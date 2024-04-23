@@ -13,11 +13,36 @@ device_ids_cycle_g: Optional[Iterator[int]] = None
 def expand_hparams_grid(hps_grid: dict, common_hps_grid: dict) -> List[dict]:
     grid = common_hps_grid.copy()
     grid.update(hps_grid)
-    for k in grid.keys():
-        v = grid[k]
-        if not isinstance(v, list):
-            grid[k] = [v]
-    return [dict(zip(grid.keys(), values)) for values in itertools.product(*grid.values())]
+    grid_keys = list(grid.keys())
+    combined_hparams = dict()
+    for k in grid_keys:
+        if ',' in k:
+            ks = k.split(',')
+            vs = list(zip(*grid[k]))
+            assert len(ks) == len(vs), f"{ks} - {vs}"
+            assert all(ki not in grid_keys for ki in ks), f"{ks}"
+            for i, ki in enumerate(ks):
+                combined_hparams[ki] = vs[i]
+            del grid[k]
+        else:
+            v = grid[k]
+            if not isinstance(v, list):
+                grid[k] = [v]
+    lens_combined_hparams = set(map(len, combined_hparams.values()))
+    assert len(lens_combined_hparams) in [0, 1], f"{combined_hparams}"
+    len_combined_hparams = tuple(lens_combined_hparams)[0]
+    grid_hparams = list()
+    for grid_values in itertools.product(*grid.values()):
+        h = dict(zip(grid.keys(), grid_values))
+        if len_combined_hparams > 0:
+            for i in range(len_combined_hparams):
+                h_hat = h.copy()
+                for k, vs in combined_hparams.items():
+                    h_hat[k] = vs[i]
+                grid_hparams.append(h_hat)
+        else:
+            grid_hparams.append(h)
+    return grid_hparams
 
 
 def model_hparams(hps_grid: dict, common_hps_grid: dict) -> List[Tuple[Optional[str], dict]]:

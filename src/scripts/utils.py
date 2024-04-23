@@ -27,7 +27,7 @@ from pcs.layers.candecomp import MonotonicCPLayer, BornCPLayer
 from pcs.models import PC, MonotonicPC, BornPC
 from graphics.distributions import plot_bivariate_samples_hmap, plot_bivariate_discrete_samples_hmap, kde_samples_hmap
 from region_graph import RegionGraph, RegionNode
-from region_graph.linear_vtree import LinearVTree
+from region_graph.linear_tree import LinearTree
 from region_graph.quad_tree import QuadTree
 from region_graph.random_binary_tree import RandomBinaryTree
 
@@ -389,6 +389,7 @@ def setup_model(
         model_name: str,
         dataset_metadata: dict,
         rg_type: str = 'random',
+        rg_sd: bool = False,
         rg_replicas: int = 1,
         rg_depth: int = 1,
         num_components: int = 2,
@@ -526,16 +527,16 @@ def setup_model(
             rg.add_node(RegionNode(range(num_variables)))
         elif rg_type == 'random':
             rg = RandomBinaryTree(
-                num_variables, num_repetitions=rg_replicas, depth=rg_depth, seed=seed)
+                num_variables, num_repetitions=rg_replicas, depth=rg_depth, seed=seed, sd=rg_sd)
         elif rg_type == 'quad-tree' and dataset_type == 'image':
             rg = QuadTree(image_shape, struct_decomp=True)
-        elif rg_type == 'linear-vtree':
-            rg = LinearVTree(num_variables, num_repetitions=rg_replicas, randomize=True, seed=seed)
+        elif rg_type == 'linear-tree':
+            rg = LinearTree(num_variables, num_repetitions=rg_replicas, randomize=True, seed=seed, sd=rg_sd)
         else:
             raise ValueError(f"Unknown region graph type named {rg_type} for the selected data")
     elif dataset_type in ['language']:
-        if rg_type == 'linear-vtree':
-            rg = LinearVTree(num_variables, num_repetitions=rg_replicas, randomize=False, seed=seed)
+        if rg_type == 'linear-tree':
+            rg = LinearTree(num_variables, num_repetitions=rg_replicas, randomize=False, seed=seed, sd=rg_sd)
         else:
             raise ValueError(f"Unknown region graph type named {rg_type} for the selected data")
     else:
@@ -544,9 +545,9 @@ def setup_model(
             rg.add_node(RegionNode(range(num_variables)))
         elif rg_type == 'random':
             rg = RandomBinaryTree(
-                num_variables, num_repetitions=rg_replicas, depth=rg_depth, seed=seed)
-        elif rg_type == 'linear-vtree':
-            rg = LinearVTree(num_variables, num_repetitions=rg_replicas, randomize=True, seed=seed)
+                num_variables, num_repetitions=rg_replicas, depth=rg_depth, seed=seed, sd=rg_sd)
+        elif rg_type == 'linear-tree':
+            rg = LinearTree(num_variables, num_repetitions=rg_replicas, randomize=True, seed=seed, sd=rg_sd)
         else:
             raise ValueError(f"Unknown region graph type named {rg_type} for the selected data")
     if all(n not in input_layer_cls.__name__ for n in ['Normal', 'Binomial']):

@@ -13,7 +13,7 @@
     "common": {
       "num-components": [32, 64, 128, 256, 512, 1024],
       "optimizer": "Adam",
-      "region-graph": "linear-vtree",
+      "region-graph": "linear-tree",
       "batch-size": 4096,
       "verbose": true,
       "dtype": "float32"

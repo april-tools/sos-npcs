@@ -57,6 +57,8 @@ parser.add_argument('--compute-layer', choices=COMPUTE_LAYERS, default=COMPUTE_L
 parser.add_argument('--multivariate', action='store_true', default=False, help="Whether to allow multivariate dists")
 parser.add_argument('--region-graph', type=str, choices=REGION_GRAPHS, default=REGION_GRAPHS[0],
                     help="The region graph to use")
+parser.add_argument('--region-graph-sd', action='store_true', default=False,
+                    help="Whether to enfore structured-decomposability in region graphs built with repetitions")
 parser.add_argument('--splines', action='store_true', default=False, help="Whether to enable splines")
 parser.add_argument('--spline-order', type=int, default=2, help="The B-spline order")
 parser.add_argument('--spline-knots', type=int, default=8, help="The number of uniformly-chosen knots within the data")

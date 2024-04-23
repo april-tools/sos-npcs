@@ -81,6 +81,7 @@ class Engine:
             'discretize_bins': self.args.discretize_bins,
             'model': self.args.model,
             'region_graph': self.args.region_graph,
+            'region_graph_sd': self.args.region_graph_sd,
             'num_components': self.args.num_components,
             'depth': self.args.depth,
             'num_replicas': self.args.num_replicas,
@@ -207,6 +208,7 @@ class Engine:
         if should_checkpoint:
             self.logger.save_checkpoint({
                 'region_graph': self.args.region_graph,
+                'region_graph_sd': self.args.region_graph_sd,
                 'weights': self.model.state_dict(),
                 'opt': self.optimizer.state_dict(),
                 'best_train': {
@@ -252,7 +254,7 @@ class Engine:
 
         # Initialize the model
         self.model = setup_model(
-            self.args.model, self.metadata, rg_type=self.args.region_graph,
+            self.args.model, self.metadata, rg_type=self.args.region_graph, rg_sd=self.args.region_graph_sd,
             rg_replicas=self.args.num_replicas, rg_depth=self.args.depth, num_components=self.args.num_components,
             input_mixture=self.args.input_mixture, compute_layer=self.args.compute_layer,
             multivariate=self.args.multivariate,

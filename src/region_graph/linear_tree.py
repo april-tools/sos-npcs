@@ -3,13 +3,22 @@ import numpy as np
 from region_graph import RegionGraph, RegionNode, PartitionNode
 
 
-def LinearVTree(num_variables: int, num_repetitions: int = 1, randomize: bool = False, seed: int = 42) -> RegionGraph:
+def LinearTree(
+        num_variables: int,
+        num_repetitions: int = 1,
+        randomize: bool = False,
+        seed: int = 42,
+        sd: bool = False
+) -> RegionGraph:
     root = RegionNode(range(num_variables))
     rg = RegionGraph()
     rg.add_node(root)
-    random_state = np.random.RandomState(seed)
+    random_state = None
 
     for _ in range(num_repetitions):
+        if randomize and (sd or random_state is None):
+            # If structured-decomposable, then use the same sampled v-tree for each repetition
+            random_state = np.random.RandomState(seed)
         parent_node = root
         vars = list(range(num_variables))
         if randomize:

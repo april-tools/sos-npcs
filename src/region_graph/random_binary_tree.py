@@ -4,16 +4,25 @@ from .region_graph import RegionGraph
 from .rg_node import PartitionNode, RegionNode
 
 
-def RandomBinaryTree(num_vars: int, num_repetitions: int = 1, seed: int = 42, depth: int = -1) -> RegionGraph:
+def RandomBinaryTree(
+        num_vars: int,
+        num_repetitions: int = 1,
+        seed: int = 42,
+        depth: int = -1,
+        sd: bool = False
+) -> RegionGraph:
     vs = list(range(num_vars))
     root = RegionNode(vs)
     graph = RegionGraph()
     graph.add_node(root)
-    random_state = np.random.RandomState(seed)
+    random_state = None
     if depth < 0:
         depth = float('inf')
 
     for replica_idx in range(num_repetitions):
+        if sd or random_state is None:
+            # If structured-decomposable, then use the same sampled v-tree for each repetition
+            random_state = np.random.RandomState(seed)
         q = list()
         q.append(root)
         while q and len(graph.topological_layers(bottom_up=False)) <= depth:

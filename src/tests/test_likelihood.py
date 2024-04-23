@@ -15,7 +15,7 @@ from pcs.layers.input import MonotonicBinaryEmbeddings, BornBinaryEmbeddings, No
     BornBSplines, MonotonicBinomial, BornBinomial, MonotonicEmbeddings, BornEmbeddings
 from pcs.models import MonotonicPC, BornPC, PC
 from region_graph import RegionGraph, RegionNode
-from region_graph.linear_vtree import LinearVTree
+from region_graph.linear_tree import LinearTree
 from region_graph.quad_tree import QuadTree
 from region_graph.random_binary_tree import RandomBinaryTree
 
@@ -109,7 +109,7 @@ def test_born_pc_random(compute_layer, num_variables, num_replicas, depth, num_c
                              [3, 8], [1, 4], [1, 2]
                          )))
 def test_born_pc_linear_stiefel(compute_layer, num_variables, num_replicas, num_components):
-    rg = LinearVTree(num_variables, num_repetitions=num_replicas)
+    rg = LinearTree(num_variables, num_repetitions=num_replicas)
     compute_layer_kwargs = {'init_method': 'stiefel'}
     input_layer_kwargs = {'init_method': 'stiefel', 'num_states': 3}
     model = BornPC(
@@ -226,7 +226,7 @@ def test_born_pc_image_dequantize(compute_layer, image_shape, num_components, in
                              [8, 13], [1, 3], [False, True], [1, 4]
                          )))
 def test_monotonic_pc_linear_rg(compute_layer, num_variables, num_components, input_mixture, num_replicas):
-    rg = LinearVTree(num_variables, num_repetitions=num_replicas, randomize=True)
+    rg = LinearTree(num_variables, num_repetitions=num_replicas, randomize=True)
     model = MonotonicPC(
         rg, input_layer_cls=MonotonicBinaryEmbeddings, compute_layer_cls=compute_layer,
         input_mixture=input_mixture, num_components=num_components)
@@ -244,7 +244,7 @@ def test_monotonic_pc_linear_rg(compute_layer, num_variables, num_components, in
 
                          )))
 def test_born_pc_linear_rg(compute_layer, num_variables, num_components, input_mixture, num_replicas):
-    rg = LinearVTree(num_variables, num_repetitions=num_replicas, randomize=True)
+    rg = LinearTree(num_variables, num_repetitions=num_replicas, randomize=True)
     model = BornPC(
         rg, input_layer_cls=BornBinaryEmbeddings, compute_layer_cls=compute_layer,
         input_mixture=input_mixture, num_components=num_components)

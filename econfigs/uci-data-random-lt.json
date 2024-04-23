@@ -12,7 +12,7 @@
   "datasets": ["power", "gas", "hepmass", "miniboone", "bsds300"],
   "grid": {
     "common": {
-      "region-graph": "linear-vtree",
+      "region-graph": "linear-tree",
       "depth": -1,
       "splines": [false, true],
       "spline-order": 2,
