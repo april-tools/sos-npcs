@@ -8,7 +8,6 @@ from scipy import integrate
 
 from pcs.hmm import MonotonicHMM, BornHMM
 from pcs.layers.mixture import MonotonicMixtureLayer, BornMixtureLayer
-from pcs.layers.tucker import MonotonicTucker2Layer, BornTucker2Layer
 from pcs.layers.candecomp import MonotonicCPLayer, BornCPLayer
 from pcs.layers.input import MonotonicBinaryEmbeddings, BornBinaryEmbeddings, NormalDistribution, \
     MultivariateNormalDistribution, BornNormalDistribution, BornMultivariateNormalDistribution, MonotonicBSplines, \
@@ -222,7 +221,7 @@ def test_born_pc_image_dequantize(compute_layer, image_shape, num_components, in
 
 @pytest.mark.parametrize("compute_layer,num_variables,num_components,input_mixture,num_replicas",
                          list(itertools.product(
-                             [MonotonicCPLayer, MonotonicTucker2Layer],
+                             [MonotonicCPLayer],
                              [8, 13], [1, 3], [False, True], [1, 4]
                          )))
 def test_monotonic_pc_linear_rg(compute_layer, num_variables, num_components, input_mixture, num_replicas):
@@ -239,7 +238,7 @@ def test_monotonic_pc_linear_rg(compute_layer, num_variables, num_components, in
 
 @pytest.mark.parametrize("compute_layer,num_variables,num_components,input_mixture,num_replicas",
                          list(itertools.product(
-                             [BornCPLayer, BornTucker2Layer],
+                             [BornCPLayer],
                              [8, 13], [1, 3], [False, True], [1, 4]
 
                          )))

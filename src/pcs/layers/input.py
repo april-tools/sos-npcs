@@ -10,7 +10,7 @@ from pcs.initializers import init_params_
 from region_graph import RegionNode
 from splines.bsplines import splines_uniform_polynomial, basis_polyval, basis_polyint, integrate_cartesian_basis, \
     least_squares_basis
-from pcs.utils import retrieve_default_dtype, ohe, safelog, log_binomial
+from pcs.utils import retrieve_complex_default_dtype, retrieve_default_dtype, ohe, log_binomial
 
 
 class InputLayer(nn.Module, abc.ABC):
@@ -98,47 +98,45 @@ class BornEmbeddings(BornInputLayer):
         self.exp_reparam = exp_reparam
         self.l2norm = l2norm
         self._ohe = num_states <= 256
+        self._cfloat_dtype = retrieve_complex_default_dtype()
 
-    def log_pf(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def log_pf(self) -> torch.Tensor:
         if self.exp_reparam:
             weight = torch.exp(self.weight)
         elif self.l2norm:
             weight = self.weight / torch.linalg.vector_norm(self.weight, ord=2, dim=2, keepdim=True)
         else:
             weight = self.weight
+        weight = weight.to(self._cfloat_dtype)
 
-        w_si = torch.sign(weight.detach())  # (num_variables, num_replicas, num_components, num_states)
-        w = safelog(torch.abs(weight))      # (num_variables, num_replicas, num_components, num_states)
-        m_w, _ = torch.max(w, dim=3, keepdim=True)  # (num_variables, num_replicas, num_components, 1)
-        e_w = w_si * torch.exp(w - m_w)
+        w = torch.log(weight)                            # (num_variables, num_replicas, num_components, num_states)
+        m_w, _ = torch.max(w.real, dim=3, keepdim=True)  # (num_variables, num_replicas, num_components, 1)
+        e_w = torch.exp(w - m_w)
         z = torch.einsum('vrid,vrjd->vrij', e_w, e_w)  # (num_variables, num_replicas, num_components, num_components)
-        z_si = torch.sign(z.detach())
-        z = m_w + m_w.permute(0, 1, 3, 2) + safelog(torch.abs(z))
-        return z.unsqueeze(dim=0), z_si.unsqueeze(dim=0)
+        z = m_w + m_w.permute(0, 1, 3, 2) + torch.log(z)
+        return z.unsqueeze(dim=0)
 
-    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.exp_reparam:
             weight = torch.exp(self.weight)
         elif self.l2norm:
             weight = self.weight / torch.linalg.vector_norm(self.weight, ord=2, dim=2, keepdim=True)
         else:
             weight = self.weight
+        weight = weight.to(self._cfloat_dtype)
 
         # x: (-1, num_vars)
         # self.weight: (num_vars, num_comps, num_states)
         if self._ohe:
-            x = ohe(x, self.num_states)  # (-1, num_vars, num_states)
+            x = ohe(x, self.num_states, dtype=self._cfloat_dtype)  # (-1, num_vars, num_states)
             # (-1, num_vars, num_replicas, num_components)
             w = torch.einsum('bvd,vrid->bvri', x, weight)
-            # Split into log absolute value and sign components
-            w_si = torch.sign(w.detach())
-            w = safelog(torch.abs(w))
+            w = torch.log(w)
         else:
             weight = weight.permute(0, 3, 1, 2)
             w = weight[torch.arange(weight.shape[0], device=x.device), x]
-            w_si = torch.sign(w.detach())
-            w = safelog(torch.abs(w))
-        return w, w_si
+            w = torch.log(w)
+        return w
 
 
 class MonotonicBinaryEmbeddings(MonotonicEmbeddings):
@@ -226,8 +224,10 @@ class BornBinomial(BornInputLayer):
             log_binomial(self.total_count, k) for k in range(num_states)
         ], dtype=torch.get_default_dtype()))
         self._log_sigmoid = nn.LogSigmoid()
+        self._cfloat_dtype = retrieve_complex_default_dtype()
+        
 
-    def log_pf(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def log_pf(self) -> torch.Tensor:
         # counts, log_bcoeefs: (num_states, 1, 1, 1)
         counts = torch.arange(self.num_states, device=self.weight.device)\
             .unsqueeze(dim=1).unsqueeze(dim=2).unsqueeze(dim=3)
@@ -244,10 +244,10 @@ class BornBinomial(BornInputLayer):
         m_lp, _ = torch.max(log_probs, dim=0, keepdim=True)  # (1, num_vars, num_replicas, num_components)
         e_lp = torch.exp(log_probs - m_lp)                   # (num_states, num_vars, num_replicas, num_components)
         z = torch.einsum('dvri,dvrj->vrij', e_lp, e_lp)
-        log_z = safelog(z.unsqueeze(dim=0)) + m_lp.unsqueeze(dim=-2) + m_lp.unsqueeze(dim=-1)
-        return log_z, torch.ones_like(log_z, requires_grad=False)
+        log_z = torch.log(z.unsqueeze(dim=0)) + m_lp.unsqueeze(dim=-2) + m_lp.unsqueeze(dim=-1)
+        return log_z.to(self._cfloat_dtype)
 
-    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (-1, num_vars, 1, 1)
         # self.weight: (num_vars, num_components)
         x = x.unsqueeze(dim=2).unsqueeze(dim=3)
@@ -263,7 +263,7 @@ class BornBinomial(BornInputLayer):
 
         # log_probs: (-1, num_vars, num_replicas, num_components)
         log_probs = log_bcoeffs + log_success + log_failure
-        return log_probs, torch.ones_like(log_probs, requires_grad=False)
+        return log_probs.to(self._cfloat_dtype)
 
 
 class NormalDistribution(MonotonicInputLayer):
@@ -356,28 +356,29 @@ class BornNormalDistribution(BornInputLayer):
         init_params_(log_sigma, 'normal', init_loc=0.0, init_scale=init_scale)
         self.log_sigma = nn.Parameter(log_sigma, requires_grad=True)
         self.eps = 1e-5
+        self._cfloat_dtype = retrieve_complex_default_dtype()
 
-    def log_pf(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def log_pf(self) -> torch.Tensor:
         mu = self.mu
         log_sigma = self.log_sigma
         # log_sum_cov, sq_norm_dist: (1, num_variables, num_replicas, num_components, num_components)
         log_cov = 2.0 * torch.log(torch.exp(log_sigma) + self.eps)
         m_s, _ = torch.max(log_cov, dim=-1, keepdim=True)
         cov = torch.exp(log_cov - m_s)
-        log_sum_cov = m_s.unsqueeze(dim=-1) + safelog(cov.unsqueeze(dim=-2) + cov.unsqueeze(dim=-1))
-        log_sq_dif_mu = 2.0 * safelog(torch.abs(mu.unsqueeze(dim=-2) - mu.unsqueeze(dim=-1)))
+        log_sum_cov = m_s.unsqueeze(dim=-1) + torch.log(cov.unsqueeze(dim=-2) + cov.unsqueeze(dim=-1))
+        log_sq_dif_mu = 2.0 * torch.log(torch.abs(mu.unsqueeze(dim=-2) - mu.unsqueeze(dim=-1)))
         sq_norm_dist = torch.exp(log_sq_dif_mu - log_sum_cov)
         # log_z: (1, num_variables, num_replicas, num_components, num_components)
         log_z = -0.5 * (self.log_two_pi + log_sum_cov + sq_norm_dist)
-        return log_z, torch.ones_like(log_z, requires_grad=False)
+        return log_z.to(self._cfloat_dtype)
 
-    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (-1, num_variables) -> (-1, num_variables, 1, 1)
         x = x.unsqueeze(dim=-1).unsqueeze(dim=-1)
         scale = torch.exp(self.log_sigma) + self.eps
         # log_prob: (-1, num_variables, num_replicas, num_components)
         log_prob = ds.Normal(loc=self.mu, scale=scale).log_prob(x)
-        return log_prob, torch.ones_like(log_prob, requires_grad=False)
+        return log_prob.to(self._cfloat_dtype)
 
 
 class BornMultivariateNormalDistribution(BornInputLayer):
@@ -400,6 +401,7 @@ class BornMultivariateNormalDistribution(BornInputLayer):
         init_params_(weight, 'normal', init_scale=init_scale)
         self.weight = nn.Parameter(weight, requires_grad=True)
         self.register_buffer('eps_eye', 1e-5 * torch.eye(self.num_variables))
+        self._cfloat_dtype = retrieve_complex_default_dtype()
 
     def __covariance(self):
         weight = self.weight
@@ -409,7 +411,7 @@ class BornMultivariateNormalDistribution(BornInputLayer):
     def __cholesky(self):
         return torch.linalg.cholesky(self.__covariance())
 
-    def log_pf(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def log_pf(self) -> torch.Tensor:
         # mu_a: (1, num_replicas, 1, num_components, num_variables)
         # mu_b: (1, num_replicas, num_components, 1, num_variables)
         mu = self.mu
@@ -424,12 +426,12 @@ class BornMultivariateNormalDistribution(BornInputLayer):
         # sq_norm_dist: (1, num_replicas, num_components, num_components)
         sq_norm_dist = batch_mahalanobis(pairwise_scale_tril, mu_a - mu_b)
         # log_det_cov: (1, num_replicas, num_components, num_components)
-        log_det_cov = torch.sum(safelog(pairwise_scale_tril.diagonal(dim1=-2, dim2=-1)), dim=-1)
+        log_det_cov = torch.sum(torch.log(pairwise_scale_tril.diagonal(dim1=-2, dim2=-1)), dim=-1)
 
         # log_z: (1, num_replicas, 1, num_components, num_components)
         log_z = -0.5 * (self.mu.shape[-1] * self.log_two_pi + sq_norm_dist) - log_det_cov
         log_z = log_z.unsqueeze(dim=-3)
-        return log_z, torch.ones_like(log_z, requires_grad=False)
+        return log_z.to(self._cfloat_dtype)
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         # x: (-1, num_variables) -> (-1, 1, 1, num_variables)
@@ -437,7 +439,7 @@ class BornMultivariateNormalDistribution(BornInputLayer):
         scale_tril = self.__cholesky()
         log_prob = ds.MultivariateNormal(loc=self.mu, scale_tril=scale_tril).log_prob(x)
         log_prob = log_prob.unsqueeze(dim=1)
-        return log_prob, torch.ones_like(log_prob, requires_grad=False)
+        return log_prob.to(self._cfloat_dtype)
 
 
 class MonotonicBSplines(MonotonicInputLayer):
@@ -477,26 +479,26 @@ class MonotonicBSplines(MonotonicInputLayer):
             num_replicas=self.num_replicas, num_components=self.num_components,
             batch_size=batch_size, noise=noise
         )
-        coeffs = safelog(coeffs)
+        coeffs = torch.log(coeffs)
         self.weight.data.copy_(coeffs)
 
     def log_pf(self) -> torch.Tensor:
         sint = self._integral_basis
         # log_z: (1, num_variables, num_replicas, num_components)
-        log_z = torch.logsumexp(self.weight + safelog(sint), dim=-1)  # (num_variables, num_replicas, num_components)
+        log_z = torch.logsumexp(self.weight + torch.log(sint), dim=-1)  # (num_variables, num_replicas, num_components)
         log_z = log_z.unsqueeze(dim=0)
         return log_z
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (-1, num_variables)
         y = basis_polyval(self.knots, self.polynomials, x)   # (-1, num_variables, num_knots)
-        log_y = safelog(y)
+        log_y = torch.log(y)
         m_y, _ = torch.max(log_y, dim=-1, keepdim=True)
         e_y = torch.exp(log_y - m_y)
         e_w = torch.exp(self.weight)
         # log_y: (-1, num_variables, num_replicas, num_components)
         y = torch.einsum('vrik,bvk->bvri', e_w, e_y)
-        log_y = m_y.unsqueeze(dim=-1) + safelog(y)
+        log_y = m_y.unsqueeze(dim=-1) + torch.log(y)
         return log_y
 
 
@@ -533,6 +535,7 @@ class BornBSplines(BornInputLayer):
             weight = torch.log(weight)
         self.weight = nn.Parameter(weight, requires_grad=True)
         self.exp_reparam = exp_reparam
+        self._cfloat_dtype = retrieve_complex_default_dtype()
 
     @torch.no_grad()
     def least_squares_fit(self, data: torch.Tensor, batch_size: int = 1, noise: float = 5e-2):
@@ -542,29 +545,29 @@ class BornBSplines(BornInputLayer):
             batch_size=batch_size, noise=noise
         )
         if self.exp_reparam:
-            coeffs = safelog(coeffs)
+            coeffs = torch.log(coeffs)
         self.weight.data.copy_(coeffs)
 
-    def log_pf(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def log_pf(self) -> torch.Tensor:
         weight = torch.exp(self.weight) if self.exp_reparam else self.weight
 
         # sint: (num_knots, num_knots)
         sint = self._integral_cartesian_basis
         z = torch.einsum('kl,vrik->lvri', sint, weight)
         z = torch.einsum('lvri,vrjl->vrij', z, weight)
-        # log_z, z_si: (1, num_variables, num_replicas, num_components, num_components)
-        z_si = torch.sign(z.detach()).unsqueeze(dim=0)
-        log_z = safelog(torch.abs(z)).unsqueeze(dim=0)
-        return log_z, z_si
+        # log_z: (1, num_variables, num_replicas, num_components, num_components)
+        z = z.to(self._cfloat_dtype)
+        log_z = torch.log(z).unsqueeze(dim=0)
+        return log_z
 
-    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         weight = torch.exp(self.weight) if self.exp_reparam else self.weight
 
         # x: (-1, num_variables)
         y = basis_polyval(self.knots, self.polynomials, x)   # (-1, num_variables, num_knots)
         # y: (-1, num_variables, num_replicas, num_components)
         y = torch.einsum('bvk,vrik->bvri', y, weight)
-        y_si = torch.sign(y.detach())
-        log_y = safelog(torch.abs(y))
+        y = y.to(self._cfloat_dtype)
+        log_y = torch.log(y)
         # log_y: (-1, num_variables, num_replicas, num_components)
-        return log_y, y_si
+        return log_y

@@ -24,6 +24,10 @@ def retrieve_default_dtype(numpy: bool = False) -> Union[torch.dtype, np.dtype]:
     raise ValueError("Cannot map torch default dtype to np.dtype")
 
 
+def retrieve_complex_default_dtype() -> torch.dtype:
+    return torch.complex128 if retrieve_default_dtype() == torch.float64 else torch.complex64
+
+
 def check_random_state(random_state: Optional[RandomState] = None) -> np.random.RandomState:
     """
     Check a possible input random state and return it as a Numpy's RandomState object.

@@ -22,10 +22,9 @@ from pcs.layers import MonotonicEmbeddings, MonotonicBinaryEmbeddings, Multivari
     BornMultivariateNormalDistribution, BornNormalDistribution, MonotonicBSplines, BornBSplines, \
     MonotonicBinomial, BornBinomial
 from pcs.layers.mixture import MonotonicMixtureLayer, BornMixtureLayer
-from pcs.layers.tucker import MonotonicTucker2Layer, BornTucker2Layer
 from pcs.layers.candecomp import MonotonicCPLayer, BornCPLayer
 from pcs.models import PC, MonotonicPC, BornPC
-from graphics.distributions import plot_bivariate_samples_hmap, plot_bivariate_discrete_samples_hmap, kde_samples_hmap
+from graphics.distributions import plot_bivariate_discrete_samples_hmap, kde_samples_hmap
 from region_graph import RegionGraph, RegionNode
 from region_graph.linear_tree import LinearTree
 from region_graph.quad_tree import QuadTree
@@ -442,7 +441,10 @@ def setup_model(
             else:
                 input_layer_cls = MultivariateNormalDistribution if multivariate else NormalDistribution
         model_cls = MonotonicPC
-        compute_layer_cls = MonotonicCPLayer if compute_layer == 'cp' else MonotonicTucker2Layer
+        if compute_layer == 'cp':
+            compute_layer_cls = MonotonicCPLayer
+        else:
+            raise NotImplementedError(f"Compute layer named '{compute_layer}' is not known")
         out_mixture_layer_cls = MonotonicMixtureLayer
         in_mixture_layer_cls = MonotonicMixtureLayer
     elif model_name == 'BornPC':
@@ -475,7 +477,10 @@ def setup_model(
                 input_layer_cls = BornMultivariateNormalDistribution if multivariate else BornNormalDistribution
             out_mixture_layer_cls = BornMixtureLayer if multivariate else MonotonicMixtureLayer
         model_cls = BornPC
-        compute_layer_cls = BornCPLayer if compute_layer == 'cp' else BornTucker2Layer
+        if compute_layer == 'cp':
+            compute_layer_cls = BornCPLayer
+        else:
+            raise NotImplementedError(f"Compute layer named '{compute_layer}' is not known")
         in_mixture_layer_cls = BornMixtureLayer
     elif 'HMM' in model_name:
         model_cls = MonotonicHMM if 'Monotonic' in model_name else BornHMM

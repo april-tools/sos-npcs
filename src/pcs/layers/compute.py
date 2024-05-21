@@ -6,7 +6,7 @@ from torch import nn
 
 from region_graph import RegionNode
 
-COMPUTE_LAYERS = ['cp', 'tucker2']
+COMPUTE_LAYERS = ['cp']
 
 
 class ComputeLayer(nn.Module, abc.ABC):

@@ -1,11 +1,11 @@
-from typing import List, Tuple
+from typing import List
 
 import torch
 from torch import nn
 
 from pcs.initializers import init_params_
 from pcs.layers import MonotonicComputeLayer, BornComputeLayer
-from pcs.utils import safelog
+from pcs.utils import retrieve_complex_default_dtype
 from region_graph import RegionNode
 
 
@@ -53,33 +53,35 @@ class BornMixtureLayer(BornComputeLayer):
             weight = torch.log(weight)
         self.weight = nn.Parameter(weight, requires_grad=True)
         self.exp_reparam = exp_reparam
+        self._cfloat_dtype = retrieve_complex_default_dtype()
 
-    def forward(self, x: torch.Tensor, x_si: torch.Tensor, square: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
-        weight = torch.exp(self.weight) if self.exp_reparam else self.weight
+    def forward(self, x: torch.Tensor, square: bool = False) -> torch.Tensor:
+        if self.exp_reparam:
+            weight = torch.exp(self.weight)
+        else:
+            weight = self.weight
+        weight = weight.to(self._cfloat_dtype)
 
         if square:
             # x: (-1, num_folds, num_in_components, num_in_components)
             # Non-monotonic Log-einsum-exp trick
-            m_x, _ = torch.max(x, dim=-2, keepdim=True)  # (-1, num_folds, 1, num_in_components)
-            e_x = x_si * torch.exp(x - m_x)              # (-1, num_folds, num_in_components, num_in_components)
+            m_x, _ = torch.max(x.real, dim=-2, keepdim=True)  # (-1, num_folds, 1, num_in_components)
+            e_x = torch.exp(x - m_x)                          # (-1, num_folds, num_in_components, num_in_components)
             # x: (-1, num_folds, num_out_components, num_in_components)
             x = torch.einsum('fki,bfij->bfkj', weight, e_x)
-            x_si = torch.sign(x.detach())
-            x = m_x + safelog(torch.abs(x))
-            m_x, _ = torch.max(x, dim=-1, keepdim=True)  # (-1, num_folds, num_out_components, 1)
-            e_x = x_si * torch.exp(x - m_x)              # (-1, num_folds, num_out_components, num_in_components)
+            x = m_x + torch.log(x)
+            m_x, _ = torch.max(x.real, dim=-1, keepdim=True)  # (-1, num_folds, num_out_components, 1)
+            e_x = torch.exp(x - m_x)                          # (-1, num_folds, num_out_components, num_in_components)
             # (-1, num_folds, num_out_components, num_out_components)
             x = torch.einsum('bfkj,flj->bfkl', e_x, weight)
-            x_si = torch.sign(x.detach())
-            x = m_x + safelog(torch.abs(x))
-            return x, x_si
+            x = m_x + torch.log(x)
+            return x
 
         # x: (-1, num_folds, num_in_components)
         # Non-monotonic Log-einsum-exp trick
-        m_x, _ = torch.max(x, dim=-1, keepdim=True)  # (-1, num_folds, 1)
-        e_x = x_si * torch.exp(x - m_x)              # (-1, num_folds, num_in_components)
+        m_x, _ = torch.max(x.real, dim=-1, keepdim=True)  # (-1, num_folds, 1)
+        e_x = torch.exp(x - m_x)                          # (-1, num_folds, num_in_components)
         # y: (-1, num_folds, num_out_components)
         y = torch.einsum('fkp,bfp->bfk', weight, e_x)
-        y_si = torch.sign(y.detach())
-        y = m_x + safelog(torch.abs(y))
-        return y, y_si
+        y = m_x + torch.log(y)
+        return y

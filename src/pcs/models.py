@@ -12,7 +12,6 @@ from pcs.layers.input import MultivariateNormalDistribution, BornMultivariateNor
 from pcs.layers.scope import ScopeLayer, MonotonicScopeLayer, BornScopeLayer
 from pcs.layers import ComputeLayer, MonotonicComputeLayer, BornComputeLayer
 from pcs.layers.mixture import MonotonicMixtureLayer, BornMixtureLayer
-from pcs.layers.tucker import MonotonicTucker2Layer, BornTucker2Layer
 from pcs.layers.candecomp import MonotonicCPLayer, BornCPLayer
 from region_graph import PartitionNode, RegionNode, RegionGraph
 
@@ -298,7 +297,7 @@ class MonotonicPC(TensorizedPC):
             num_components: int = 2,
             **kwargs
     ):
-        if compute_layer_cls not in [MonotonicCPLayer, MonotonicTucker2Layer]:
+        if compute_layer_cls not in [MonotonicCPLayer]:
             raise ValueError(f"Invalid compute layer called {compute_layer_cls.__name__}")
         super().__init__(
             region_graph, input_layer_cls, MonotonicScopeLayer, compute_layer_cls,
@@ -378,7 +377,7 @@ class BornPC(TensorizedPC):
             num_components: int = 2,
             **kwargs
     ):
-        if compute_layer_cls not in [BornCPLayer, BornTucker2Layer]:
+        if compute_layer_cls not in [BornCPLayer]:
             raise ValueError(f"Invalid compute layer called {compute_layer_cls.__name__}")
         super().__init__(
             region_graph, input_layer_cls, BornScopeLayer, compute_layer_cls,
@@ -387,83 +386,78 @@ class BornPC(TensorizedPC):
             num_sum_components=num_components,
             **kwargs)
 
-    def _eval_layers(self, x: torch.Tensor, x_si: torch.Tensor, square_mode: bool = False) -> torch.Tensor:
+    def _eval_layers(self, x: torch.Tensor, square_mode: bool = False) -> torch.Tensor:
         if self.scope_layer is not None:
-            x, x_si = self.scope_layer(x, x_si, square=square_mode)
+            x = self.scope_layer(x, square=square_mode)
         
         if self.in_mixture is not None:
-            x, x_si = self.in_mixture(x, x_si, square=square_mode)
-        layer_outputs: List[Tuple[torch.Tensor, torch.Tensor]] = [(x, x_si)]
+            x = self.in_mixture(x, square=square_mode)
+        layer_outputs: List[torch.Tensor] = [x]
         
         for layer, (in_layer_ids, fold_idx) in zip(self.layers, self.bookkeeping):
             if len(in_layer_ids) == 1:
                 # (B, F, K)
                 (in_layer_id,) = in_layer_ids
-                inputs, inputs_si = layer_outputs[in_layer_id]
+                inputs = layer_outputs[in_layer_id]
             else:
                 # (B, F_1 + ... + F_n, K)
-                inputs = torch.cat([layer_outputs[i][0] for i in in_layer_ids], dim=1)
-                inputs_si = torch.cat([layer_outputs[i][1] for i in in_layer_ids], dim=1)
+                inputs = torch.cat([layer_outputs[i] for i in in_layer_ids], dim=1)
                 
             inputs = inputs[:, fold_idx]  # inputs: (B, F, H, K)
-            inputs_si = inputs_si[:, fold_idx]
-            outputs, outputs_si = layer(inputs, inputs_si, square=square_mode)  # outputs: (B, F, K)
-            layer_outputs.append((outputs, outputs_si))
-        outputs, outputs_si = layer_outputs[-1]  # (B, F, K)
-        
+            outputs = layer(inputs, square=square_mode)  # outputs: (B, F, K)
+            layer_outputs.append(outputs)
+        outputs = layer_outputs[-1]  # (B, F, K)
+
         if self.out_mixture is None:
             outputs = outputs[:, 0]
+            outputs = outputs.real
             return outputs.squeeze(dim=-1) if square_mode else 2 * outputs
-        
+
         if isinstance(self.out_mixture, BornComputeLayer):
             if square_mode:
                 # x: (-1, 1, num_components, num_components)
                 outputs = outputs.view(outputs.shape[0], 1, outputs.shape[-2], outputs.shape[-1])
-                outputs_si = outputs_si.view(outputs_si.shape[0], 1, outputs_si.shape[-2], outputs_si.shape[-1])
             else:
                 # x: (-1, 1, num_replicas) or (-1, 1, num_components)
                 outputs = outputs.view(outputs.shape[0], 1, -1)
-                outputs_si = outputs_si.view(outputs_si.shape[0], 1, -1)
-            outputs, _ = self.out_mixture(outputs, outputs_si, square=square_mode)
+            outputs = self.out_mixture(outputs, square=square_mode)
+            outputs = outputs.real
             outputs = outputs.squeeze(dim=-1) if square_mode else 2 * outputs
             return outputs
-        
-        x = outputs.view(outputs.shape[0], 1, -1)  # (-1, 1, num_replicas)
-        
+
+        x = outputs.view(outputs.shape[0], 1, -1).real  # (-1, 1, num_replicas)
         if not square_mode:
             x = 2 * x
         x = self.out_mixture(x)  # (B, 1, 1)
 
         return x.squeeze(dim=-1)
 
-    def eval_log_pf(self) -> Tuple[Tuple[torch.Tensor, torch.Tensor], torch.Tensor]:
-        log_in_z, in_z_si = self.input_layer.log_pf()
-        log_z = self._eval_layers(log_in_z, in_z_si, square_mode=True)
-        return (log_in_z, in_z_si), log_z
+    def eval_log_pf(self) -> torch.Tensor:
+        log_in_z = self.input_layer.log_pf()
+        log_z = self._eval_layers(log_in_z, square_mode=True)
+        return log_in_z, log_z
 
     def log_score(self, x: torch.Tensor) -> torch.Tensor:
-        (x, x_si), ldj = self._eval_input(x)
-        return self._eval_layers(x, x_si) + ldj
+        x, ldj = self._eval_input(x)
+        return self._eval_layers(x) + ldj
 
     def log_marginal_score(
             self,
             x: torch.Tensor,
             mar_mask: torch.Tensor,
-            log_in_z: Optional[Tuple[torch.Tensor, torch.Tensor]] = None
+            log_in_z: Optional[torch.Tensor] = None
     ) -> torch.Tensor:
         if isinstance(self.input_layer, BornMultivariateNormalDistribution):
             raise NotImplementedError("Marginalization of multivariate input distributions is not supported")
         if log_in_z is None:
             if self.training:
-                log_in_z, in_z_si = self.input_layer.log_pf()
+                log_in_z = self.input_layer.log_pf()
             else:
-                (log_in_z, in_z_si), _ = self.log_pf()
+                log_in_z, _ = self.log_pf()
         else:
-            log_in_z, in_z_si = log_in_z
-        (x, x_si), ldj = self._eval_input(x)
+            log_in_z = log_in_z
+        x, ldj = self._eval_input(x)
         x = x.unsqueeze(dim=-2) + x.unsqueeze(dim=-1)
-        x_si = x_si.unsqueeze(dim=-2) * x_si.unsqueeze(dim=-1)
         mar_mask = mar_mask.float().unsqueeze(dim=2).unsqueeze(dim=3).unsqueeze(dim=4)
         x = (1.0 - mar_mask) * x + mar_mask * log_in_z
-        x_si = (1.0 - mar_mask) * x_si + mar_mask * in_z_si
-        return self._eval_layers(x, x_si, square_mode=True) + ldj
+        return self._eval_layers(x, square_mode=True) + ldj

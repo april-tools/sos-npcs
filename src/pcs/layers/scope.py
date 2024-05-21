@@ -1,19 +1,21 @@
 import abc
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import torch
 from torch import nn
 
-from pcs.utils import retrieve_default_dtype
+from pcs.utils import retrieve_complex_default_dtype, retrieve_default_dtype
 from region_graph import RegionNode
 
 
 class ScopeLayer(nn.Module, abc.ABC):
-    def __init__(self, rg_nodes: List[RegionNode]):
+    def __init__(self, rg_nodes: List[RegionNode], dtype: Optional[torch.dtype] = None):
         super().__init__()
         scope = ScopeLayer.__build_scope(rg_nodes)
-        self.register_buffer('scope', torch.from_numpy(scope))
+        if dtype is None:
+            dtype = retrieve_default_dtype()
+        self.register_buffer('scope', torch.from_numpy(scope).to(dtype))
 
     @staticmethod
     def __build_scope(rg_nodes: List[RegionNode]) -> np.ndarray:
@@ -23,8 +25,7 @@ class ScopeLayer(nn.Module, abc.ABC):
             range(num_replicas)
         ), "Replica indices should be consecutive, starting with 0."
         num_variables = len(set(v for n in rg_nodes for v in n.scope))
-        scope = np.zeros(shape=(len(rg_nodes), num_variables, num_replicas),
-                         dtype=retrieve_default_dtype(numpy=True))
+        scope = np.zeros(shape=(len(rg_nodes), num_variables, num_replicas), dtype=np.float64)
         for i, n in enumerate(rg_nodes):
             scope[i, list(n.scope), n.get_replica_idx()] = 1.0
         return scope
@@ -42,22 +43,16 @@ class MonotonicScopeLayer(ScopeLayer):
 
 class BornScopeLayer(ScopeLayer):
     def __init__(self, rg_nodes: List[RegionNode]):
-        super().__init__(rg_nodes)
+        super().__init__(rg_nodes, dtype=retrieve_complex_default_dtype())
 
-    def forward(self, x: torch.Tensor, x_si: torch.Tensor, square: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor, square: bool = False) -> torch.Tensor:
         if square:
             # x: (-1, num_vars, num_replicas, num_components, num_components)
             # y: (-1, num_folds, num_components, num_components)
-            x = torch.einsum('bvrij,fvr->bfij', x, self.scope)
-            x_si[x_si > 0.0] = 0.0
-            x_si = torch.einsum('bvrij,fvr->bfij', x_si, self.scope)
-            x_si = 2.0 * torch.fmod(x_si, 2) + 1.0  # (trick: compute signs by performing an einsum)
-            return x, x_si
+            y = torch.einsum('bvrij,fvr->bfij', x, self.scope)
+            return y
 
         # x: (-1, num_vars, num_replicas, num_components)
         # y: (-1, num_folds, num_components)
-        x = torch.einsum('bvri,fvr->bfi', x, self.scope)
-        x_si[x_si > 0.0] = 0.0
-        x_si = torch.einsum('bvri,fvr->bfi', x_si, self.scope)
-        x_si = 2.0 * torch.fmod(x_si, 2) + 1.0  # (trick: compute signs by performing an einsum)
-        return x, x_si
+        y = torch.einsum('bvri,fvr->bfi', x, self.scope)
+        return y
