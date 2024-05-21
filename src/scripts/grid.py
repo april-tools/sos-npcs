@@ -30,7 +30,7 @@ def expand_hparams_grid(hps_grid: dict, common_hps_grid: dict) -> List[dict]:
                 grid[k] = [v]
     lens_combined_hparams = set(map(len, combined_hparams.values()))
     assert len(lens_combined_hparams) in [0, 1], f"{combined_hparams}"
-    len_combined_hparams = tuple(lens_combined_hparams)[0]
+    len_combined_hparams = tuple(lens_combined_hparams)[0] if len(lens_combined_hparams) == 1 else 0
     grid_hparams = list()
     for grid_values in itertools.product(*grid.values()):
         h = dict(zip(grid.keys(), grid_values))
