@@ -172,6 +172,8 @@ class TensorizedPC(PC, abc.ABC):
                     del mixture_layer_kwargs['complex']
                 if 'exp_reparam' in mixture_layer_kwargs:
                     del mixture_layer_kwargs['exp_reparam']
+                if isinstance(self, BornPC) and 'init_method' in mixture_layer_kwargs:
+                    mixture_layer_kwargs['init_method'] = 'uniform'
             self.out_mixture = out_mixture_layer_cls(
                 rg_layers[-1][1],
                 num_in_components=num_in_components,
@@ -459,7 +461,7 @@ class BornPC(TensorizedPC):
         else:
             log_in_z = log_in_z
         x, ldj = self._eval_input(x)
-        x = x.unsqueeze(dim=-2) + x.unsqueeze(dim=-1)
+        x = x.conj().unsqueeze(dim=-2) + x.unsqueeze(dim=-1)
         mar_mask = mar_mask.float().unsqueeze(dim=2).unsqueeze(dim=3).unsqueeze(dim=4)
         x = (1.0 - mar_mask) * x + mar_mask * log_in_z
         return self._eval_layers(x, square_mode=True) + ldj

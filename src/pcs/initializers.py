@@ -71,7 +71,7 @@ def init_params_impl_(tensor: torch.Tensor, method: str = 'normal', init_loc: fl
 
 
 def init_params_(tensor: torch.Tensor, method: str = 'normal', init_loc: float = 0.0, init_scale: float = 1.0):
-    if tensor.dtype in [torch.complex32, torch.complex64, torch.complex128]:
+    if torch.is_complex(tensor):
         init_params_impl_(tensor.real, method=method, init_loc=init_loc, init_scale=init_scale)
         init_params_impl_(tensor.imag, method=method, init_loc=init_loc, init_scale=init_scale)
         return

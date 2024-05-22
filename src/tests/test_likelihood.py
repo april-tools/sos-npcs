@@ -89,7 +89,7 @@ def test_monotonic_pc_random(compute_layer, num_variables, num_replicas, depth, 
                          )))
 def test_born_pc_random(compute_layer, num_variables, num_replicas, depth, num_components, input_mixture, exp_reparam):
     rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas, depth=depth)
-    init_method = 'log-normal' if exp_reparam else 'uniform'
+    init_method = 'log-normal' if exp_reparam else 'normal'
     compute_layer_kwargs = input_layer_kwargs = {'exp_reparam': exp_reparam, 'init_method': init_method}
     model = BornPC(
         rg, input_layer_cls=BornBinaryEmbeddings, compute_layer_cls=compute_layer,
@@ -344,7 +344,7 @@ def test_spline_monotonic_pc(compute_layer, num_components):
                          list(itertools.product([BornCPLayer], [2], [False, True])))
 def test_spline_born_pc(compute_layer, num_components, exp_reparam):
     rg = RandomBinaryTree(2, num_repetitions=1, depth=1)
-    init_method = 'log-normal' if exp_reparam else 'uniform'
+    init_method = 'log-normal' if exp_reparam else 'normal'
     model = BornPC(
         rg, input_layer_cls=BornBSplines, compute_layer_cls=compute_layer,
         num_components=num_components,

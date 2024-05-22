@@ -591,11 +591,9 @@ class BornBSplines(BornInputLayer):
         # x: (-1, num_variables)
         knots = self.knots
         polynomials = self.polynomials
-        if self.complex:
-            x = x.to(self._complex_dtype)
-            knots = knots.to(self._complex_dtype)
-            polynomials = polynomials.to(self._complex_dtype)
         y = basis_polyval(knots, polynomials, x)   # (-1, num_variables, num_knots)
+        if self.complex:
+            y = y.to(self._complex_dtype)
         # y: (-1, num_variables, num_replicas, num_components)
         y = torch.einsum('bvk,vrik->bvri', y, weight)
         if not self.complex:
