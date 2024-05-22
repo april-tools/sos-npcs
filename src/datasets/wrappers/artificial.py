@@ -42,8 +42,8 @@ def single_ring_sample(num_samples: int, dim: int = 2, sigma: float = 0.26, seed
     return rings_sample(num_samples, dim, sigma, radia=[1], seed=seed)
 
 
-def multi_rings_sample(num_samples: int, dim: int = 2, sigma: float = 0.2, seed: int = 42):
-    return rings_sample(num_samples, dim, sigma, radia=[1, 3, 5], seed=seed)
+def multi_rings_sample(num_samples: int, dim: int = 2, sigma: float = 0.26, seed: int = 42):
+    return rings_sample(num_samples, dim, sigma, radia=[1, 5], seed=seed)
 
 
 def funnel_sample(num_samples: int, dim: int = 2, sigma: float = 2.0, seed: int = 42):

@@ -1,6 +1,5 @@
 torch>=2.0.0
 pandas<2.0.0
-torchtext
 portalocker
 scikit-learn
 zuko

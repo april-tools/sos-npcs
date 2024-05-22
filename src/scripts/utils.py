@@ -205,6 +205,8 @@ def perplexity(average_ll: float, num_variables: int) -> float:
 def build_run_id(args):
     rs = list()
     if 'PC' in args.model:
+        if 'Born' in args.model and args.complex:
+            rs.append(f"C")
         rs.append(f"RG{args.region_graph[:3]}")
         rs.append(f"R{args.num_replicas}")
     rs.append(f"K{args.num_components}")
@@ -392,6 +394,7 @@ def setup_model(
         rg_replicas: int = 1,
         rg_depth: int = 1,
         num_components: int = 2,
+        complex: bool = False,
         input_mixture: bool = False,
         compute_layer: str = 'cp',
         multivariate: bool = False,
@@ -408,8 +411,12 @@ def setup_model(
 ) -> Union[PC, Flow]:
     if binomials and splines:
         raise ValueError("At most one between --binomials and --splines must be true")
+    if complex and model_name != 'BornPC':
+        raise ValueError("--complex can only be used with BornPC models")
     if exp_reparam and model_name != 'BornPC':
         raise ValueError("--exp-reparam can only be used with BornPC models")
+    if l2norm_reparam and model_name != 'BornPC':
+        raise ValueError("--l2norm-reparam can only be used with BornPC models")
     dataset_type = dataset_metadata['type']
     num_variables = dataset_metadata['num_variables']
     image_shape = dataset_metadata['image_shape']
@@ -565,9 +572,11 @@ def setup_model(
     }
     if model_name == 'BornPC':
         if all(n not in input_layer_cls.__name__ for n in ['Normal', 'Binomial']):
+            input_layer_kwargs['complex'] = complex
             input_layer_kwargs['exp_reparam'] = exp_reparam
         if 'Embeddings' in input_layer_cls.__name__:
             input_layer_kwargs['l2norm_reparam'] = l2norm_reparam
+        compute_layer_kwargs['complex'] = complex
         compute_layer_kwargs['exp_reparam'] = exp_reparam
     return model_cls(
         rg,

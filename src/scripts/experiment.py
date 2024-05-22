@@ -44,6 +44,7 @@ parser.add_argument('--shuffle-bins', action='store_true', default=False,
                     help="Whether to shuffle bins, in case of using discretized artificial data")
 parser.add_argument('--model', choices=PCS_MODELS + HMM_MODELS + ['NICE', 'MAF', 'NSF'],
                     required=True, help="The model name")
+parser.add_argument('--complex', action='store_true', default=False, help="Whether to learn a NPC^2 with complex weights")
 parser.add_argument('--num-workers', type=int, default=0, help="The number of data loader workers")
 parser.add_argument('--binomials', action='store_true', default=False,
                     help="Whether to use binomial instead of categoricals, in case of discrete data")

@@ -10,7 +10,7 @@ from pcs.initializers import init_params_
 from region_graph import RegionNode
 from splines.bsplines import splines_uniform_polynomial, basis_polyval, basis_polyint, integrate_cartesian_basis, \
     least_squares_basis
-from pcs.utils import retrieve_complex_default_dtype, retrieve_default_dtype, ohe, log_binomial
+from pcs.utils import retrieve_complex_default_dtype, retrieve_default_dtype, ohe, log_binomial, safelog
 
 
 class InputLayer(nn.Module, abc.ABC):
@@ -375,7 +375,7 @@ class BornNormalDistribution(BornInputLayer):
         m_s, _ = torch.max(log_cov, dim=-1, keepdim=True)
         cov = torch.exp(log_cov - m_s)
         log_sum_cov = m_s.unsqueeze(dim=-1) + torch.log(cov.unsqueeze(dim=-2) + cov.unsqueeze(dim=-1))
-        log_sq_dif_mu = 2.0 * torch.log(torch.abs(mu.unsqueeze(dim=-2) - mu.unsqueeze(dim=-1)))
+        log_sq_dif_mu = 2.0 * safelog(torch.abs(mu.unsqueeze(dim=-2) - mu.unsqueeze(dim=-1)))
         sq_norm_dist = torch.exp(log_sq_dif_mu - log_sum_cov)
         # log_z: (1, num_variables, num_replicas, num_components, num_components)
         log_z = -0.5 * (self.log_two_pi + log_sum_cov + sq_norm_dist)

@@ -5,5 +5,3 @@ from .miniboone import MINIBOONE
 from .bsds300 import BSDS300
 from .mnist import MNIST
 from .cifar10 import CIFAR10
-from .wikitext2 import load_wikitext2
-from .wikitext103 import load_wikitext103

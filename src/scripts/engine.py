@@ -80,6 +80,7 @@ class Engine:
             'discretize': self.args.discretize,
             'discretize_bins': self.args.discretize_bins,
             'model': self.args.model,
+            'complex': self.args.complex,
             'region_graph': self.args.region_graph,
             'region_graph_sd': self.args.region_graph_sd,
             'num_components': self.args.num_components,
@@ -256,6 +257,7 @@ class Engine:
         self.model = setup_model(
             self.args.model, self.metadata, rg_type=self.args.region_graph, rg_sd=self.args.region_graph_sd,
             rg_replicas=self.args.num_replicas, rg_depth=self.args.depth, num_components=self.args.num_components,
+            complex=self.args.complex,
             input_mixture=self.args.input_mixture, compute_layer=self.args.compute_layer,
             multivariate=self.args.multivariate,
             exp_reparam=self.args.exp_reparam, binomials=self.args.binomials, splines=self.args.splines,

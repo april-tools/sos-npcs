@@ -73,8 +73,6 @@ ARTIFICIAL_DATASETS = [
 ]
 
 LANGUAGE_DATASETS = [
-    "wikitext2",
-    "wikitext103",
     "gpt2_commongen"
 ]
 
@@ -267,11 +265,8 @@ def load_language_dataset(
         seed: int = 42
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     path = os.path.join(path, 'language')
-    if name == 'wikitext2':
-        train_data, valid_data, test_data = load_wikitext2(path=path, seq_length=seq_length)
-    elif name == 'wikitext103':
-        train_data, valid_data, test_data = load_wikitext103(path=path, seq_length=seq_length)
-    elif name == 'gpt2_commongen':
+    if name == 'gpt2_commongen':
+        assert seq_length == 32
         train_data, valid_data, test_data = load_gpt2_commongen(path=path, seed=seed)
     else:
         raise ValueError(f"Unknown language dataset called {name}")
