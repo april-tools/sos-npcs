@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import torch
 from torch import nn
@@ -45,30 +45,41 @@ class BornCPLayer(BornComputeLayer):
             num_out_components: int,
             init_method: str = 'normal',
             init_scale: float = 1.0,
+            complex: bool = False,
             exp_reparam: bool = False
     ):
         super().__init__(rg_nodes, num_in_components, num_out_components)
-        weight = torch.empty(len(rg_nodes), num_out_components, num_in_components)
+        complex_dtype = retrieve_complex_default_dtype()
+        weight = torch.empty(
+            len(rg_nodes), num_out_components, num_in_components,
+            dtype=complex_dtype if complex else None
+        )
         init_params_(weight, init_method, init_scale=init_scale)
         if exp_reparam:
             weight = torch.log(weight)
         self.weight = nn.Parameter(weight, requires_grad=True)
+        self.complex = complex
         self.exp_reparam = exp_reparam
-        self._cfloat_dtype = retrieve_complex_default_dtype()
+        self._complex_dtype = complex_dtype
+
+    def _forward_weight(self) -> Tuple[torch.Tensor, torch.Tensor]:
+        weight = torch.exp(self.weight) if self.exp_reparam else self.weight
+        if self.complex:
+            # note: .conj() returns a view
+            return weight, weight.conj()
+        weight = weight.to(self._complex_dtype)
+        return weight, weight
 
     def forward(self, x: torch.Tensor, square: bool = False) -> torch.Tensor:
-        if self.exp_reparam:
-            weight = torch.exp(self.weight)
-        else:
-            weight = self.weight
-        weight = weight.to(self._cfloat_dtype)
+        # Get the weight and the conjugate weight tensors
+        weight, weight_conj = self._forward_weight()
 
         if square:
             # x: (-1, num_folds, num_in_components, num_in_components)
             # Compute the element-wise product
             x = torch.sum(x, dim=-3)         # (-1, num_folds, num_in_components, num_in_components)
 
-            # Log-einsum-exp trick
+            # Complex log-einsum-exp trick
             m_x, _ = torch.max(x.real, dim=-2, keepdim=True)  # (-1, num_folds, 1, num_in_components)
             e_x = torch.exp(x - m_x)                          # (-1, num_folds, num_in_components, num_in_components)
             # x: (-1, num_folds, num_out_components, num_in_components)
@@ -77,7 +88,7 @@ class BornCPLayer(BornComputeLayer):
             m_x, _ = torch.max(x.real, dim=-1, keepdim=True)  # (-1, num_folds, num_out_components, 1)
             e_x = torch.exp(x - m_x)                          # (-1, num_folds, num_out_components, num_in_components)
             # (-1, num_folds, num_out_components, num_out_components)
-            x = torch.einsum('bfkj,flj->bfkl', e_x, weight)
+            x = torch.einsum('bfkj,flj->bfkl', e_x, weight_conj)
             x = m_x + torch.log(x)
             return x
 

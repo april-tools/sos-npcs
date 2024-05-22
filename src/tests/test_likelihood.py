@@ -163,17 +163,17 @@ def test_monotonic_pc_pseudo_large_image(compute_layer, image_shape, num_compone
     assert lls.shape == (len(data), 1)
 
 
-@pytest.mark.parametrize("compute_layer,image_shape,num_components,input_mixture,l2norm",
+@pytest.mark.parametrize("compute_layer,image_shape,num_components,input_mixture,l2norm_reparam",
                          list(itertools.product(
                              [BornCPLayer],
                              [(1, 7, 7), (3, 28, 28)], [1, 3], [False, True], [False, True]
                          )))
-def test_born_pc_pseudo_large_image(compute_layer, image_shape, num_components, input_mixture, l2norm):
+def test_born_pc_pseudo_large_image(compute_layer, image_shape, num_components, input_mixture, l2norm_reparam):
     rg = QuadTree(image_shape, struct_decomp=True)
     model = BornPC(
         rg, input_layer_cls=BornEmbeddings, compute_layer_cls=compute_layer,
         input_mixture=input_mixture, num_components=num_components,
-        input_layer_kwargs={'num_states': 768, 'l2norm': l2norm})
+        input_layer_kwargs={'num_states': 768, 'l2norm_reparam': l2norm_reparam})
     data = torch.round(torch.rand((42, np.prod(image_shape)))).long()
     lls = model.log_prob(data)
     assert lls.shape == (len(data), 1)
@@ -363,9 +363,9 @@ def test_monotonic_hmm(seq_length, hidden_size):
     check_evi_ll(model, data)
 
 
-@pytest.mark.parametrize("seq_length,hidden_size,l2norm",
+@pytest.mark.parametrize("seq_length,hidden_size,l2norm_reparam",
                          list(itertools.product([2, 7], [1, 13], [False, True])))
-def test_born_hmm(seq_length, hidden_size, l2norm):
-    model = BornHMM(vocab_size=3, seq_length=seq_length, hidden_size=hidden_size, l2norm=l2norm)
+def test_born_hmm(seq_length, hidden_size, l2norm_reparam):
+    model = BornHMM(vocab_size=3, seq_length=seq_length, hidden_size=hidden_size, l2norm_reparam=l2norm_reparam)
     data = torch.LongTensor(generate_all_ternary_samples(seq_length))
     check_evi_ll(model, data)

@@ -403,7 +403,7 @@ def setup_model(
         init_method: str = 'normal',
         init_scale: float = 1.0,
         dequantize: bool = False,
-        l2norm: bool = False,
+        l2norm_reparam: bool = False,
         seed: int = 123
 ) -> Union[PC, Flow]:
     if binomials and splines:
@@ -484,7 +484,7 @@ def setup_model(
         in_mixture_layer_cls = BornMixtureLayer
     elif 'HMM' in model_name:
         model_cls = MonotonicHMM if 'Monotonic' in model_name else BornHMM
-        kwargs = dict() if 'Monotonic' in model_name else {'l2norm': l2norm}
+        kwargs = dict() if 'Monotonic' in model_name else {'l2norm_reparam': l2norm_reparam}
         assert dataset_type == 'language'
         model = model_cls(
             vocab_size=interval[1] + 1,
@@ -567,7 +567,7 @@ def setup_model(
         if all(n not in input_layer_cls.__name__ for n in ['Normal', 'Binomial']):
             input_layer_kwargs['exp_reparam'] = exp_reparam
         if 'Embeddings' in input_layer_cls.__name__:
-            input_layer_kwargs['l2norm'] = l2norm
+            input_layer_kwargs['l2norm_reparam'] = l2norm_reparam
         compute_layer_kwargs['exp_reparam'] = exp_reparam
     return model_cls(
         rg,

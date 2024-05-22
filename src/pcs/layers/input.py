@@ -84,59 +84,67 @@ class BornEmbeddings(BornInputLayer):
             num_states: int = 2,
             init_method: str = 'normal',
             init_scale: float = 1.0,
+            complex: bool = False,
             exp_reparam: bool = False,
-            l2norm: bool = False
+            l2norm_reparam: bool = False
     ):
-        assert not exp_reparam or not l2norm, "Only one between --exp-reparam and --l2norm can be set true"
+        assert not exp_reparam or not l2norm_reparam, "Only one between 'exp_reparam' and 'l2norm_reparam' can be set true"
         super().__init__(rg_nodes, num_components)
         self.num_states = num_states
-        weight = torch.empty(self.num_variables, self.num_replicas, self.num_components, num_states)
+        complex_dtype = retrieve_complex_default_dtype()
+        weight = torch.empty(
+            self.num_variables, self.num_replicas, self.num_components, num_states,
+            dtype=complex_dtype if complex else None
+        )
         init_params_(weight, init_method, init_scale=init_scale)
         if exp_reparam:
             weight = torch.log(weight)
         self.weight = nn.Parameter(weight, requires_grad=True)
+        self.complex = complex
         self.exp_reparam = exp_reparam
-        self.l2norm = l2norm
+        self.l2norm_reparam = l2norm_reparam
+        self._complex_dtype = complex_dtype
         self._ohe = num_states <= 256
-        self._cfloat_dtype = retrieve_complex_default_dtype()
 
-    def log_pf(self) -> torch.Tensor:
+    def _forward_weight(self) -> Tuple[torch.Tensor, torch.Tensor]:
         if self.exp_reparam:
             weight = torch.exp(self.weight)
-        elif self.l2norm:
+        elif self.l2norm_reparam:
             weight = self.weight / torch.linalg.vector_norm(self.weight, ord=2, dim=2, keepdim=True)
         else:
             weight = self.weight
-        weight = weight.to(self._cfloat_dtype)
+        if self.complex:
+            # note: .conj() returns a view
+            return weight, weight.conj()
+        return weight, weight
 
-        w = torch.log(weight)                            # (num_variables, num_replicas, num_components, num_states)
-        m_w, _ = torch.max(w.real, dim=3, keepdim=True)  # (num_variables, num_replicas, num_components, 1)
-        e_w = torch.exp(w - m_w)
-        z = torch.einsum('vrid,vrjd->vrij', e_w, e_w)  # (num_variables, num_replicas, num_components, num_components)
-        z = m_w + m_w.permute(0, 1, 3, 2) + torch.log(z)
+    def log_pf(self) -> torch.Tensor:
+        # weight: (num_vars, num_comps, num_states)
+        # Get the weight and the conjugate weight tensors
+        weight, weight_conj = self._forward_weight()
+        z = torch.einsum('vrid,vrjd->vrij', weight, weight_conj)  # (num_variables, num_replicas, num_components, num_components)
+        if not self.complex:
+            z = z.to(self._complex_dtype)
+        z = torch.log(z)
         return z.unsqueeze(dim=0)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if self.exp_reparam:
-            weight = torch.exp(self.weight)
-        elif self.l2norm:
-            weight = self.weight / torch.linalg.vector_norm(self.weight, ord=2, dim=2, keepdim=True)
-        else:
-            weight = self.weight
-        weight = weight.to(self._cfloat_dtype)
-
         # x: (-1, num_vars)
-        # self.weight: (num_vars, num_comps, num_states)
+        # weight: (num_vars, num_comps, num_states)
+        # Get the weight and the conjugate weight tensors
+        weight, weight_conj = self._forward_weight()
         if self._ohe:
-            x = ohe(x, self.num_states, dtype=self._cfloat_dtype)  # (-1, num_vars, num_states)
+            ohe_dtype = self._complex_dtype if self.complex else None
+            x = ohe(x, self.num_states, dtype=ohe_dtype)  # (-1, num_vars, num_states)
             # (-1, num_vars, num_replicas, num_components)
-            w = torch.einsum('bvd,vrid->bvri', x, weight)
-            w = torch.log(w)
+            y = torch.einsum('bvd,vrid->bvri', x, weight)
         else:
             weight = weight.permute(0, 3, 1, 2)
-            w = weight[torch.arange(weight.shape[0], device=x.device), x]
-            w = torch.log(w)
-        return w
+            y = weight[torch.arange(weight.shape[0], device=x.device), x]
+        if not self.complex:
+            y = y.to(self._complex_dtype)
+        y = torch.log(y)
+        return y
 
 
 class MonotonicBinaryEmbeddings(MonotonicEmbeddings):
@@ -158,11 +166,12 @@ class BornBinaryEmbeddings(BornEmbeddings):
             num_components: int = 2,
             init_method: str = 'normal',
             init_scale: float = 1.0,
+            complex: bool = False,
             exp_reparam: bool = False
     ):
         super().__init__(
             rg_nodes, num_components=num_components, num_states=2,
-            init_method=init_method, init_scale=init_scale, exp_reparam=exp_reparam)
+            init_method=init_method, init_scale=init_scale, complex=complex, exp_reparam=exp_reparam)
 
 
 class MonotonicBinomial(MonotonicInputLayer):
@@ -224,7 +233,7 @@ class BornBinomial(BornInputLayer):
             log_binomial(self.total_count, k) for k in range(num_states)
         ], dtype=torch.get_default_dtype()))
         self._log_sigmoid = nn.LogSigmoid()
-        self._cfloat_dtype = retrieve_complex_default_dtype()
+        self._complex_dtype = retrieve_complex_default_dtype()
         
 
     def log_pf(self) -> torch.Tensor:
@@ -245,7 +254,7 @@ class BornBinomial(BornInputLayer):
         e_lp = torch.exp(log_probs - m_lp)                   # (num_states, num_vars, num_replicas, num_components)
         z = torch.einsum('dvri,dvrj->vrij', e_lp, e_lp)
         log_z = torch.log(z.unsqueeze(dim=0)) + m_lp.unsqueeze(dim=-2) + m_lp.unsqueeze(dim=-1)
-        return log_z.to(self._cfloat_dtype)
+        return log_z.to(self._complex_dtype)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (-1, num_vars, 1, 1)
@@ -263,7 +272,7 @@ class BornBinomial(BornInputLayer):
 
         # log_probs: (-1, num_vars, num_replicas, num_components)
         log_probs = log_bcoeffs + log_success + log_failure
-        return log_probs.to(self._cfloat_dtype)
+        return log_probs.to(self._complex_dtype)
 
 
 class NormalDistribution(MonotonicInputLayer):
@@ -356,7 +365,7 @@ class BornNormalDistribution(BornInputLayer):
         init_params_(log_sigma, 'normal', init_loc=0.0, init_scale=init_scale)
         self.log_sigma = nn.Parameter(log_sigma, requires_grad=True)
         self.eps = 1e-5
-        self._cfloat_dtype = retrieve_complex_default_dtype()
+        self._complex_dtype = retrieve_complex_default_dtype()
 
     def log_pf(self) -> torch.Tensor:
         mu = self.mu
@@ -370,7 +379,7 @@ class BornNormalDistribution(BornInputLayer):
         sq_norm_dist = torch.exp(log_sq_dif_mu - log_sum_cov)
         # log_z: (1, num_variables, num_replicas, num_components, num_components)
         log_z = -0.5 * (self.log_two_pi + log_sum_cov + sq_norm_dist)
-        return log_z.to(self._cfloat_dtype)
+        return log_z.to(self._complex_dtype)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (-1, num_variables) -> (-1, num_variables, 1, 1)
@@ -378,7 +387,7 @@ class BornNormalDistribution(BornInputLayer):
         scale = torch.exp(self.log_sigma) + self.eps
         # log_prob: (-1, num_variables, num_replicas, num_components)
         log_prob = ds.Normal(loc=self.mu, scale=scale).log_prob(x)
-        return log_prob.to(self._cfloat_dtype)
+        return log_prob.to(self._complex_dtype)
 
 
 class BornMultivariateNormalDistribution(BornInputLayer):
@@ -401,7 +410,7 @@ class BornMultivariateNormalDistribution(BornInputLayer):
         init_params_(weight, 'normal', init_scale=init_scale)
         self.weight = nn.Parameter(weight, requires_grad=True)
         self.register_buffer('eps_eye', 1e-5 * torch.eye(self.num_variables))
-        self._cfloat_dtype = retrieve_complex_default_dtype()
+        self._complex_dtype = retrieve_complex_default_dtype()
 
     def __covariance(self):
         weight = self.weight
@@ -431,7 +440,7 @@ class BornMultivariateNormalDistribution(BornInputLayer):
         # log_z: (1, num_replicas, 1, num_components, num_components)
         log_z = -0.5 * (self.mu.shape[-1] * self.log_two_pi + sq_norm_dist) - log_det_cov
         log_z = log_z.unsqueeze(dim=-3)
-        return log_z.to(self._cfloat_dtype)
+        return log_z.to(self._complex_dtype)
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         # x: (-1, num_variables) -> (-1, 1, 1, num_variables)
@@ -439,7 +448,7 @@ class BornMultivariateNormalDistribution(BornInputLayer):
         scale_tril = self.__cholesky()
         log_prob = ds.MultivariateNormal(loc=self.mu, scale_tril=scale_tril).log_prob(x)
         log_prob = log_prob.unsqueeze(dim=1)
-        return log_prob.to(self._cfloat_dtype)
+        return log_prob.to(self._complex_dtype)
 
 
 class MonotonicBSplines(MonotonicInputLayer):
@@ -512,12 +521,14 @@ class BornBSplines(BornInputLayer):
             interval: Tuple[float, float] = (0.0, 1.0),
             init_method: str = 'normal',
             init_scale: float = 1.0,
+            complex: bool = False,
             exp_reparam: bool = False
     ):
         super().__init__(rg_nodes, num_components)
         self.order = order
         self.num_knots = num_knots
         self.interval = interval
+        complex_dtype = retrieve_complex_default_dtype()
 
         # Construct the basis functions (as polynomials) and the knots
         knots, polynomials = splines_uniform_polynomial(order, num_knots, interval=interval)
@@ -529,13 +540,17 @@ class BornBSplines(BornInputLayer):
         self.register_buffer('_integral_cartesian_basis', integrate_cartesian_basis(self.knots, self.polynomials))
 
         # Initialize the coefficients (in log-space) of the splines (along replicas and components dimensions)
-        weight = torch.empty(self.num_variables, self.num_replicas, self.num_components, self.num_knots)
+        weight = torch.empty(
+            self.num_variables, self.num_replicas, self.num_components, self.num_knots,
+            dtype=complex_dtype if complex else None
+        )
         init_params_(weight, init_method, init_scale=init_scale)
         if exp_reparam:
             weight = torch.log(weight)
         self.weight = nn.Parameter(weight, requires_grad=True)
+        self.complex = complex
         self.exp_reparam = exp_reparam
-        self._cfloat_dtype = retrieve_complex_default_dtype()
+        self._complex_dtype = complex_dtype
 
     @torch.no_grad()
     def least_squares_fit(self, data: torch.Tensor, batch_size: int = 1, noise: float = 5e-2):
@@ -548,26 +563,43 @@ class BornBSplines(BornInputLayer):
             coeffs = torch.log(coeffs)
         self.weight.data.copy_(coeffs)
 
-    def log_pf(self) -> torch.Tensor:
+    def _forward_weight(self) -> Tuple[torch.Tensor, torch.Tensor]:
         weight = torch.exp(self.weight) if self.exp_reparam else self.weight
+        weight_conj = weight.conj() if self.complex else weight
+        return weight, weight_conj
+
+    def log_pf(self) -> torch.Tensor:
+        # Get the weight and the conjugate weight tensors
+        weight, weight_conj = self._forward_weight()
 
         # sint: (num_knots, num_knots)
         sint = self._integral_cartesian_basis
+        if self.complex:
+            sint = sint.to(self._complex_dtype)
         z = torch.einsum('kl,vrik->lvri', sint, weight)
-        z = torch.einsum('lvri,vrjl->vrij', z, weight)
+        z = torch.einsum('lvri,vrjl->vrij', z, weight_conj)
+        if not self.complex:
+            z = z.to(self._complex_dtype)
         # log_z: (1, num_variables, num_replicas, num_components, num_components)
-        z = z.to(self._cfloat_dtype)
-        log_z = torch.log(z).unsqueeze(dim=0)
-        return log_z
+        log_z = torch.log(z)
+        return log_z.unsqueeze(dim=0)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        weight = torch.exp(self.weight) if self.exp_reparam else self.weight
+        # Get the weight and the conjugate weight tensors
+        weight, weight_conj = self._forward_weight()
 
         # x: (-1, num_variables)
-        y = basis_polyval(self.knots, self.polynomials, x)   # (-1, num_variables, num_knots)
+        knots = self.knots
+        polynomials = self.polynomials
+        if self.complex:
+            x = x.to(self._complex_dtype)
+            knots = knots.to(self._complex_dtype)
+            polynomials = polynomials.to(self._complex_dtype)
+        y = basis_polyval(knots, polynomials, x)   # (-1, num_variables, num_knots)
         # y: (-1, num_variables, num_replicas, num_components)
         y = torch.einsum('bvk,vrik->bvri', y, weight)
-        y = y.to(self._cfloat_dtype)
+        if not self.complex:
+            y = y.to(self._complex_dtype)
         log_y = torch.log(y)
         # log_y: (-1, num_variables, num_replicas, num_components)
         return log_y

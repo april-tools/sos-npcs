@@ -21,7 +21,7 @@ INIT_METHODS = [
 ]
 
 
-def init_params_(tensor: torch.Tensor, method: str = 'normal', init_loc: float = 0.0, init_scale: float = 1.0):
+def init_params_impl_(tensor: torch.Tensor, method: str = 'normal', init_loc: float = 0.0, init_scale: float = 1.0):
     if init_scale < 1e-9:
         raise ValueError("Initialization scale is too small")
     if method == 'uniform':
@@ -68,6 +68,14 @@ def init_params_(tensor: torch.Tensor, method: str = 'normal', init_loc: float =
         tensor.copy_(q.transpose(-2, -1))
     else:
         raise NotImplementedError(f"Unknown initialization method called {method}")
+
+
+def init_params_(tensor: torch.Tensor, method: str = 'normal', init_loc: float = 0.0, init_scale: float = 1.0):
+    if tensor.dtype in [torch.complex32, torch.complex64, torch.complex128]:
+        init_params_impl_(tensor.real, method=method, init_loc=init_loc, init_scale=init_scale)
+        init_params_impl_(tensor.imag, method=method, init_loc=init_loc, init_scale=init_scale)
+        return
+    init_params_impl_(tensor, method=method, init_loc=init_loc, init_scale=init_scale)
 
 
 def gamma_(tensor: torch.Tensor, alpha: float = 1.0, beta: float = 1.0):

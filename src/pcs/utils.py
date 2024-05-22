@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 
 import numpy as np
 import torch
@@ -17,6 +17,8 @@ def retrieve_default_dtype(numpy: bool = False) -> Union[torch.dtype, np.dtype]:
     dtype = torch.get_default_dtype()
     if not numpy:
         return dtype
+    if dtype == torch.float16:
+        return np.dtype(np.float16)
     if dtype == torch.float32:
         return np.dtype(np.float32)
     if dtype == torch.float64:
@@ -24,8 +26,22 @@ def retrieve_default_dtype(numpy: bool = False) -> Union[torch.dtype, np.dtype]:
     raise ValueError("Cannot map torch default dtype to np.dtype")
 
 
+def retrieve_real_complex_default_dtypes() -> Tuple[torch.dtype, torch.dtype]:
+    real_dtype = retrieve_default_dtype()
+    if real_dtype == torch.float16:
+        complex_dtype = torch.complex32
+    elif real_dtype == torch.float32:
+        complex_dtype = torch.complex64
+    elif real_dtype == torch.float64:
+        complex_dtype = torch.complex128
+    else:
+        raise ValueError("Cannot map torch default dtype to complex dtype")
+    return real_dtype, complex_dtype
+
+
 def retrieve_complex_default_dtype() -> torch.dtype:
-    return torch.complex128 if retrieve_default_dtype() == torch.float64 else torch.complex64
+    _, complex_dtype = retrieve_real_complex_default_dtypes()
+    return complex_dtype
 
 
 def check_random_state(random_state: Optional[RandomState] = None) -> np.random.RandomState:

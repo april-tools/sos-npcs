@@ -68,8 +68,8 @@ parser.add_argument('--spline-lsq-noise', default=1e-1, type=float,
                     help="The amount of noise to apply relative to the least squares initialization method")
 parser.add_argument('--exp-reparam', action='store_true', default=False,
                     help="Whether to reparameterize the parameters of BornPCs via exponentiation")
-parser.add_argument('--l2norm', action='store_true', default=False,
-                    help="Wether to apply L2 norm to the parameters (valid only for HMMs)")
+parser.add_argument('--l2norm-reparam', action='store_true', default=False,
+                    help="Wether to apply L2 norm to the parameters")
 parser.add_argument('--init-method', choices=INIT_METHODS, default=INIT_METHODS[0], help="Parameters initialisers")
 parser.add_argument('--init-scale', type=float, default=1.0, help="The initialization scale for the layers")
 parser.add_argument('--optimizer', choices=OPTIMIZERS_NAMES, default=OPTIMIZERS_NAMES[0], help="Optimiser to use")

@@ -168,6 +168,8 @@ class TensorizedPC(PC, abc.ABC):
                 num_in_components = self.input_layer.num_replicas
             mixture_layer_kwargs = compute_layer_kwargs.copy()
             if out_mixture_layer_cls is MonotonicMixtureLayer:
+                if 'complex' in mixture_layer_kwargs:
+                    del mixture_layer_kwargs['complex']
                 if 'exp_reparam' in mixture_layer_kwargs:
                     del mixture_layer_kwargs['exp_reparam']
             self.out_mixture = out_mixture_layer_cls(

@@ -1,5 +1,5 @@
 import abc
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import numpy as np
 import torch

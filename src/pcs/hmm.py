@@ -97,13 +97,13 @@ class BornHMM(PC, abc.ABC):
             hidden_size: int = 2,
             init_method: str = 'normal',
             init_scale: float = 1.0,
-            l2norm: bool = False
+            l2norm_reparam: bool = False
     ):
         assert seq_length > 1
         super().__init__(num_variables=seq_length)
         self.vocab_size = vocab_size
         self.hidden_size = hidden_size
-        self.l2norm = l2norm
+        self.l2norm_reparam = l2norm_reparam
 
         latent_prior = torch.empty(self.hidden_size)
         init_params_(latent_prior, init_method, init_scale=init_scale)
@@ -123,7 +123,7 @@ class BornHMM(PC, abc.ABC):
 
     def _latent_prior(self, x: torch.Tensor, x_si: torch.Tensor, square: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
         w = self.latent_prior
-        if self.l2norm:
+        if self.l2norm_reparam:
             w = w / torch.linalg.vector_norm(w, ord=2, dim=0, keepdim=True)
 
         if square:
@@ -151,7 +151,7 @@ class BornHMM(PC, abc.ABC):
 
     def _latent_conds(self, x: torch.Tensor, x_si: torch.Tensor, square: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
         w = self.latent_conds
-        if self.l2norm:
+        if self.l2norm_reparam:
             w = w / torch.linalg.vector_norm(w, ord=2, dim=1, keepdim=True)
 
         if square:
@@ -179,7 +179,7 @@ class BornHMM(PC, abc.ABC):
 
     def _emission_conds(self, x: torch.Tensor, i: int) -> Tuple[torch.Tensor, torch.Tensor]:
         e = self.emission_conds
-        if self.l2norm:
+        if self.l2norm_reparam:
             e = e / torch.linalg.vector_norm(e, ord=2, dim=0, keepdim=True)
 
         zi = torch.arange(self.hidden_size, device=x.device).unsqueeze(dim=0)
@@ -190,7 +190,7 @@ class BornHMM(PC, abc.ABC):
 
     def _emission_conds_normalize(self) -> Tuple[torch.Tensor, torch.Tensor]:
         e = self.emission_conds
-        if self.l2norm:
+        if self.l2norm_reparam:
             e = e / torch.linalg.vector_norm(e, ord=2, dim=0, keepdim=True)
 
         w_si = torch.sign(e.detach())

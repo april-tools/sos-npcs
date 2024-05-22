@@ -92,7 +92,7 @@ class Engine:
             'spline_order': self.args.spline_order,
             'spline_knots': self.args.spline_knots,
             'exp_reparam': self.args.exp_reparam,
-            'l2norm': self.args.l2norm,
+            'l2norm_reparam': self.args.l2norm_reparam,
             'optimizer': self.args.optimizer,
             'learning_rate': self.args.learning_rate,
             'batch_size': self.args.batch_size,
@@ -261,7 +261,7 @@ class Engine:
             exp_reparam=self.args.exp_reparam, binomials=self.args.binomials, splines=self.args.splines,
             spline_order=self.args.spline_order, spline_knots=self.args.spline_knots,
             init_method=self.args.init_method, init_scale=self.args.init_scale,
-            dequantize=self.args.dequantize, l2norm=self.args.l2norm, seed=self.args.seed
+            dequantize=self.args.dequantize, l2norm_reparam=self.args.l2norm_reparam, seed=self.args.seed
         )
 
         # Instantiate the optimizer
