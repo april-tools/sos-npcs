@@ -1,0 +1,27 @@
+{
+  "common": {
+    "tboard-path": "tboard-runs/gaussian-mring",
+    "checkpoint-path": "checkpoints/gaussian-mring",
+    "save-checkpoint": true,
+    "num-epochs": 1200,
+    "device": "cpu",
+    "num-workers": 0,
+    "early-stop-patience": 100,
+    "log-distribution": true
+  },
+  "datasets": ["mring"],
+  "grid": {
+    "common": {
+      "optimizer": "Adam",
+      "batch-size": 128,
+      "verbose": true,
+      "standardize": true,
+      "init-scale": 1.0
+    },
+    "models": {
+      "mring": {
+        "BornPC": { "num-components": 4, "init-method": "uniform", "learning-rate": 1e-3, "complex": [false, true] }
+      }
+    }
+  }
+}
