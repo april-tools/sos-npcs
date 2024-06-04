@@ -7,7 +7,8 @@
     "device": "cpu",
     "num-workers": 2,
     "patience-threshold": 1e-3,
-    "early-stop-patience": 50
+    "early-stop-patience": 50,
+    "log-distribution": true
   },
   "datasets": ["mring", "cosine", "funnel", "banana"],
   "grid": {
