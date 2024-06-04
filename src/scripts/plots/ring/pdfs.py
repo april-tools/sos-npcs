@@ -57,10 +57,10 @@ def load_mixture(
         exp_id_fmt: str,
         num_components: int,
         learning_rate: float = 5e-3,
-        batch_size: int = 64
+        batch_size: int = 64 
 ) -> TensorizedPC:
     metadata, _ = setup_data_loaders('ring', 'datasets', 1)
-    model: TensorizedPC = setup_model(model_name, metadata, num_components=num_components)
+    model: TensorizedPC = setup_model(model_name, metadata, num_components=num_components, complex='complex' in exp_id_fmt)
     exp_id = exp_id_fmt.format(num_components, learning_rate, batch_size)
     filepath = os.path.join(args.path, 'ring', model_name, exp_id, 'model.pt')
     state_dict = torch.load(filepath, map_location='cpu')
@@ -73,7 +73,7 @@ def load_pdf(
         exp_id_fmt: str,
         num_components,
         learning_rate: float = 5e-3,
-        batch_size: int = 64
+        batch_size: int = 64 
 ) -> np.ndarray:
     exp_id = exp_id_fmt.format(num_components, learning_rate, batch_size)
     filepath = os.path.join(args.path, 'ring', model, exp_id, 'distbest.npy')
@@ -165,18 +165,18 @@ if __name__ == '__main__':
     models = [
         'MonotonicPC',
         'MonotonicPC',
-        'MonotonicPC',
+        'BornPC',
         'BornPC'
     ]
 
-    num_components = [1, 2, 16, 2]
-    learning_rates = [5e-3, 5e-3, 5e-3, 1e-3]
+    num_components = [2, 16, 2, 2]
+    learning_rates = [5e-3, 5e-3, 1e-3, 1e-3]
 
     exp_id_formats = [
         'RGran_R1_K{}_D1_Lcp_OAdam_LR{}_BS{}_IU',
         'RGran_R1_K{}_D1_Lcp_OAdam_LR{}_BS{}_IU',
-        'RGran_R1_K{}_D1_Lcp_OAdam_LR{}_BS{}_IU',
-        'RGran_R1_K{}_D1_Lcp_OAdam_LR{}_BS{}_IN'
+        'real/RGran_R1_K{}_D1_Lcp_OAdam_LR{}_BS{}_IN',
+        'complex/C_RGran_R1_K{}_D1_Lcp_OAdam_LR{}_BS{}_IN'
     ]
 
     truth_pdf = np.load(
