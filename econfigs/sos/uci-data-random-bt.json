@@ -5,96 +5,79 @@
     "save-checkpoint": true,
     "num-epochs": 1200,
     "device": "cuda",
-    "num-workers": 4,
+    "num-workers": 2,
     "patience-threshold": 1e-3,
-    "early-stop-patience": 25
+    "early-stop-patience": 5
   },
-  "datasets": ["power", "gas", "hepmass", "miniboone", "bsds300"],
+  "datasets": ["power", "gas", "hepmass", "miniboone"],
   "grid": {
     "common": {
       "region-graph": "random",
       "depth": -1,
-      "splines": [false, true],
+      "splines": false,
       "spline-order": 2,
       "optimizer": "Adam",
       "verbose": true,
+      "init-method": "uniform",
       "init-scale": 1.0,
-      "num-replicas,num-units": [[1, 256], [4, 128], [16, 64], [64, 32], [256, 16], [1024, 8]],
-      "learning-rate": 0.01
+      "num-replicas,num-components": [[1, 256], [4, 128], [16, 64], [64, 32], [256, 16]]
     },
     "models": {
       "power": {
         "MonotonicPC": {
           "init-method": "uniform",
           "spline-knots": 256,
-          "batch-size": 8192
+          "batch-size": 8192,
+          "learning-rate": 1e-2
         },
         "BornPC": {
-          "non-monotonic": {
+          "real": {
             "init-method": "uniform",
-            "exp-reparam": false,
             "spline-knots": 256,
-            "batch-size": 8192
+            "batch-size": 8192,
+            "learning-rate": 1e-3
           }
         }
       },
       "gas": {
         "MonotonicPC": {
-          "init-method": "uniform",
           "spline-knots": 512,
-          "batch-size": 4096
+          "batch-size": 4096,
+          "learning-rate": 1e-2
         },
         "BornPC": {
-          "non-monotonic": {
-            "init-method": "uniform",
-            "exp-reparam": false,
+          "real": {
             "spline-knots": 512,
-            "batch-size": 4096
+            "batch-size": 4096,
+            "learning-rate": 1e-3
           }
         }
       },
       "hepmass": {
         "MonotonicPC": {
-          "init-method": "uniform",
           "spline-knots": 128,
-          "batch-size": 2048
+          "batch-size": 2048,
+          "learning-rate": 1e-2
         },
         "BornPC": {
-          "non-monotonic": {
-            "init-method": "uniform",
-            "exp-reparam": false,
+          "real": {
             "spline-knots": 128,
-            "batch-size": 2048
+            "batch-size": 2048,
+            "learning-rate": 1e-3
           }
         }
       },
       "miniboone": {
         "MonotonicPC": {
-          "init-method": "uniform",
           "spline-knots": 64,
-          "batch-size": 1024
+          "batch-size": 1024,
+          "learning-rate": 1e-2
         },
         "BornPC": {
-          "non-monotonic": {
-            "init-method": "uniform",
-            "exp-reparam": false,
+          "real": {
             "spline-knots": 64,
-            "batch-size": 1024
-          }
-        }
-      },
-      "bsds300": {
-        "MonotonicPC": {
-          "init-method": "uniform",
-          "spline-knots": 256,
-          "batch-size": 512
-        },
-        "BornPC": {
-          "non-monotonic": {
-            "init-method": "uniform",
-            "exp-reparam": false,
-            "spline-knots": 256,
-            "batch-size": 512
+            "batch-size": 1024,
+            "learning-rate": 1e-3
           }
         }
       }
