@@ -7,12 +7,13 @@
     "device": "cuda",
     "num-workers": 2,
     "patience-threshold": 1e-3,
-    "early-stop-patience": 5
+    "early-stop-patience": 10
   },
-  "datasets": ["power", "gas", "hepmass", "miniboone"],
+  "datasets": ["power", "gas", "hepmass"],
   "grid": {
     "common": {
       "region-graph": "random",
+      "region-graph-sd": true,
       "depth": -1,
       "splines": false,
       "spline-order": 2,
@@ -20,19 +21,18 @@
       "verbose": true,
       "init-method": "uniform",
       "init-scale": 1.0,
-      "num-replicas,num-components": [[1, 256], [4, 128], [16, 64], [64, 32], [256, 16]]
+      "num-replicas,num-components": [[1, 128], [4, 64], [16, 32], [64, 16], [256, 8]]
     },
     "models": {
       "power": {
-        "MonotonicPC": {
-          "init-method": "uniform",
-          "spline-knots": 256,
-          "batch-size": 8192,
-          "learning-rate": 1e-2
-        },
         "BornPC": {
           "real": {
-            "init-method": "uniform",
+            "spline-knots": 256,
+            "batch-size": 8192,
+            "learning-rate": 1e-3
+          },
+          "complex": {
+            "complex": true,
             "spline-knots": 256,
             "batch-size": 8192,
             "learning-rate": 1e-3
@@ -40,13 +40,14 @@
         }
       },
       "gas": {
-        "MonotonicPC": {
-          "spline-knots": 512,
-          "batch-size": 4096,
-          "learning-rate": 1e-2
-        },
         "BornPC": {
           "real": {
+            "spline-knots": 512,
+            "batch-size": 4096,
+            "learning-rate": 1e-3
+          },
+          "complex": {
+            "complex": true,
             "spline-knots": 512,
             "batch-size": 4096,
             "learning-rate": 1e-3
@@ -54,29 +55,16 @@
         }
       },
       "hepmass": {
-        "MonotonicPC": {
-          "spline-knots": 128,
-          "batch-size": 2048,
-          "learning-rate": 1e-2
-        },
         "BornPC": {
           "real": {
             "spline-knots": 128,
             "batch-size": 2048,
             "learning-rate": 1e-3
-          }
-        }
-      },
-      "miniboone": {
-        "MonotonicPC": {
-          "spline-knots": 64,
-          "batch-size": 1024,
-          "learning-rate": 1e-2
-        },
-        "BornPC": {
-          "real": {
-            "spline-knots": 64,
-            "batch-size": 1024,
+          },
+          "complex": {
+            "complex": true,
+            "spline-knots": 128,
+            "batch-size": 2048,
             "learning-rate": 1e-3
           }
         }
