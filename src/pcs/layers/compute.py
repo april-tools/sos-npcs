@@ -29,5 +29,5 @@ class MonotonicComputeLayer(ComputeLayer, abc.ABC):
 
 
 class BornComputeLayer(ComputeLayer, abc.ABC):
-    def forward(self, x: torch.Tensor, x_si: torch.Tensor, square: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor, square: bool = False) -> torch.Tensor:
         raise NotImplementedError()
