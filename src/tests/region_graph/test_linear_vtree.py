@@ -10,9 +10,12 @@ from tests.region_graph.test_region_graph import (
 
 
 @pytest.mark.parametrize(
-    "num_variables,num_repetitions,randomize", itertools.product([1, 2, 5, 12], [1, 3], [False, True])
+    "num_variables,num_repetitions,randomize",
+    itertools.product([1, 2, 5, 12], [1, 3], [False, True]),
 )
-def test_linear_vtree(num_variables: int, num_repetitions: int, randomize: bool) -> None:
+def test_linear_vtree(
+    num_variables: int, num_repetitions: int, randomize: bool
+) -> None:
     rg = LinearTree(num_variables, num_repetitions=num_repetitions, randomize=randomize)
     assert rg.num_variables == num_variables
     assert rg.is_smooth

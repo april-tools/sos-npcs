@@ -13,7 +13,12 @@ from tests.region_graph.test_region_graph import (
 
 
 @pytest.mark.parametrize(
-    "size,struct_decomp", list(itertools.product([(1, 1, 1), (1, 17, 17), (3, 17, 17), (3, 32, 32)], [False, True]))
+    "size,struct_decomp",
+    list(
+        itertools.product(
+            [(1, 1, 1), (1, 17, 17), (3, 17, 17), (3, 32, 32)], [False, True]
+        )
+    ),
 )
 def test_rg_quad_tree(size: Tuple[int, int, int], struct_decomp: bool) -> None:
     rg = QuadTree(size, struct_decomp=struct_decomp)

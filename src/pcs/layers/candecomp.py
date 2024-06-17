@@ -11,12 +11,12 @@ from region_graph import RegionNode
 
 class MonotonicCPLayer(MonotonicComputeLayer):
     def __init__(
-            self,
-            rg_nodes: List[RegionNode],
-            num_in_components: int,
-            num_out_components: int,
-            init_method: str = 'dirichlet',
-            init_scale: float = 1.0
+        self,
+        rg_nodes: List[RegionNode],
+        num_in_components: int,
+        num_out_components: int,
+        init_method: str = "dirichlet",
+        init_scale: float = 1.0,
     ):
         super().__init__(rg_nodes, num_in_components, num_out_components)
         weight = torch.empty(len(rg_nodes), num_out_components, num_in_components)
@@ -31,28 +31,30 @@ class MonotonicCPLayer(MonotonicComputeLayer):
         # Log-einsum-exp trick
         w = torch.exp(self.weight)
         m_x, _ = torch.max(x, dim=-1, keepdim=True)  # (-1, num_folds, 1)
-        e_x = torch.exp(x - m_x)                     # (-1, num_folds, num_in_components)
-        y = torch.einsum('fkp,bfp->bfk', w, e_x)     # (-1, num_folds, num_out_components)
-        y = m_x + torch.log(y)                       # (-1, num_folds, num_out_components)
+        e_x = torch.exp(x - m_x)  # (-1, num_folds, num_in_components)
+        y = torch.einsum("fkp,bfp->bfk", w, e_x)  # (-1, num_folds, num_out_components)
+        y = m_x + torch.log(y)  # (-1, num_folds, num_out_components)
         return y
 
 
 class BornCPLayer(BornComputeLayer):
     def __init__(
-            self,
-            rg_nodes: List[RegionNode],
-            num_in_components: int,
-            num_out_components: int,
-            init_method: str = 'normal',
-            init_scale: float = 1.0,
-            complex: bool = False,
-            exp_reparam: bool = False
+        self,
+        rg_nodes: List[RegionNode],
+        num_in_components: int,
+        num_out_components: int,
+        init_method: str = "normal",
+        init_scale: float = 1.0,
+        complex: bool = False,
+        exp_reparam: bool = False,
     ):
         super().__init__(rg_nodes, num_in_components, num_out_components)
         complex_dtype = retrieve_complex_default_dtype()
         weight = torch.empty(
-            len(rg_nodes), num_out_components, num_in_components,
-            dtype=complex_dtype if complex else None
+            len(rg_nodes),
+            num_out_components,
+            num_in_components,
+            dtype=complex_dtype if complex else None,
         )
         init_params_(weight, init_method, init_scale=init_scale)
         if exp_reparam:
@@ -77,29 +79,39 @@ class BornCPLayer(BornComputeLayer):
         if square:
             # x: (-1, num_folds, num_in_components, num_in_components)
             # Compute the element-wise product
-            x = torch.sum(x, dim=-3)         # (-1, num_folds, num_in_components, num_in_components)
+            x = torch.sum(
+                x, dim=-3
+            )  # (-1, num_folds, num_in_components, num_in_components)
 
             # Complex log-einsum-exp trick
-            m_x, _ = torch.max(x.real, dim=-2, keepdim=True)  # (-1, num_folds, 1, num_in_components)
-            e_x = torch.exp(x - m_x)                          # (-1, num_folds, num_in_components, num_in_components)
+            m_x, _ = torch.max(
+                x.real, dim=-2, keepdim=True
+            )  # (-1, num_folds, 1, num_in_components)
+            e_x = torch.exp(
+                x - m_x
+            )  # (-1, num_folds, num_in_components, num_in_components)
             # x: (-1, num_folds, num_out_components, num_in_components)
-            x = torch.einsum('fki,bfij->bfkj', weight, e_x)
+            x = torch.einsum("fki,bfij->bfkj", weight, e_x)
             x = m_x + torch.log(x)
-            m_x, _ = torch.max(x.real, dim=-1, keepdim=True)  # (-1, num_folds, num_out_components, 1)
-            e_x = torch.exp(x - m_x)                          # (-1, num_folds, num_out_components, num_in_components)
+            m_x, _ = torch.max(
+                x.real, dim=-1, keepdim=True
+            )  # (-1, num_folds, num_out_components, 1)
+            e_x = torch.exp(
+                x - m_x
+            )  # (-1, num_folds, num_out_components, num_in_components)
             # (-1, num_folds, num_out_components, num_out_components)
-            x = torch.einsum('bfkj,flj->bfkl', e_x, weight_conj)
+            x = torch.einsum("bfkj,flj->bfkl", e_x, weight_conj)
             x = m_x + torch.log(x)
             return x
 
         # x: (-1, num_folds, arity, num_in_components)
         # Compute the element-wise product
-        x = torch.sum(x, dim=-2)         # (-1, num_folds, num_in_components)
+        x = torch.sum(x, dim=-2)  # (-1, num_folds, num_in_components)
 
         # Complex log-einsum-exp trick
         m_x, _ = torch.max(x.real, dim=-1, keepdim=True)  # (-1, num_folds, 1)
-        e_x = torch.exp(x - m_x)                     # (-1, num_folds, num_in_components)
+        e_x = torch.exp(x - m_x)  # (-1, num_folds, num_in_components)
         # y: (-1, num_folds, num_out_components)
-        y = torch.einsum('fkp,bfp->bfk', weight, e_x)
+        y = torch.einsum("fkp,bfp->bfk", weight, e_x)
         y = m_x + torch.log(y)
         return y

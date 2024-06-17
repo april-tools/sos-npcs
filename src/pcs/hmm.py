@@ -12,19 +12,17 @@ from pcs.models import PC
 from pcs.utils import safelog
 
 
-HMM_MODELS = [
-    "MonotonicHMM", "BornHMM"
-]
+HMM_MODELS = ["MonotonicHMM", "BornHMM"]
 
 
 class MonotonicHMM(PC, abc.ABC):
     def __init__(
-            self,
-            vocab_size: int,
-            seq_length: int,
-            hidden_size: int = 2,
-            init_method: str = 'uniform',
-            init_scale: float = 1.0
+        self,
+        vocab_size: int,
+        seq_length: int,
+        hidden_size: int = 2,
+        init_method: str = "uniform",
+        init_scale: float = 1.0,
     ):
         assert seq_length > 1
         super().__init__(num_variables=seq_length)
@@ -41,9 +39,13 @@ class MonotonicHMM(PC, abc.ABC):
 
         emission_conds = torch.empty(self.hidden_size, self.vocab_size)
         init_params_(emission_conds, init_method, init_scale=init_scale)
-        self.emission_conds = nn.Parameter(torch.log(emission_conds), requires_grad=True)
+        self.emission_conds = nn.Parameter(
+            torch.log(emission_conds), requires_grad=True
+        )
 
-    def eval_log_pf(self) -> Tuple[Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]], torch.Tensor]:
+    def eval_log_pf(
+        self,
+    ) -> Tuple[Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]], torch.Tensor]:
         log_pf = torch.zeros(size=(1, 1), device=self._device)
         log_in_pf = torch.zeros(size=(1, self.hidden_size), device=self._device)
         return log_in_pf, log_pf
@@ -81,23 +83,25 @@ class MonotonicHMM(PC, abc.ABC):
         return y
 
     def log_marginal_score(
-            self,
-            x: torch.Tensor,
-            mar_mask: torch.Tensor,
-            log_in_z: Optional[Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]] = None
+        self,
+        x: torch.Tensor,
+        mar_mask: torch.Tensor,
+        log_in_z: Optional[
+            Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]
+        ] = None,
     ) -> torch.Tensor:
         raise NotImplementedError()
 
 
 class BornHMM(PC, abc.ABC):
     def __init__(
-            self,
-            vocab_size: int,
-            seq_length: int,
-            hidden_size: int = 2,
-            init_method: str = 'normal',
-            init_scale: float = 1.0,
-            l2norm_reparam: bool = False
+        self,
+        vocab_size: int,
+        seq_length: int,
+        hidden_size: int = 2,
+        init_method: str = "normal",
+        init_scale: float = 1.0,
+        l2norm_reparam: bool = False,
     ):
         assert seq_length > 1
         super().__init__(num_variables=seq_length)
@@ -117,11 +121,17 @@ class BornHMM(PC, abc.ABC):
         init_params_(emission_conds, init_method, init_scale=init_scale)
         self.emission_conds = nn.Parameter(emission_conds, requires_grad=True)
 
-    def eval_log_pf(self) -> Tuple[Optional[Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]], torch.Tensor]:
+    def eval_log_pf(
+        self,
+    ) -> Tuple[
+        Optional[Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]], torch.Tensor
+    ]:
         log_pf, _ = self._eval_layers_normalize()
         return None, log_pf
 
-    def _latent_prior(self, x: torch.Tensor, x_si: torch.Tensor, square: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _latent_prior(
+        self, x: torch.Tensor, x_si: torch.Tensor, square: bool = False
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         w = self.latent_prior
         if self.l2norm_reparam:
             w = w / torch.linalg.vector_norm(w, ord=2, dim=0, keepdim=True)
@@ -131,7 +141,7 @@ class BornHMM(PC, abc.ABC):
             # self.latent_prior: (hidden_size,)
             m_x, _ = torch.max(x, dim=2, keepdim=True)  # (batch_size, hidden_size, 1)
             x = x_si * torch.exp(x - m_x)
-            x = torch.einsum('bij,j->bi', x, w)
+            x = torch.einsum("bij,j->bi", x, w)
             x_si = torch.sign(x.detach())
             x = m_x.squeeze(dim=2) + safelog(torch.abs(x))  # (batch_size, hidden_size)
             m_x, _ = torch.max(x, dim=1, keepdim=True)  # (batch_size, 1)
@@ -149,7 +159,9 @@ class BornHMM(PC, abc.ABC):
         y = safelog(torch.abs(y)) + m_x
         return y, y_si
 
-    def _latent_conds(self, x: torch.Tensor, x_si: torch.Tensor, square: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _latent_conds(
+        self, x: torch.Tensor, x_si: torch.Tensor, square: bool = False
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         w = self.latent_conds
         if self.l2norm_reparam:
             w = w / torch.linalg.vector_norm(w, ord=2, dim=1, keepdim=True)
@@ -159,12 +171,14 @@ class BornHMM(PC, abc.ABC):
             # self.latent_conds: (hidden_size, hidden_size)
             m_x, _ = torch.max(x, dim=2, keepdim=True)  # (batch_size, hidden_size, 1)
             x = x_si * torch.exp(x - m_x)
-            x = torch.einsum('pi,bji->bpj', w, x)
+            x = torch.einsum("pi,bji->bpj", w, x)
             x_si = torch.sign(x.detach())
-            x = m_x.permute(0, 2, 1) + safelog(torch.abs(x))  # (batch_size, hidden_size, hidden_size)
+            x = m_x.permute(0, 2, 1) + safelog(
+                torch.abs(x)
+            )  # (batch_size, hidden_size, hidden_size)
             m_x, _ = torch.max(x, dim=2, keepdim=True)  # (batch_size, hidden_size, 1)
             x = x_si * torch.exp(x - m_x)
-            x = torch.einsum('qj,bpj->bpq', w, x)
+            x = torch.einsum("qj,bpj->bpq", w, x)
             x_si = torch.sign(x.detach())
             x = m_x + safelog(torch.abs(x))  # (batch_size, hidden_size, hidden_size)
             return x, x_si
@@ -172,12 +186,14 @@ class BornHMM(PC, abc.ABC):
         # self.latent_conds: (hidden_size, hidden_size)
         m_x, _ = torch.max(x, dim=1, keepdim=True)
         x = x_si * torch.exp(x - m_x)
-        y = torch.einsum('ij,bj->bi', w, x)
+        y = torch.einsum("ij,bj->bi", w, x)
         y_si = torch.sign(y.detach())
         y = safelog(torch.abs(y)) + m_x
         return y, y_si
 
-    def _emission_conds(self, x: torch.Tensor, i: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _emission_conds(
+        self, x: torch.Tensor, i: int
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         e = self.emission_conds
         if self.l2norm_reparam:
             e = e / torch.linalg.vector_norm(e, ord=2, dim=0, keepdim=True)
@@ -231,9 +247,11 @@ class BornHMM(PC, abc.ABC):
         return 2.0 * y
 
     def log_marginal_score(
-            self,
-            x: torch.Tensor,
-            mar_mask: torch.Tensor,
-            log_in_z: Optional[Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]] = None
+        self,
+        x: torch.Tensor,
+        mar_mask: torch.Tensor,
+        log_in_z: Optional[
+            Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]
+        ] = None,
     ) -> torch.Tensor:
         raise NotImplementedError()

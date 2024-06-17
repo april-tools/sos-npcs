@@ -57,7 +57,9 @@ class HypercubeScopeCache:  # pylint: disable=too-few-public-methods
         )
         f = 1
         for i, c in enumerate(reversed(range(len(shape)))):
-            range_to_add: NDArray[np.int64] = f * np.array(range(x1[c], x2[c]), np.int64)
+            range_to_add: NDArray[np.int64] = f * np.array(
+                range(x1[c], x2[c]), np.int64
+            )
             # TODO: find a better way to reshape
             scope += np.reshape(range_to_add, (len(range_to_add),) + i * (1,))
             f *= shape[c]

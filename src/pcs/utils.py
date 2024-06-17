@@ -10,7 +10,9 @@ RandomState = Union[int, np.random.RandomState]
 
 
 def log_binomial(n: int, k: int) -> float:
-    return special.loggamma(n + 1) - special.loggamma(k + 1) - special.loggamma(n - k + 1)
+    return (
+        special.loggamma(n + 1) - special.loggamma(k + 1) - special.loggamma(n - k + 1)
+    )
 
 
 def retrieve_default_dtype(numpy: bool = False) -> Union[torch.dtype, np.dtype]:
@@ -44,7 +46,9 @@ def retrieve_complex_default_dtype() -> torch.dtype:
     return complex_dtype
 
 
-def check_random_state(random_state: Optional[RandomState] = None) -> np.random.RandomState:
+def check_random_state(
+    random_state: Optional[RandomState] = None,
+) -> np.random.RandomState:
     """
     Check a possible input random state and return it as a Numpy's RandomState object.
 
@@ -60,7 +64,9 @@ def check_random_state(random_state: Optional[RandomState] = None) -> np.random.
         return np.random.RandomState(random_state)
     if isinstance(random_state, np.random.RandomState):
         return random_state
-    raise ValueError("The random state must be either None, a seed integer or a Numpy RandomState object")
+    raise ValueError(
+        "The random state must be either None, a seed integer or a Numpy RandomState object"
+    )
 
 
 def num_parameters(model: nn.Module, requires_grad: bool = True) -> int:

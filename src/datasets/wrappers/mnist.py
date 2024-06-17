@@ -8,6 +8,7 @@ class MNIST:
     """
     The MNIST dataset of handwritten digits.
     """
+
     class Data:
         """
         Constructs the dataset.
@@ -19,13 +20,13 @@ class MNIST:
                 self.x = self.x + rng.rand(*self.x.shape) / 256.0
             else:
                 self.x = (self.x * 256.0).astype(np.int64)
-            self.y = data[1]                                               # numeric labels
+            self.y = data[1]  # numeric labels
             self.N = self.x.shape[0]
 
     def __init__(self, path: str, dequantize: bool = True):
         # load dataset
-        with gzip.open(os.path.join(path, 'mnist', 'mnist.pkl.gz'), 'rb') as f:
-            trn, val, tst = pickle.load(f, encoding='latin1')
+        with gzip.open(os.path.join(path, "mnist", "mnist.pkl.gz"), "rb") as f:
+            trn, val, tst = pickle.load(f, encoding="latin1")
 
         rng = np.random.RandomState(42)
         self.trn = self.Data(trn, dequantize, rng)

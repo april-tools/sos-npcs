@@ -1,7 +1,17 @@
 import itertools
 import json
 from functools import cached_property
-from typing import Dict, FrozenSet, Iterable, List, Set, Tuple, TypedDict, final, overload
+from typing import (
+    Dict,
+    FrozenSet,
+    Iterable,
+    List,
+    Set,
+    Tuple,
+    TypedDict,
+    final,
+    overload,
+)
 
 from .rg_node import PartitionNode, RegionNode, RGNode
 
@@ -42,12 +52,10 @@ class RegionGraph:
         self._nodes.add(node)
 
     @overload
-    def add_edge(self, tail: RegionNode, head: PartitionNode) -> None:
-        ...
+    def add_edge(self, tail: RegionNode, head: PartitionNode) -> None: ...
 
     @overload
-    def add_edge(self, tail: PartitionNode, head: RegionNode) -> None:
-        ...
+    def add_edge(self, tail: PartitionNode, head: RegionNode) -> None: ...
 
     def add_edge(self, tail: RGNode, head: RGNode) -> None:
         """Add an edge to the graph. Nodes are automatically added.
@@ -125,7 +133,8 @@ class RegionGraph:
                 reg1.scope & reg2.scope
                 for reg1, reg2 in itertools.combinations(partition.inputs, 2)
             )
-            and set().union(*(region.scope for region in partition.inputs)) == partition.scope
+            and set().union(*(region.scope for region in partition.inputs))
+            == partition.scope
             for partition in self.partition_nodes
         )
 
@@ -158,7 +167,9 @@ class RegionGraph:
 
         # TODO: give each node an id as attr? they do have one defined. but what about load?
         region_ids = {node: idx for idx, node in enumerate(self.region_nodes)}
-        graph_json["regions"] = {str(idx): list(node.scope) for node, idx in region_ids.items()}
+        graph_json["regions"] = {
+            str(idx): list(node.scope) for node, idx in region_ids.items()
+        }
 
         for partition in self.partition_nodes:
             part_output = partition.outputs
@@ -167,7 +178,7 @@ class RegionGraph:
             graph_json["graph"].append(
                 {
                     "p": region_ids[part_output[0]],
-                    "ir": [region_ids[part_input] for part_input in partition.inputs]
+                    "ir": [region_ids[part_input] for part_input in partition.inputs],
                 }
             )
 
@@ -188,7 +199,9 @@ class RegionGraph:
         with open(filename, "r", encoding="utf-8") as f:
             graph_json: _RegionGraphJson = json.load(f)
 
-        ids_region = {int(idx): RegionNode(scope) for idx, scope in graph_json["regions"].items()}
+        ids_region = {
+            int(idx): RegionNode(scope) for idx, scope in graph_json["regions"].items()
+        }
 
         graph = RegionGraph()
 
@@ -198,7 +211,9 @@ class RegionGraph:
 
         for partition in graph_json["graph"]:
             part_output = ids_region[partition["p"]]
-            part_inputs = [ids_region[part_input_id] for part_input_id in partition["ir"]]
+            part_inputs = [
+                ids_region[part_input_id] for part_input_id in partition["ir"]
+            ]
 
             partition_node = PartitionNode(part_output.scope)
 
@@ -231,7 +246,9 @@ class RegionGraph:
             else self._topological_layers_top_down()
         )
 
-    def _topological_layers_bottom_up(self) -> List[Tuple[List[PartitionNode], List[RegionNode]]]:
+    def _topological_layers_bottom_up(
+        self,
+    ) -> List[Tuple[List[PartitionNode], List[RegionNode]]]:
         """Layerize in the bottom-up manner.
 
         Returns:
@@ -268,7 +285,9 @@ class RegionGraph:
 
         return layers
 
-    def _topological_layers_top_down(self) -> List[Tuple[List[PartitionNode], List[RegionNode]]]:
+    def _topological_layers_top_down(
+        self,
+    ) -> List[Tuple[List[PartitionNode], List[RegionNode]]]:
         """Layerize in the top-down manner.
 
         Returns:

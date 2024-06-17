@@ -13,33 +13,23 @@ from tests.test_likelihood import check_mar_ll_pf
 from tests.test_utils import generate_all_binary_samples
 
 
-def check_sampling(
-        model: PC,
-        num_samples: int
-):
-    samples = inverse_transform_sample(
-        model,
-        vdomain=2,
-        num_samples=num_samples
-    )
+def check_sampling(model: PC, num_samples: int):
+    samples = inverse_transform_sample(model, vdomain=2, num_samples=num_samples)
     num_variables = model.num_variables
     assert samples.shape == (num_samples, num_variables)
     assert torch.all(torch.isin(samples, torch.tensor([0, 1])))
 
 
 def check_conditional_sampling(
-        model: PC,
-        num_samples: int,
-        evi_vars: List[int],
-        evi_state: torch.Tensor,
-        mis_var: int
+    model: PC,
+    num_samples: int,
+    evi_vars: List[int],
+    evi_state: torch.Tensor,
+    mis_var: int,
 ):
     num_variables = model.num_variables
     samples = inverse_transform_sample(
-        model,
-        vdomain=2,
-        num_samples=num_samples,
-        evidence=(evi_vars, evi_state)
+        model, vdomain=2, num_samples=num_samples, evidence=(evi_vars, evi_state)
     )
     assert samples.shape == (num_samples, num_variables)
     assert torch.all(samples[:, evi_vars] == evi_state)
@@ -62,7 +52,9 @@ def check_conditional_sampling(
     emprical_freqs[1] = torch.sum(samples[:, mis_var])
     emprical_freqs[0] = samples.shape[0] - emprical_freqs[1]
     emprical_freqs = torch.log(emprical_freqs) - np.log(samples.shape[0])
-    assert torch.allclose(con_log_probs, emprical_freqs, atol=2.5e-3)  # 99.5% confidence
+    assert torch.allclose(
+        con_log_probs, emprical_freqs, atol=2.5e-3
+    )  # 99.5% confidence
 
 
 def test_sampling_monotonic_pc():
@@ -75,8 +67,11 @@ def test_sampling_monotonic_pc():
 
     rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas, depth=depth)
     model = MonotonicPC(
-        rg, input_layer_cls=MonotonicBinaryEmbeddings, compute_layer_cls=MonotonicCPLayer,
-        num_components=num_components)
+        rg,
+        input_layer_cls=MonotonicBinaryEmbeddings,
+        compute_layer_cls=MonotonicCPLayer,
+        num_components=num_components,
+    )
     data = torch.LongTensor(generate_all_binary_samples(num_variables))
     check_mar_ll_pf(model, data)
     check_sampling(model, num_samples)
@@ -93,8 +88,11 @@ def test_sampling_born_pc():
 
     rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas, depth=depth)
     model = BornPC(
-        rg, input_layer_cls=BornBinaryEmbeddings, compute_layer_cls=BornCPLayer,
-        num_components=num_components)
+        rg,
+        input_layer_cls=BornBinaryEmbeddings,
+        compute_layer_cls=BornCPLayer,
+        num_components=num_components,
+    )
     data = torch.LongTensor(generate_all_binary_samples(num_variables))
     check_mar_ll_pf(model, data)
     check_sampling(model, num_samples)

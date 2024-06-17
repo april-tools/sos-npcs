@@ -36,7 +36,9 @@ class RGNode(ABC):
         """Generate the `repr` string of the node."""
         return self.__class__.__name__ + ": " + repr(set(self.scope))
 
-    def __lt__(self, other: "RGNode") -> bool:  # we don't use Self as it can compare to RGNode
+    def __lt__(
+        self, other: "RGNode"
+    ) -> bool:  # we don't use Self as it can compare to RGNode
         """Compare the node with the other, for sorting."""
         # TODO: it's better to be abstract. but do we really need this?
         return self._sort_key < other._sort_key
@@ -93,7 +95,9 @@ class PartitionNode(RGNode):
     inputs: List[RegionNode]
     outputs: List[RegionNode]
 
-    def __init__(self, scope: Iterable[int]) -> None:  # pylint: disable=useless-parent-delegation
+    def __init__(
+        self, scope: Iterable[int]
+    ) -> None:  # pylint: disable=useless-parent-delegation
         """Construct the node.
 
         Args:

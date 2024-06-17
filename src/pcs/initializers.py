@@ -4,76 +4,90 @@ from torch import nn
 from torch import distributions
 
 INIT_METHODS = [
-    'uniform',
-    'normal',
-    'log-normal',
-    'negative-skewed-normal',
-    'negative-skewed-log-normal',
-    'positive-skewed-normal',
-    'positive-skewed-log-normal',
-    'fw-normal',
-    'fw-log-normal',
-    'gamma',
-    'dirichlet',
-    'xavier-uniform',
-    'xavier-normal',
-    'stiefel'
+    "uniform",
+    "normal",
+    "log-normal",
+    "negative-skewed-normal",
+    "negative-skewed-log-normal",
+    "positive-skewed-normal",
+    "positive-skewed-log-normal",
+    "fw-normal",
+    "fw-log-normal",
+    "gamma",
+    "dirichlet",
+    "xavier-uniform",
+    "xavier-normal",
+    "stiefel",
 ]
 
 
-def init_params_impl_(tensor: torch.Tensor, method: str = 'normal', init_loc: float = 0.0, init_scale: float = 1.0):
+def init_params_impl_(
+    tensor: torch.Tensor,
+    method: str = "normal",
+    init_loc: float = 0.0,
+    init_scale: float = 1.0,
+):
     if init_scale < 1e-9:
         raise ValueError("Initialization scale is too small")
-    if method == 'uniform':
+    if method == "uniform":
         init_loc = init_loc + torch.finfo(torch.get_default_dtype()).tiny
         nn.init.uniform_(tensor, a=init_loc, b=init_loc + init_scale)
-    elif method == 'normal':
+    elif method == "normal":
         nn.init.normal_(tensor, init_loc, init_scale)
-    elif method == 'log-normal':
+    elif method == "log-normal":
         nn.init.normal_(tensor, init_loc, init_scale)
         tensor.exp_()
-    elif method == 'negative-skewed-normal':
+    elif method == "negative-skewed-normal":
         nn.init.normal_(tensor, init_loc - init_scale, init_scale)
-    elif method == 'negative-skewed-log-normal':
+    elif method == "negative-skewed-log-normal":
         nn.init.normal_(tensor, init_loc - init_scale, init_scale)
-    elif method == 'positive-skewed-normal':
+    elif method == "positive-skewed-normal":
         nn.init.normal_(tensor, init_loc + init_scale, init_scale)
-    elif method == 'positive-skewed-log-normal':
+    elif method == "positive-skewed-log-normal":
         nn.init.normal_(tensor, init_loc + init_scale, init_scale)
-    elif method == 'fw-normal':
-        init_loc = np.log(tensor.shape[-1]) / 3.0 + 0.5 * (init_scale ** 2)
+    elif method == "fw-normal":
+        init_loc = np.log(tensor.shape[-1]) / 3.0 + 0.5 * (init_scale**2)
         t = torch.randn(*tensor.shape) * init_scale - init_loc
         tensor.copy_(t)
-    elif method == 'fw-log-normal':
-        init_loc = np.log(tensor.shape[-1]) / 3.0 + 0.5 * (init_scale ** 2)
+    elif method == "fw-log-normal":
+        init_loc = np.log(tensor.shape[-1]) / 3.0 + 0.5 * (init_scale**2)
         t = torch.exp(torch.randn(*tensor.shape) * init_scale - init_loc)
         tensor.copy_(t)
-    elif method == 'gamma':
+    elif method == "gamma":
         gamma_(tensor, init_loc + 2.0, init_scale)
-    elif method == 'dirichlet':
+    elif method == "dirichlet":
         dirichlet_(tensor, alpha=1.0 / init_scale, log_space=False)
-    elif method == 'xavier-uniform':
+    elif method == "xavier-uniform":
         fan_in, fan_out = tensor.shape[-1], tensor.shape[-2]
         std = np.sqrt(2.0 / float(fan_in + fan_out))
         a = np.sqrt(3.0) * std
         nn.init.uniform_(tensor, -a, a)
-    elif method == 'xavier-normal':
+    elif method == "xavier-normal":
         fan_in, fan_out = tensor.shape[-1], tensor.shape[-2]
         std = np.sqrt(2.0 / float(fan_in + fan_out))
         nn.init.normal_(tensor, 0.0, std)
-    elif method == 'stiefel':
+    elif method == "stiefel":
         assert tensor.shape[-2] <= tensor.shape[-1]
         nn.init.normal_(tensor, init_loc, init_scale)
-        q, _ = torch.linalg.qr(tensor.transpose(-2, -1), mode='reduced')
+        q, _ = torch.linalg.qr(tensor.transpose(-2, -1), mode="reduced")
         tensor.copy_(q.transpose(-2, -1))
     else:
         raise NotImplementedError(f"Unknown initialization method called {method}")
 
 
-def init_params_(tensor: torch.Tensor, method: str = 'normal', init_loc: float = 0.0, init_scale: float = 1.0):
+def init_params_(
+    tensor: torch.Tensor,
+    method: str = "normal",
+    init_loc: float = 0.0,
+    init_scale: float = 1.0,
+):
     if torch.is_complex(tensor):
-        init_params_impl_(tensor.real, method=method, init_loc=init_loc, init_scale=init_scale)
-        init_params_impl_(tensor.imag, method=method, init_loc=init_loc, init_scale=init_scale)
+        init_params_impl_(
+            tensor.real, method=method, init_loc=init_loc, init_scale=init_scale
+        )
+        init_params_impl_(
+            tensor.imag, method=method, init_loc=init_loc, init_scale=init_scale
+        )
         return
     init_params_impl_(tensor, method=method, init_loc=init_loc, init_scale=init_scale)
 
@@ -82,12 +96,14 @@ def gamma_(tensor: torch.Tensor, alpha: float = 1.0, beta: float = 1.0):
     with torch.no_grad():
         samples = distributions.Gamma(
             torch.full_like(tensor, fill_value=alpha),
-            torch.full_like(tensor, fill_value=beta)
+            torch.full_like(tensor, fill_value=beta),
         ).sample()
         tensor.copy_(samples)
 
 
-def dirichlet_(tensor: torch.Tensor, alpha: float = 1.0, log_space: bool = False, dim: int = -1):
+def dirichlet_(
+    tensor: torch.Tensor, alpha: float = 1.0, log_space: bool = False, dim: int = -1
+):
     """
     Initialize a tensor using the symmetric Dirichlet distribution.
 
@@ -103,7 +119,9 @@ def dirichlet_(tensor: torch.Tensor, alpha: float = 1.0, log_space: bool = False
         idx = (len(shape) + dim) % len(shape)
         concentration = torch.full([shape[idx]], fill_value=alpha)
         dirichlet = distributions.Dirichlet(concentration)
-        samples = dirichlet.sample(torch.Size([d for i, d in enumerate(shape) if i != idx]))
+        samples = dirichlet.sample(
+            torch.Size([d for i, d in enumerate(shape) if i != idx])
+        )
         if log_space:
             samples = torch.log(samples)
         tensor.copy_(torch.transpose(samples, idx, -1))

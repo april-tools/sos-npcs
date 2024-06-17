@@ -6,6 +6,6 @@ def nll(x: torch.Tensor) -> torch.Tensor:
 
 
 def setup_loss(loss: str):
-    if loss == 'nll':
+    if loss == "nll":
         return nll
     raise ValueError(f"Unknown loss function called {loss}")

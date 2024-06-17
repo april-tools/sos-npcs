@@ -7,16 +7,20 @@ from pcs.models import PC
 
 @torch.no_grad()
 def inverse_transform_sample(
-        model: PC,
-        *,
-        vdomain: int,
-        num_samples: int = 1,
-        evidence: Optional[Tuple[List[int], torch.Tensor]] = None,
-        device: Optional[Union[str, torch.device]] = None
+    model: PC,
+    *,
+    vdomain: int,
+    num_samples: int = 1,
+    evidence: Optional[Tuple[List[int], torch.Tensor]] = None,
+    device: Optional[Union[str, torch.device]] = None
 ) -> torch.Tensor:
     num_variables = model.num_variables
-    mar_mask = torch.ones(num_samples, vdomain, num_variables, dtype=torch.bool, device=device)
-    mar_data = torch.zeros(num_samples, vdomain, num_variables, dtype=torch.long, device=device)
+    mar_mask = torch.ones(
+        num_samples, vdomain, num_variables, dtype=torch.bool, device=device
+    )
+    mar_data = torch.zeros(
+        num_samples, vdomain, num_variables, dtype=torch.long, device=device
+    )
     samples = torch.zeros(num_samples, num_variables, dtype=torch.long, device=device)
     variables_to_sample = range(num_variables)
 
@@ -24,7 +28,9 @@ def inverse_transform_sample(
         evidence_variables, evidence_state = evidence
         mar_mask[:, :, evidence_variables] = False
         mar_data[:, :, evidence_variables] = evidence_state
-        variables_to_sample = filter(lambda v: v not in evidence_variables, variables_to_sample)
+        variables_to_sample = filter(
+            lambda v: v not in evidence_variables, variables_to_sample
+        )
         samples[:, evidence_variables] = evidence_state
         samples_mar_mask = torch.ones(1, num_variables, dtype=torch.long, device=device)
         samples_mar_mask[:, evidence_variables] = False

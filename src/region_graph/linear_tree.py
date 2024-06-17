@@ -4,11 +4,11 @@ from region_graph import RegionGraph, RegionNode, PartitionNode
 
 
 def LinearTree(
-        num_variables: int,
-        num_repetitions: int = 1,
-        randomize: bool = False,
-        seed: int = 42,
-        sd: bool = False
+    num_variables: int,
+    num_repetitions: int = 1,
+    randomize: bool = False,
+    seed: int = 42,
+    sd: bool = False,
 ) -> RegionGraph:
     root = RegionNode(range(num_variables))
     rg = RegionGraph()
@@ -30,7 +30,7 @@ def LinearTree(
             if i == num_variables - 2:
                 rest_node = RegionNode({vars[-1]})
             else:
-                rest_node = RegionNode({j for j in vars[i + 1:]})
+                rest_node = RegionNode({j for j in vars[i + 1 :]})
             rg.add_edge(leaf_node, partition_node)
             rg.add_edge(rest_node, partition_node)
             parent_node = rest_node

@@ -94,7 +94,9 @@ def _merge_4_regions_mixed(regions: List[RegionNode], graph: RegionGraph) -> Reg
     return whole_region
 
 
-def _merge_4_regions_struct_decomp(regions: List[RegionNode], graph: RegionGraph) -> RegionNode:
+def _merge_4_regions_struct_decomp(
+    regions: List[RegionNode], graph: RegionGraph
+) -> RegionNode:
     """Make the structure to connect 4 children with structured-decomposability \
         (horizontal then vertical).
 
@@ -133,7 +135,9 @@ def _merge_4_regions_struct_decomp(regions: List[RegionNode], graph: RegionGraph
     return whole_region
 
 
-def _square_from_buffer(buffer: List[List[RegionNode]], i: int, j: int) -> List[RegionNode]:
+def _square_from_buffer(
+    buffer: List[List[RegionNode]], i: int, j: int
+) -> List[RegionNode]:
     """Get the children of the current position from the buffer.
 
     Args:
@@ -156,7 +160,9 @@ def _square_from_buffer(buffer: List[List[RegionNode]], i: int, j: int) -> List[
 
 
 # pylint: disable-next=too-many-locals,invalid-name
-def QuadTree(image_shape: Tuple[int, int, int], struct_decomp: bool = False) -> RegionGraph:
+def QuadTree(
+    image_shape: Tuple[int, int, int], struct_decomp: bool = False
+) -> RegionGraph:
     """Get quad RG.
 
         Args:
@@ -168,7 +174,9 @@ def QuadTree(image_shape: Tuple[int, int, int], struct_decomp: bool = False) -> 
     Returns:
         RegionGraph: The RG.
     """
-    assert image_shape[2] == image_shape[1] and image_shape[1] > 0  # TODO: then we don't need two
+    assert (
+        image_shape[2] == image_shape[1] and image_shape[1] > 0
+    )  # TODO: then we don't need two
 
     width, height = image_shape[2], image_shape[1]
     shape = (width, height)
@@ -186,7 +194,7 @@ def QuadTree(image_shape: Tuple[int, int, int], struct_decomp: bool = False) -> 
             hypercube = ((i, j), (i + 1, j + 1))
 
             c_scope = hypercube_to_scope(hypercube, shape)
-            c_variable, = c_scope
+            (c_variable,) = c_scope
             c_scope = set(c_variable + c * width * height for c in range(num_channels))
             c_node = RegionNode(c_scope)
             graph.add_node(c_node)
@@ -208,7 +216,9 @@ def QuadTree(image_shape: Tuple[int, int, int], struct_decomp: bool = False) -> 
 
         for i in range(buffer_width):
             for j in range(buffer_height):
-                regions = _square_from_buffer(old_buffer, 2 * i + lr_choice, 2 * j + td_choice)
+                regions = _square_from_buffer(
+                    old_buffer, 2 * i + lr_choice, 2 * j + td_choice
+                )
                 if len(regions) == 1:
                     buf = regions[0]
                 elif len(regions) == 2:

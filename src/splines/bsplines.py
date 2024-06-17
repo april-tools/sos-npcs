@@ -7,13 +7,13 @@ from splines.polynomial import polyval, polyint, cartesian_polymul
 
 
 def least_squares_basis(
-        knots: torch.Tensor,
-        polynomials: torch.Tensor,
-        data: torch.Tensor,
-        num_replicas: int = 1,
-        num_components: int = 1,
-        batch_size: int = 1,
-        noise: float = 5e-2
+    knots: torch.Tensor,
+    polynomials: torch.Tensor,
+    data: torch.Tensor,
+    num_replicas: int = 1,
+    num_components: int = 1,
+    batch_size: int = 1,
+    noise: float = 5e-2,
 ) -> torch.Tensor:
     assert polynomials.shape[1] == polynomials.shape[2]
     assert knots.shape[0] == polynomials.shape[0]
@@ -27,8 +27,10 @@ def least_squares_basis(
 
     b = 0.0
     for i in range(0, len(data), batch_size):
-        batch = data[i:i + batch_size].to(knots.device)  # (batch, num_variables)
-        batch_basis = basis_polyval(knots, polynomials, batch)  # (<= batch_size, num_variables, num_knots)
+        batch = data[i : i + batch_size].to(knots.device)  # (batch, num_variables)
+        batch_basis = basis_polyval(
+            knots, polynomials, batch
+        )  # (<= batch_size, num_variables, num_knots)
         b = b + torch.sum(batch_basis, dim=0)
     # b: (num_variables, num_knots, 1)
     b = 2.0 * b.unsqueeze(dim=-1) / len(data)
@@ -38,7 +40,9 @@ def least_squares_basis(
     x = x.squeeze(dim=-1)  # (num_variables, num_knots)
 
     # Add artificial noise
-    g = torch.randn([x.shape[0], num_replicas, num_components, x.shape[1]], device=x.device)
+    g = torch.randn(
+        [x.shape[0], num_replicas, num_components, x.shape[1]], device=x.device
+    )
     x = x.unsqueeze(dim=-2).unsqueeze(dim=-2)
     r = torch.linalg.norm(x, ord=2, dim=-1, keepdim=True)
     x = noise * r * g + x
@@ -46,7 +50,9 @@ def least_squares_basis(
     return x
 
 
-def integrate_cartesian_basis(knots: torch.Tensor, polynomials: torch.Tensor) -> torch.Tensor:
+def integrate_cartesian_basis(
+    knots: torch.Tensor, polynomials: torch.Tensor
+) -> torch.Tensor:
     assert polynomials.shape[1] == polynomials.shape[2]
     assert knots.shape[0] == polynomials.shape[0]
     assert knots.shape[1] == polynomials.shape[1]
@@ -54,7 +60,9 @@ def integrate_cartesian_basis(knots: torch.Tensor, polynomials: torch.Tensor) ->
 
     prod_basis_polynomials = torch.vmap(
         torch.vmap(cartesian_polymul, in_dims=(0, None)), in_dims=(None, 0)
-    )(polynomials, polynomials)  # (num_knots, num_knots, order + 1, order + 1, 2 * order + 1)
+    )(
+        polynomials, polynomials
+    )  # (num_knots, num_knots, order + 1, order + 1, 2 * order + 1)
 
     # knots_a: (num_knots, 1,   order + 1, 1,   2)
     # knots_b: (1, num_knots,   1, order + 1,   2)
@@ -80,9 +88,11 @@ def basis_polyval(m: torch.Tensor, p: torch.Tensor, x: torch.Tensor) -> torch.Te
     #
     x_shape = list(x.shape) + [1] * (len(p.shape) - 1)
     x = x.view(x_shape)  # (batch_size, num_variables, 1, 1)
-    y = polyval(p, x)    # (batch_size, num_variables, num_knots, order + 1)
-    mask = (m[:, :, 0] <= x) & (x < m[:, :, 1])  # (batch_size, num_variables, num_knots, order + 1)
-    y = torch.where(mask, y, 0.0)                # (batch_size, num_variables, num_knots, order + 1)
+    y = polyval(p, x)  # (batch_size, num_variables, num_knots, order + 1)
+    mask = (m[:, :, 0] <= x) & (
+        x < m[:, :, 1]
+    )  # (batch_size, num_variables, num_knots, order + 1)
+    y = torch.where(mask, y, 0.0)  # (batch_size, num_variables, num_knots, order + 1)
     return torch.sum(y, dim=-1)  # (batch_size, num_variables, num_knots)
 
 
@@ -97,10 +107,10 @@ def basis_polyint(m: torch.Tensor, p: torch.Tensor) -> torch.Tensor:
 
 
 def splines_uniform_polynomial(
-        order: int,
-        num_knots: int,
-        interval: Tuple[float, float] = (0.0, 1.0),
-        clamped: bool = True,
+    order: int,
+    num_knots: int,
+    interval: Tuple[float, float] = (0.0, 1.0),
+    clamped: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray]:
     knots = splines_uniform_knots(order, num_knots, interval=interval, clamped=clamped)
     intervals, polynomials = splines_polynomial(order, knots)
@@ -108,16 +118,20 @@ def splines_uniform_polynomial(
 
 
 def splines_uniform_knots(
-        order: int,
-        nun_knots: int,
-        interval: Tuple[float, float] = (0.0, 1.0),
-        clamped: bool = True
+    order: int,
+    nun_knots: int,
+    interval: Tuple[float, float] = (0.0, 1.0),
+    clamped: bool = True,
 ) -> np.ndarray:
     if nun_knots <= order:
-        raise ValueError("The number of knots must be greater than the order of the polynomials")
+        raise ValueError(
+            "The number of knots must be greater than the order of the polynomials"
+        )
     l, r = interval
     h = (r - l) / (nun_knots - order)
-    knots = np.linspace(l - h * order, r + h * order, nun_knots + order + 1, dtype=np.float64)
+    knots = np.linspace(
+        l - h * order, r + h * order, nun_knots + order + 1, dtype=np.float64
+    )
     if not clamped:
         return knots
     knots = np.clip(knots, interval[0], interval[1])
@@ -128,17 +142,20 @@ def splines_polynomial(order: int, knots: np.ndarray) -> Tuple[np.ndarray, np.nd
     # knots: (num_knots + order - 1)
     sidx = np.arange(len(knots) - order - 1)
     batched_spline_knots = [
-        knots[sidx[i]:sidx[i] + order + 2]
-        for i in range(len(sidx))
+        knots[sidx[i] : sidx[i] + order + 2] for i in range(len(sidx))
     ]
     res = list(map(build_spline_polynomial, batched_spline_knots))
     spline_intervals, spline_polynomials = zip(*res)
-    spline_intervals = np.stack(spline_intervals, axis=0)      # (num_knots, order + 1, 2)
-    spline_polynomials = np.stack(spline_polynomials, axis=0)  # (num_knots, order + 1, order + 1)
+    spline_intervals = np.stack(spline_intervals, axis=0)  # (num_knots, order + 1, 2)
+    spline_polynomials = np.stack(
+        spline_polynomials, axis=0
+    )  # (num_knots, order + 1, order + 1)
     return spline_intervals, spline_polynomials
 
 
-def build_spline_polynomial(knots: np.ndarray, eps: float = 1e-9) -> Tuple[np.ndarray, np.ndarray]:
+def build_spline_polynomial(
+    knots: np.ndarray, eps: float = 1e-9
+) -> Tuple[np.ndarray, np.ndarray]:
     knots = knots.astype(np.float64, copy=False)
     q = len(knots) - 2  # order of the polynomial
 
@@ -164,7 +181,10 @@ def build_spline_polynomial(knots: np.ndarray, eps: float = 1e-9) -> Tuple[np.nd
         return poly_shift(poly_x(), knots[i]) / (knots[i + k] - knots[i])
 
     b_prev = [
-        [(knots[j], knots[j + 1], poly_const(1.0) if i == j else poly_const(0.0)) for j in range(q + 1)]
+        [
+            (knots[j], knots[j + 1], poly_const(1.0) if i == j else poly_const(0.0))
+            for j in range(q + 1)
+        ]
         for i in range(q + 1)
     ]
 

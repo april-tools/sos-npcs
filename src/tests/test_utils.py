@@ -21,7 +21,7 @@ def generate_all_ternary_samples(num_variables: int) -> np.ndarray:
 @pytest.mark.parametrize("num_variables,arity", list(itertools.product([1, 5], [2, 3])))
 def test_generate_all_nary_samples(num_variables, arity):
     x = generate_all_nary_samples(num_variables, arity=arity)
-    assert len(x) == int(arity ** num_variables)
+    assert len(x) == int(arity**num_variables)
     assert np.all(np.isin(x, list(range(arity))))
 
 
@@ -29,6 +29,7 @@ def test_generate_all_nary_samples(num_variables, arity):
 def test_log_binomial(n, k):
     def factorial(x):
         return np.prod(1 + np.asarray(range(x)))
+
     lb = log_binomial(n, k)
     lb_true = np.log(factorial(n) / (factorial(k) * factorial(n - k)))
     assert np.isclose(lb, lb_true)

@@ -5,11 +5,11 @@ from .rg_node import PartitionNode, RegionNode
 
 
 def RandomBinaryTree(
-        num_vars: int,
-        num_repetitions: int = 1,
-        seed: int = 42,
-        depth: int = -1,
-        sd: bool = False
+    num_vars: int,
+    num_repetitions: int = 1,
+    seed: int = 42,
+    depth: int = -1,
+    sd: bool = False,
 ) -> RegionGraph:
     vs = list(range(num_vars))
     root = RegionNode(vs)
@@ -17,7 +17,7 @@ def RandomBinaryTree(
     graph.add_node(root)
     random_state = None
     if depth < 0:
-        depth = float('inf')
+        depth = float("inf")
 
     for replica_idx in range(num_repetitions):
         if sd or random_state is None:
@@ -31,7 +31,7 @@ def RandomBinaryTree(
             if len(rvs) == 1:
                 continue
             random_state.shuffle(rvs)
-            rvs_left, rvs_right = rvs[:len(rvs) // 2], rvs[len(rvs) // 2:]
+            rvs_left, rvs_right = rvs[: len(rvs) // 2], rvs[len(rvs) // 2 :]
             partition_node = PartitionNode(rvs)
             region_left = RegionNode(rvs_left, replica_idx=replica_idx)
             region_right = RegionNode(rvs_right, replica_idx=replica_idx)

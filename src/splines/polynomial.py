@@ -20,12 +20,15 @@ def polyint(l: torch.Tensor, r: torch.Tensor, p: torch.Tensor) -> torch.Tensor:
     # r: (...)
     # p: (..., order + 1)
     order_zero_shape = p.shape[:-1] + (1,)
-    indefinite_integrals = torch.concatenate([
-        p / torch.arange(p.shape[-1], 0, step=-1, device=p.device),
-        torch.zeros(order_zero_shape, dtype=p.dtype, device=p.device)
-    ], dim=-1)
+    indefinite_integrals = torch.concatenate(
+        [
+            p / torch.arange(p.shape[-1], 0, step=-1, device=p.device),
+            torch.zeros(order_zero_shape, dtype=p.dtype, device=p.device),
+        ],
+        dim=-1,
+    )
     right_hand = polyval(indefinite_integrals, r)  # (...,)
-    left_hand = polyval(indefinite_integrals, l)   # (...,)
+    left_hand = polyval(indefinite_integrals, l)  # (...,)
     return right_hand - left_hand
 
 
@@ -38,5 +41,7 @@ def cartesian_polymul(p: torch.Tensor, q: torch.Tensor) -> torch.Tensor:
     p = p.unsqueeze(dim=1)
     q = q.unsqueeze(dim=1)
     p = torch.flip(p, dims=(-1,))  # Conv1d implements cross-correlation
-    cross_pq = F.conv1d(q, p, padding=padding)  # Compute polynomial product via convolution
+    cross_pq = F.conv1d(
+        q, p, padding=padding
+    )  # Compute polynomial product via convolution
     return cross_pq
