@@ -1,29 +1,22 @@
-import sys
-
 import argparse
 import itertools
-import os
-from typing import List, Tuple, Optional
 import json
-
-import numpy as np
-import pandas as pd
+import os
+import sys
+from typing import List, Optional, Tuple
 
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import seaborn as sns
 
 from datasets.loaders import CONTINUOUS_DATASETS
-from pcs.models import PCS_MODELS
 from graphics.utils import setup_tueplots
-from scripts.utils import (
-    retrieve_tboard_runs,
-    retrieve_wandb_runs,
-    unroll_hparams,
-    filter_dataframe,
-    format_model,
-    drop_na,
-)
+from pcs.models import PCS_MODELS
+from scripts.utils import (drop_na, filter_dataframe, format_model,
+                           retrieve_tboard_runs, retrieve_wandb_runs,
+                           unroll_hparams)
 
 PALETTE = {
     "gaussian": {

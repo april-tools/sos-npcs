@@ -1,55 +1,36 @@
 import os
 import random
 import subprocess
-from typing import Tuple, Union, List
+from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import torch
-from zuko.flows import Flow, NICE, MAF, NSF
+import wandb
 from sklearn.preprocessing import StandardScaler
 from tbparse import SummaryReader
 from torch.utils.data import DataLoader, TensorDataset
-import wandb
+from zuko.flows import MAF, NICE, NSF, Flow
 
-from pcs.hmm import MonotonicHMM, BornHMM
+from datasets.loaders import (BINARY_DATASETS, CONTINUOUS_DATASETS,
+                              IMAGE_DATASETS, LANGUAGE_DATASETS,
+                              SMALL_UCI_DATASETS, load_artificial_dataset,
+                              load_binary_dataset, load_continuous_dataset,
+                              load_image_dataset, load_language_dataset,
+                              load_small_uci_dataset)
+from graphics.distributions import (kde_samples_hmap,
+                                    plot_bivariate_discrete_samples_hmap)
+from pcs.hmm import BornHMM, MonotonicHMM
+from pcs.layers import (BornBinaryEmbeddings, BornBinomial, BornBSplines,
+                        BornEmbeddings, BornMultivariateNormalDistribution,
+                        BornNormalDistribution, MonotonicBinaryEmbeddings,
+                        MonotonicBinomial, MonotonicBSplines,
+                        MonotonicEmbeddings, MultivariateNormalDistribution,
+                        NormalDistribution)
+from pcs.layers.candecomp import BornCPLayer, MonotonicCPLayer
+from pcs.layers.mixture import BornMixtureLayer, MonotonicMixtureLayer
+from pcs.models import PC, BornPC, MonotonicPC
 from pcs.utils import retrieve_default_dtype
-from datasets.loaders import (
-    BINARY_DATASETS,
-    IMAGE_DATASETS,
-    CONTINUOUS_DATASETS,
-    SMALL_UCI_DATASETS,
-    load_small_uci_dataset,
-    LANGUAGE_DATASETS,
-    load_language_dataset,
-)
-from datasets.loaders import (
-    load_image_dataset,
-    load_binary_dataset,
-    load_artificial_dataset,
-    load_continuous_dataset,
-)
-from pcs.layers import (
-    MonotonicEmbeddings,
-    MonotonicBinaryEmbeddings,
-    MultivariateNormalDistribution,
-    NormalDistribution,
-    BornEmbeddings,
-    BornBinaryEmbeddings,
-    BornMultivariateNormalDistribution,
-    BornNormalDistribution,
-    MonotonicBSplines,
-    BornBSplines,
-    MonotonicBinomial,
-    BornBinomial,
-)
-from pcs.layers.mixture import MonotonicMixtureLayer, BornMixtureLayer
-from pcs.layers.candecomp import MonotonicCPLayer, BornCPLayer
-from pcs.models import PC, MonotonicPC, BornPC
-from graphics.distributions import (
-    plot_bivariate_discrete_samples_hmap,
-    kde_samples_hmap,
-)
 from region_graph import RegionGraph, RegionNode
 from region_graph.linear_tree import LinearTree
 from region_graph.quad_tree import QuadTree

@@ -1,9 +1,9 @@
-from typing import Optional, Union, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
-from torch import nn
 from scipy import special
+from torch import nn
 
 #: A random state type is either an integer seed value or a Numpy RandomState instance.
 RandomState = Union[int, np.random.RandomState]

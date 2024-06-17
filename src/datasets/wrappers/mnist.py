@@ -1,7 +1,8 @@
-import os
-import numpy as np
 import gzip
+import os
 import pickle
+
+import numpy as np
 
 
 class MNIST:

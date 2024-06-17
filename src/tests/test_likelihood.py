@@ -1,35 +1,29 @@
 import itertools
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import pytest
 import torch
 from scipy import integrate
 
-from pcs.hmm import MonotonicHMM, BornHMM
-from pcs.layers.mixture import MonotonicMixtureLayer, BornMixtureLayer
-from pcs.layers.candecomp import MonotonicCPLayer, BornCPLayer
-from pcs.layers.input import (
-    MonotonicBinaryEmbeddings,
-    BornBinaryEmbeddings,
-    NormalDistribution,
-    MultivariateNormalDistribution,
-    BornNormalDistribution,
-    BornMultivariateNormalDistribution,
-    MonotonicBSplines,
-    BornBSplines,
-    MonotonicBinomial,
-    BornBinomial,
-    MonotonicEmbeddings,
-    BornEmbeddings,
-)
-from pcs.models import MonotonicPC, BornPC, PC
+from pcs.hmm import BornHMM, MonotonicHMM
+from pcs.layers.candecomp import BornCPLayer, MonotonicCPLayer
+from pcs.layers.input import (BornBinaryEmbeddings, BornBinomial, BornBSplines,
+                              BornEmbeddings,
+                              BornMultivariateNormalDistribution,
+                              BornNormalDistribution,
+                              MonotonicBinaryEmbeddings, MonotonicBinomial,
+                              MonotonicBSplines, MonotonicEmbeddings,
+                              MultivariateNormalDistribution,
+                              NormalDistribution)
+from pcs.layers.mixture import BornMixtureLayer, MonotonicMixtureLayer
+from pcs.models import PC, BornPC, MonotonicPC
 from region_graph import RegionGraph, RegionNode
 from region_graph.linear_tree import LinearTree
 from region_graph.quad_tree import QuadTree
 from region_graph.random_binary_tree import RandomBinaryTree
-
-from tests.test_utils import generate_all_binary_samples, generate_all_ternary_samples
+from tests.test_utils import (generate_all_binary_samples,
+                              generate_all_ternary_samples)
 
 
 def check_normalized_log_scores(model: PC, x: torch.Tensor) -> torch.Tensor:

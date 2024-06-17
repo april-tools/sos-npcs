@@ -2,9 +2,9 @@ import io
 from typing import Optional
 
 import numpy as np
-from PIL import Image as pillow
 from matplotlib import pyplot as plt
-from tueplots import fonts, figsizes, fontsizes
+from PIL import Image as pillow
+from tueplots import figsizes, fonts, fontsizes
 
 
 def setup_tueplots(

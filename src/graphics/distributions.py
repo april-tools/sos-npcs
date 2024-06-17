@@ -2,14 +2,13 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, TensorDataset
-from sklearn.neighbors import KernelDensity
 from matplotlib import pyplot as plt
+from sklearn.neighbors import KernelDensity
+from torch.utils.data import DataLoader, TensorDataset
 
+from graphics.utils import matplotlib_buffer_to_image, setup_tueplots
 from pcs.models import PC
 from pcs.utils import retrieve_default_dtype
-
-from graphics.utils import setup_tueplots, matplotlib_buffer_to_image
 
 
 def plot_bivariate_samples_hmap(

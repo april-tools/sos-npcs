@@ -1,17 +1,8 @@
 import itertools
 import json
 from functools import cached_property
-from typing import (
-    Dict,
-    FrozenSet,
-    Iterable,
-    List,
-    Set,
-    Tuple,
-    TypedDict,
-    final,
-    overload,
-)
+from typing import (Dict, FrozenSet, Iterable, List, Set, Tuple, TypedDict,
+                    final, overload)
 
 from .rg_node import PartitionNode, RegionNode, RGNode
 

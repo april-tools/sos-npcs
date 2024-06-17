@@ -1,6 +1,6 @@
 import numpy as np
 
-from region_graph import RegionGraph, RegionNode, PartitionNode
+from region_graph import PartitionNode, RegionGraph, RegionNode
 
 
 def LinearTree(

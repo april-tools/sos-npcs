@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 from pcs.initializers import init_params_
-from pcs.layers import MonotonicComputeLayer, BornComputeLayer
+from pcs.layers import BornComputeLayer, MonotonicComputeLayer
 from pcs.utils import retrieve_complex_default_dtype
 from region_graph import RegionNode
 

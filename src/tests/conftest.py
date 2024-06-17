@@ -1,5 +1,4 @@
 import pytest
-
 import torch
 
 from scripts.utils import set_global_seed

@@ -1,15 +1,14 @@
 import os
-from typing import Optional, Dict, Any, Union, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
 import wandb
+from PIL import Image as pillow
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from PIL import Image as pillow
-
-from graphics.distributions import bivariate_pmf_heatmap, bivariate_pdf_heatmap
+from graphics.distributions import bivariate_pdf_heatmap, bivariate_pmf_heatmap
 from pcs.models import PC, TensorizedPC
 
 

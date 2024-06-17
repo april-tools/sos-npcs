@@ -1,22 +1,20 @@
 from __future__ import annotations
 
 import abc
-from typing import List, Type, Optional, Tuple, Union, Dict, Any
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import torch
 from torch import nn
 
-from pcs.layers.input import InputLayer, BornInputLayer
-from pcs.layers.input import (
-    MultivariateNormalDistribution,
-    BornMultivariateNormalDistribution,
-)
-from pcs.layers.scope import ScopeLayer, MonotonicScopeLayer, BornScopeLayer
-from pcs.layers import ComputeLayer, MonotonicComputeLayer, BornComputeLayer
-from pcs.layers.mixture import MonotonicMixtureLayer, BornMixtureLayer
-from pcs.layers.candecomp import MonotonicCPLayer, BornCPLayer
-from region_graph import PartitionNode, RegionNode, RegionGraph
+from pcs.layers import BornComputeLayer, ComputeLayer, MonotonicComputeLayer
+from pcs.layers.candecomp import BornCPLayer, MonotonicCPLayer
+from pcs.layers.input import (BornInputLayer,
+                              BornMultivariateNormalDistribution, InputLayer,
+                              MultivariateNormalDistribution)
+from pcs.layers.mixture import BornMixtureLayer, MonotonicMixtureLayer
+from pcs.layers.scope import BornScopeLayer, MonotonicScopeLayer, ScopeLayer
+from region_graph import PartitionNode, RegionGraph, RegionNode
 
 PCS_MODELS = ["MonotonicPC", "BornPC"]
 

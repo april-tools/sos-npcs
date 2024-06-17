@@ -1,24 +1,17 @@
-import sys
-import os
-import joblib
-from copy import copy
-
 import argparse
+import json
+import os
+import sys
+from copy import copy
+from typing import List, Union
+
+import joblib
 import numpy as np
 import pandas as pd
-from typing import Union, List
-import json
 
-from scripts.utils import retrieve_wandb_runs
-from scripts.utils import (
-    retrieve_tboard_runs,
-    retrieve_wandb_runs,
-    unroll_hparams,
-    filter_dataframe,
-    drop_na,
-)
 from datasets.loaders import CONTINUOUS_DATASETS
-
+from scripts.utils import (drop_na, filter_dataframe, retrieve_tboard_runs,
+                           retrieve_wandb_runs, unroll_hparams)
 
 EXP_HPARAMS = ["num_components", "batch_size", "learning_rate"]
 PARAMS_UNIT = 1_000_000

@@ -1,16 +1,16 @@
+import argparse
 import os
+from argparse import Namespace
 from copy import copy
 
 import wandb
-import argparse
-from argparse import Namespace
 
 from datasets.loaders import ALL_DATASETS
 from pcs.hmm import HMM_MODELS
 from pcs.initializers import INIT_METHODS
 from pcs.layers import COMPUTE_LAYERS
-from pcs.optimizers import OPTIMIZERS_NAMES
 from pcs.models import PCS_MODELS
+from pcs.optimizers import OPTIMIZERS_NAMES
 from region_graph import REGION_GRAPHS
 from scripts.engine import Engine
 

@@ -1,6 +1,7 @@
 import itertools
-import pytest
+
 import numpy as np
+import pytest
 
 from pcs.utils import log_binomial
 

@@ -1,11 +1,9 @@
-from typing import Callable, Tuple, Iterable
+from typing import Callable, Iterable, Tuple
 
 import torch
-
 from torch.utils.data import IterableDataset
-
 from torchtext.data.utils import get_tokenizer
-from torchtext.vocab import build_vocab_from_iterator, Vocab
+from torchtext.vocab import Vocab, build_vocab_from_iterator
 
 
 def get_tokenizer_vocab(

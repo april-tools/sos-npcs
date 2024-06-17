@@ -10,7 +10,7 @@ from pcs.initializers import INIT_METHODS
 from pcs.layers import COMPUTE_LAYERS
 from pcs.optimizers import OPTIMIZERS_NAMES
 from region_graph import REGION_GRAPHS
-from scripts.utils import setup_experiment_path, build_run_id, format_model
+from scripts.utils import build_run_id, format_model, setup_experiment_path
 
 parser = argparse.ArgumentParser(
     description="Plot the distribution of the weights",

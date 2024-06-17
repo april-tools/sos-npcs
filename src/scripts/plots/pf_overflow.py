@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from graphics.utils import setup_tueplots
-from scripts.utils import setup_model, set_global_seed
+from scripts.utils import set_global_seed, setup_model
 
 
 def get_partition_function(num_variables: int, dtype: torch.dtype) -> Tuple[int, float]:

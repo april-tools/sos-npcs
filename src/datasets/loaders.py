@@ -2,22 +2,17 @@ import csv
 import os
 import pickle
 import time
-from typing import Optional, List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import torch
 from sklearn.model_selection import train_test_split
 
 from datasets.wrappers import *
-from datasets.wrappers.artificial import (
-    single_ring_sample,
-    multi_rings_sample,
-    funnel_sample,
-    banana_sample,
-    cosine_sample,
-    spiral_sample,
-    rotate_samples,
-)
+from datasets.wrappers.artificial import (banana_sample, cosine_sample,
+                                          funnel_sample, multi_rings_sample,
+                                          rotate_samples, single_ring_sample,
+                                          spiral_sample)
 from datasets.wrappers.gpt2_commongen import load_gpt2_commongen
 
 SMALL_UCI_DATASETS = ["biofam", "flare", "lymphography", "spect", "tumor", "votes"]

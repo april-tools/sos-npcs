@@ -1,11 +1,11 @@
-import os
 import argparse
+import os
 from typing import Callable
 
+import cv2
 import matplotlib.cm as cm
 import numpy as np
 from PIL import Image as pillow
-import cv2
 
 parser = argparse.ArgumentParser(description="Create GIF from distributions")
 parser.add_argument("path", type=str, default="checkpoints/gaussian-ring")

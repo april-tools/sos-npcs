@@ -4,9 +4,9 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-from scipy import stats
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
+from scipy import stats
 
 from graphics.utils import setup_tueplots
 from scripts.utils import retrieve_tboard_runs

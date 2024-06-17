@@ -3,8 +3,8 @@ import os
 
 import numpy as np
 import pandas as pd
-from matplotlib import rcParams
 from matplotlib import pyplot as plt
+from matplotlib import rcParams
 
 from graphics.utils import setup_tueplots
 

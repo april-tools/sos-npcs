@@ -1,11 +1,10 @@
-from typing import Iterator, List, Optional, Tuple
-from collections import defaultdict
-
-import json
-import itertools
-import subprocess
-import multiprocessing
 import argparse
+import itertools
+import json
+import multiprocessing
+import subprocess
+from collections import defaultdict
+from typing import Iterator, List, Optional, Tuple
 
 device_ids_cycle_g: Optional[Iterator[int]] = None
 

@@ -2,34 +2,28 @@ import os
 import time
 from argparse import Namespace
 from copy import copy
-from typing import Dict, Any, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import torch
 from torch.optim.lr_scheduler import StepLR
-from zuko.flows import Flow
 from torch.utils.data import DataLoader, TensorDataset
+from zuko.flows import Flow
 
 from datasets.loaders import ALL_DATASETS
 from optimization.schedulers import ReduceLROnPlateau
 from pcs.initializers import INIT_METHODS
 from pcs.layers import COMPUTE_LAYERS
+from pcs.models import PC, PCS_MODELS, TensorizedPC
 from pcs.optimizers import OPTIMIZERS_NAMES, setup_optimizer
-from pcs.models import PCS_MODELS, PC, TensorizedPC
-from region_graph import REGION_GRAPHS
 from pcs.utils import num_parameters
+from region_graph import REGION_GRAPHS
 from scripts.logger import Logger
-from scripts.utils import (
-    set_global_seed,
-    evaluate_model_log_likelihood,
-    bits_per_dimension,
-    perplexity,
-    build_run_id,
-    setup_data_loaders,
-    setup_model,
-    setup_experiment_path,
-    get_git_revision_hash,
-)
+from scripts.utils import (bits_per_dimension, build_run_id,
+                           evaluate_model_log_likelihood,
+                           get_git_revision_hash, perplexity, set_global_seed,
+                           setup_data_loaders, setup_experiment_path,
+                           setup_model)
 
 
 class Engine:

@@ -5,16 +5,16 @@ from collections import defaultdict
 from typing import Tuple
 
 import matplotlib.pyplot as plt
-import torch
 import numpy as np
+import torch
 from matplotlib import rcParams
-from torch.utils.data import DataLoader, TensorDataset
 from torch import optim
+from torch.utils.data import DataLoader, TensorDataset
 
 from graphics.utils import setup_tueplots
 from pcs.models import PC
-from scripts.utils import set_global_seed, setup_data_loaders, setup_model
 from pcs.utils import num_parameters
+from scripts.utils import set_global_seed, setup_data_loaders, setup_model
 
 parser = argparse.ArgumentParser(description="Benchmark for squared circuits")
 parser.add_argument(

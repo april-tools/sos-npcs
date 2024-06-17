@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import Tuple, Union, Optional
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -10,7 +10,6 @@ from torch import nn
 from pcs.initializers import init_params_
 from pcs.models import PC
 from pcs.utils import safelog
-
 
 HMM_MODELS = ["MonotonicHMM", "BornHMM"]
 

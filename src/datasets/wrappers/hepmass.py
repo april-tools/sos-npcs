@@ -1,11 +1,11 @@
 import os.path
-from typing import Tuple
-
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 from collections import Counter
 from os.path import join
+from typing import Tuple
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 
 class HEPMASS:

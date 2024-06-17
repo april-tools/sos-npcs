@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 import torch
 
-from splines.polynomial import polyval, polyint, cartesian_polymul
+from splines.polynomial import cartesian_polymul, polyint, polyval
 
 
 def least_squares_basis(

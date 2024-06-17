@@ -1,8 +1,8 @@
 import os
-
-import numpy as np
 import pickle
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class CIFAR10:

@@ -1,12 +1,11 @@
 from typing import List
 
 import numpy as np
-
 import torch
 
-from pcs.layers import MonotonicBinaryEmbeddings, BornBinaryEmbeddings
-from pcs.layers.candecomp import MonotonicCPLayer, BornCPLayer
-from pcs.models import MonotonicPC, BornPC, PC
+from pcs.layers import BornBinaryEmbeddings, MonotonicBinaryEmbeddings
+from pcs.layers.candecomp import BornCPLayer, MonotonicCPLayer
+from pcs.models import PC, BornPC, MonotonicPC
 from pcs.sampling import inverse_transform_sample
 from region_graph.random_binary_tree import RandomBinaryTree
 from tests.test_likelihood import check_mar_ll_pf

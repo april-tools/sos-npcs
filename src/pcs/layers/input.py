@@ -1,29 +1,20 @@
 import abc
-from typing import Tuple, Union, List
+from typing import List, Tuple, Union
 
 import numpy as np
 import torch
-from torch import nn, distributions as ds
-from torch.distributions.multivariate_normal import (
-    _batch_mahalanobis as batch_mahalanobis,
-)
+from torch import distributions as ds
+from torch import nn
+from torch.distributions.multivariate_normal import \
+    _batch_mahalanobis as batch_mahalanobis
 
 from pcs.initializers import init_params_
+from pcs.utils import (log_binomial, ohe, retrieve_complex_default_dtype,
+                       retrieve_default_dtype, safelog)
 from region_graph import RegionNode
-from splines.bsplines import (
-    splines_uniform_polynomial,
-    basis_polyval,
-    basis_polyint,
-    integrate_cartesian_basis,
-    least_squares_basis,
-)
-from pcs.utils import (
-    retrieve_complex_default_dtype,
-    retrieve_default_dtype,
-    ohe,
-    log_binomial,
-    safelog,
-)
+from splines.bsplines import (basis_polyint, basis_polyval,
+                              integrate_cartesian_basis, least_squares_basis,
+                              splines_uniform_polynomial)
 
 
 class InputLayer(nn.Module, abc.ABC):
