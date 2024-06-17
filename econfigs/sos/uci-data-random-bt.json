@@ -2,70 +2,50 @@
   "common": {
     "tboard-path": "tboard-runs/uci-data",
     "checkpoint-path": "checkpoints/uci-data",
-    "save-checkpoint": true,
+    "save-checkpoint": false,
     "num-epochs": 1200,
     "device": "cuda",
     "num-workers": 2,
     "patience-threshold": 1e-3,
     "early-stop-patience": 10
   },
-  "datasets": ["power", "gas", "hepmass"],
+  "datasets": ["power", "gas"],
   "grid": {
     "common": {
       "region-graph": "random",
       "region-graph-sd": true,
       "depth": -1,
       "splines": false,
-      "spline-order": 2,
       "optimizer": "Adam",
       "verbose": true,
       "init-method": "uniform",
       "init-scale": 1.0,
-      "num-replicas,num-components": [[1, 128], [4, 64], [16, 32], [64, 16], [256, 8]]
+      "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 128, 64], [16, 64, 16], [64, 32, 4]]
     },
     "models": {
       "power": {
         "BornPC": {
           "real": {
-            "spline-knots": 256,
             "batch-size": 8192,
-            "learning-rate": 1e-3
+            "learning-rate": [1e-4, 5e-3, 1e-3]
           },
           "complex": {
             "complex": true,
-            "spline-knots": 256,
             "batch-size": 8192,
-            "learning-rate": 1e-3
+            "learning-rate": [1e-4, 5e-3, 1e-3]
           }
         }
       },
       "gas": {
         "BornPC": {
           "real": {
-            "spline-knots": 512,
             "batch-size": 4096,
-            "learning-rate": 1e-3
+            "learning-rate": [1e-4, 5e-3, 1e-3]
           },
           "complex": {
             "complex": true,
-            "spline-knots": 512,
             "batch-size": 4096,
-            "learning-rate": 1e-3
-          }
-        }
-      },
-      "hepmass": {
-        "BornPC": {
-          "real": {
-            "spline-knots": 128,
-            "batch-size": 2048,
-            "learning-rate": 1e-3
-          },
-          "complex": {
-            "complex": true,
-            "spline-knots": 128,
-            "batch-size": 2048,
-            "learning-rate": 1e-3
+            "learning-rate": [1e-4, 5e-3, 1e-3]
           }
         }
       }
