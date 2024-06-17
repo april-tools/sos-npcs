@@ -59,7 +59,7 @@ def check_conditional_sampling(
 def test_sampling_monotonic_pc():
     num_replicas = 1
     depth = 1
-    num_components = 2
+    num_units = 2
     num_variables = 3
     num_samples, num_con_samples = 10000, 600000
     mis_var, evi_vars, evi_state = 1, [0, 2], torch.tensor([1, 0])
@@ -69,7 +69,7 @@ def test_sampling_monotonic_pc():
         rg,
         input_layer_cls=MonotonicBinaryEmbeddings,
         compute_layer_cls=MonotonicCPLayer,
-        num_components=num_components,
+        num_units=num_units,
     )
     data = torch.LongTensor(generate_all_binary_samples(num_variables))
     check_mar_ll_pf(model, data)
@@ -80,7 +80,7 @@ def test_sampling_monotonic_pc():
 def test_sampling_born_pc():
     num_replicas = 1
     depth = 1
-    num_components = 2
+    num_units = 2
     num_variables = 3
     num_samples, num_con_samples = 10000, 600000
     mis_var, evi_vars, evi_state = 1, [0, 2], torch.tensor([1, 0])
@@ -90,7 +90,7 @@ def test_sampling_born_pc():
         rg,
         input_layer_cls=BornBinaryEmbeddings,
         compute_layer_cls=BornCPLayer,
-        num_components=num_components,
+        num_units=num_units,
     )
     data = torch.LongTensor(generate_all_binary_samples(num_variables))
     check_mar_ll_pf(model, data)
