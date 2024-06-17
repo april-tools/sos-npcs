@@ -313,7 +313,7 @@ class Engine:
             rg_replicas=self.args.num_replicas,
             rg_depth=self.args.depth,
             num_units=self.args.num_units,
-            num_input_units=self.args.num_inputs_units,
+            num_input_units=self.args.num_input_units,
             complex=self.args.complex,
             input_mixture=self.args.input_mixture,
             compute_layer=self.args.compute_layer,
