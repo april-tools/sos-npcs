@@ -62,14 +62,14 @@ if __name__ == '__main__':
 
     exp_alises = [
         '',
-        'monotonic',
-        'non-monotonic'
+        'real',
+        'complex'
     ]
 
     exp_ids = [
         'RGran_R1_K{}_D1_Lcp_OAdam_LR0.001_BS256_SO2_SK32_IU',
-        'RGran_R1_K{}_D1_Lcp_OAdam_LR0.001_BS256_SO2_SK32_RExp_IU',
-        'RGran_R1_K{}_D1_Lcp_OAdam_LR0.001_BS256_SO2_SK32_IU'
+        'RGran_R1_K{}_D1_Lcp_OAdam_LR0.001_BS256_SO2_SK32_IU',
+        'C_RGran_R1_K{}_D1_Lcp_OAdam_LR0.001_BS256_SO2_SK32_IU'
     ]
 
     dataset_num_components = {
