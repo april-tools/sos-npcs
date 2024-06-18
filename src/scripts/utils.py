@@ -12,21 +12,38 @@ from tbparse import SummaryReader
 from torch.utils.data import DataLoader, TensorDataset
 from zuko.flows import MAF, NICE, NSF, Flow
 
-from datasets.loaders import (BINARY_DATASETS, CONTINUOUS_DATASETS,
-                              IMAGE_DATASETS, LANGUAGE_DATASETS,
-                              SMALL_UCI_DATASETS, load_artificial_dataset,
-                              load_binary_dataset, load_continuous_dataset,
-                              load_image_dataset, load_language_dataset,
-                              load_small_uci_dataset)
-from graphics.distributions import (kde_samples_hmap,
-                                    plot_bivariate_discrete_samples_hmap)
+from datasets.loaders import (
+    BINARY_DATASETS,
+    CONTINUOUS_DATASETS,
+    IMAGE_DATASETS,
+    LANGUAGE_DATASETS,
+    SMALL_UCI_DATASETS,
+    load_artificial_dataset,
+    load_binary_dataset,
+    load_continuous_dataset,
+    load_image_dataset,
+    load_language_dataset,
+    load_small_uci_dataset,
+)
+from graphics.distributions import (
+    kde_samples_hmap,
+    plot_bivariate_discrete_samples_hmap,
+)
 from pcs.hmm import BornHMM, MonotonicHMM
-from pcs.layers import (BornBinaryEmbeddings, BornBinomial, BornBSplines,
-                        BornEmbeddings, BornMultivariateNormalDistribution,
-                        BornNormalDistribution, MonotonicBinaryEmbeddings,
-                        MonotonicBinomial, MonotonicBSplines,
-                        MonotonicEmbeddings, MultivariateNormalDistribution,
-                        NormalDistribution)
+from pcs.layers import (
+    BornBinaryEmbeddings,
+    BornBinomial,
+    BornBSplines,
+    BornEmbeddings,
+    BornMultivariateNormalDistribution,
+    BornNormalDistribution,
+    MonotonicBinaryEmbeddings,
+    MonotonicBinomial,
+    MonotonicBSplines,
+    MonotonicEmbeddings,
+    MultivariateNormalDistribution,
+    NormalDistribution,
+)
 from pcs.layers.candecomp import BornCPLayer, MonotonicCPLayer
 from pcs.layers.mixture import BornMixtureLayer, MonotonicMixtureLayer
 from pcs.models import PC, BornPC, MonotonicPC

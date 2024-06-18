@@ -9,9 +9,12 @@ from torch import nn
 
 from pcs.layers import BornComputeLayer, ComputeLayer, MonotonicComputeLayer
 from pcs.layers.candecomp import BornCPLayer, MonotonicCPLayer
-from pcs.layers.input import (BornInputLayer,
-                              BornMultivariateNormalDistribution, InputLayer,
-                              MultivariateNormalDistribution)
+from pcs.layers.input import (
+    BornInputLayer,
+    BornMultivariateNormalDistribution,
+    InputLayer,
+    MultivariateNormalDistribution,
+)
 from pcs.layers.mixture import BornMixtureLayer, MonotonicMixtureLayer
 from pcs.layers.scope import BornScopeLayer, MonotonicScopeLayer, ScopeLayer
 from region_graph import PartitionNode, RegionGraph, RegionNode

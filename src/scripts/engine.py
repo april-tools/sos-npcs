@@ -19,11 +19,17 @@ from pcs.optimizers import OPTIMIZERS_NAMES, setup_optimizer
 from pcs.utils import num_parameters
 from region_graph import REGION_GRAPHS
 from scripts.logger import Logger
-from scripts.utils import (bits_per_dimension, build_run_id,
-                           evaluate_model_log_likelihood,
-                           get_git_revision_hash, perplexity, set_global_seed,
-                           setup_data_loaders, setup_experiment_path,
-                           setup_model)
+from scripts.utils import (
+    bits_per_dimension,
+    build_run_id,
+    evaluate_model_log_likelihood,
+    get_git_revision_hash,
+    perplexity,
+    set_global_seed,
+    setup_data_loaders,
+    setup_experiment_path,
+    setup_model,
+)
 
 
 class Engine:
@@ -239,7 +245,10 @@ class Engine:
             metrics["test_bpd"] = test_bpd
             metrics["test_ppl"] = test_ppl
 
-        should_checkpoint = isinstance(self.model, PC) and ((self.args.early_stop_loss and best_train_found) or (not self.args.early_stop_loss and best_valid_found))
+        should_checkpoint = isinstance(self.model, PC) and (
+            (self.args.early_stop_loss and best_train_found)
+            or (not self.args.early_stop_loss and best_valid_found)
+        )
         if self.args.save_checkpoint and should_checkpoint:
             self.logger.save_checkpoint(
                 {

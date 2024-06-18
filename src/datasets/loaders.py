@@ -9,10 +9,15 @@ import torch
 from sklearn.model_selection import train_test_split
 
 from datasets.wrappers import *
-from datasets.wrappers.artificial import (banana_sample, cosine_sample,
-                                          funnel_sample, multi_rings_sample,
-                                          rotate_samples, single_ring_sample,
-                                          spiral_sample)
+from datasets.wrappers.artificial import (
+    banana_sample,
+    cosine_sample,
+    funnel_sample,
+    multi_rings_sample,
+    rotate_samples,
+    single_ring_sample,
+    spiral_sample,
+)
 from datasets.wrappers.gpt2_commongen import load_gpt2_commongen
 
 SMALL_UCI_DATASETS = ["biofam", "flare", "lymphography", "spect", "tumor", "votes"]

@@ -8,22 +8,27 @@ from scipy import integrate
 
 from pcs.hmm import BornHMM, MonotonicHMM
 from pcs.layers.candecomp import BornCPLayer, MonotonicCPLayer
-from pcs.layers.input import (BornBinaryEmbeddings, BornBinomial, BornBSplines,
-                              BornEmbeddings,
-                              BornMultivariateNormalDistribution,
-                              BornNormalDistribution,
-                              MonotonicBinaryEmbeddings, MonotonicBinomial,
-                              MonotonicBSplines, MonotonicEmbeddings,
-                              MultivariateNormalDistribution,
-                              NormalDistribution)
+from pcs.layers.input import (
+    BornBinaryEmbeddings,
+    BornBinomial,
+    BornBSplines,
+    BornEmbeddings,
+    BornMultivariateNormalDistribution,
+    BornNormalDistribution,
+    MonotonicBinaryEmbeddings,
+    MonotonicBinomial,
+    MonotonicBSplines,
+    MonotonicEmbeddings,
+    MultivariateNormalDistribution,
+    NormalDistribution,
+)
 from pcs.layers.mixture import BornMixtureLayer, MonotonicMixtureLayer
 from pcs.models import PC, BornPC, MonotonicPC
 from region_graph import RegionGraph, RegionNode
 from region_graph.linear_tree import LinearTree
 from region_graph.quad_tree import QuadTree
 from region_graph.random_binary_tree import RandomBinaryTree
-from tests.test_utils import (generate_all_binary_samples,
-                              generate_all_ternary_samples)
+from tests.test_utils import generate_all_binary_samples, generate_all_ternary_samples
 
 
 def check_normalized_log_scores(model: PC, x: torch.Tensor) -> torch.Tensor:
@@ -153,9 +158,7 @@ def test_born_pc_random(
     "compute_layer,num_variables,num_replicas,num_units",
     list(itertools.product([BornCPLayer], [3, 8], [1, 4], [1, 2])),
 )
-def test_born_pc_linear_stiefel(
-    compute_layer, num_variables, num_replicas, num_units
-):
+def test_born_pc_linear_stiefel(compute_layer, num_variables, num_replicas, num_units):
     rg = LinearTree(num_variables, num_repetitions=num_replicas)
     compute_layer_kwargs = {"init_method": "stiefel"}
     input_layer_kwargs = {"init_method": "stiefel", "num_states": 3}
@@ -293,9 +296,7 @@ def test_monotonic_pc_image_dequantize(
     "compute_layer,image_shape,num_units,input_mixture",
     list(itertools.product([BornCPLayer], [(1, 7, 7)], [1, 3], [False, True])),
 )
-def test_born_pc_image_dequantize(
-    compute_layer, image_shape, num_units, input_mixture
-):
+def test_born_pc_image_dequantize(compute_layer, image_shape, num_units, input_mixture):
     rg = QuadTree(image_shape, struct_decomp=True)
     model = BornPC(
         rg,
