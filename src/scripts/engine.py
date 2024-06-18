@@ -239,13 +239,8 @@ class Engine:
             metrics["test_bpd"] = test_bpd
             metrics["test_ppl"] = test_ppl
 
-        should_checkpoint = (
-            self.args.save_checkpoint
-            and isinstance(self.model, PC)
-            and (self.args.early_stop_loss and best_train_found)
-            or (not self.args.early_stop_loss and best_valid_found)
-        )
-        if should_checkpoint:
+        should_checkpoint = isinstance(self.model, PC) and ((self.args.early_stop_loss and best_train_found) or (not self.args.early_stop_loss and best_valid_found))
+        if self.args.save_checkpoint and should_checkpoint:
             self.logger.save_checkpoint(
                 {
                     "region_graph": self.args.region_graph,
