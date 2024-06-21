@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PROJECT_NAME="squared-npcs"
+export PROJECT_NAME="sos-npcs"
 export PYTHONPATH=${PYTHONPATH:-src}
 
 # These flags need to be updated accordingly:
@@ -20,12 +20,12 @@ EXCL_NODES=${EXCL_NODES:-}
 # An optional list of Slurm node to allow
 LIST_NODES=${LIST_NODES:-}
 # The maximum number of parallel jobs to dispatch
-MAX_PARALLEL_JOBS=20
+MAX_PARALLEL_JOBS=12
 
 # Resources and maximum execution time
-NUM_CPUS=3
+NUM_CPUS=2
 NUM_GPUS=1
-TIME=48:00:00
+TIME=120:00:00
 
 JOB_NAME="$PROJECT_NAME-$EXPS_ID"
 OUTPUT="slurm/logs/$JOB_NAME-%j.out"
