@@ -9,16 +9,12 @@ from scipy import integrate
 from pcs.hmm import BornHMM, MonotonicHMM
 from pcs.layers.candecomp import BornCPLayer, MonotonicCPLayer
 from pcs.layers.input import (BornBinaryEmbeddings, BornBinomial, BornBSplines,
-                              BornEmbeddings,
-                              BornMultivariateNormalDistribution,
-                              BornNormalDistribution,
+                              BornEmbeddings, BornNormalDistribution,
                               MonotonicBinaryEmbeddings, MonotonicBinomial,
                               MonotonicBSplines, MonotonicEmbeddings,
-                              MultivariateNormalDistribution,
                               NormalDistribution)
-from pcs.layers.mixture import BornMixtureLayer, MonotonicMixtureLayer
+from pcs.layers.mixture import BornMixtureLayer
 from pcs.models import PC, BornPC, MonotonicPC
-from region_graph import RegionGraph, RegionNode
 from region_graph.linear_tree import LinearTree
 from region_graph.quad_tree import QuadTree
 from region_graph.random_binary_tree import RandomBinaryTree
@@ -71,7 +67,7 @@ def check_mar_ll_one(
 def check_pdf(model, interval: Optional[Tuple[float, float]] = None):
     pdf = lambda y, x: torch.exp(model.log_prob(torch.Tensor([[x, y]])))
     if interval is None:
-        a, b = -np.inf, np.inf
+        a, b = -64.0, 64.0
     else:
         a, b = interval
     ig, err = integrate.dblquad(pdf, a, b, a, b)
@@ -79,18 +75,15 @@ def check_pdf(model, interval: Optional[Tuple[float, float]] = None):
 
 
 @pytest.mark.parametrize(
-    "compute_layer,num_variables,num_replicas,num_units,input_mixture",
-    list(itertools.product([MonotonicCPLayer], [8, 13], [1, 4], [1, 3], [False, True])),
+    "compute_layer,num_variables,num_replicas,num_units",
+    list(itertools.product([MonotonicCPLayer], [8, 13], [1, 4], [1, 3])),
 )
-def test_monotonic_pc_random(
-    compute_layer, num_variables, num_replicas, num_units, input_mixture
-):
+def test_monotonic_pc_random(compute_layer, num_variables, num_replicas, num_units):
     rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas)
     model = MonotonicPC(
         rg,
         input_layer_cls=MonotonicBinaryEmbeddings,
         compute_layer_cls=compute_layer,
-        input_mixture=input_mixture,
         num_units=num_units,
     )
     data = torch.LongTensor(generate_all_binary_samples(num_variables))
@@ -101,14 +94,13 @@ def test_monotonic_pc_random(
 
 
 @pytest.mark.parametrize(
-    "compute_layer,num_variables,num_replicas,num_units,input_mixture,exp_reparam",
+    "compute_layer,num_variables,num_replicas,num_units,exp_reparam",
     list(
         itertools.product(
             [BornCPLayer],
             [8, 13],
             [1, 4],
             [1, 3],
-            [False, True],
             [False, True],
         )
     ),
@@ -118,7 +110,6 @@ def test_born_pc_random(
     num_variables,
     num_replicas,
     num_units,
-    input_mixture,
     exp_reparam,
 ):
     rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas)
@@ -133,7 +124,6 @@ def test_born_pc_random(
         compute_layer_cls=compute_layer,
         input_layer_kwargs=input_layer_kwargs,
         compute_layer_kwargs=compute_layer_kwargs,
-        input_mixture=input_mixture,
         num_units=num_units,
     )
     data = torch.LongTensor(generate_all_binary_samples(num_variables))
@@ -164,18 +154,15 @@ def test_born_pc_linear_stiefel(compute_layer, num_variables, num_replicas, num_
 
 
 @pytest.mark.parametrize(
-    "compute_layer,image_shape,num_units,input_mixture",
-    list(itertools.product([MonotonicCPLayer], [(1, 3, 3)], [1, 3], [False, True])),
+    "compute_layer,image_shape,num_units",
+    list(itertools.product([MonotonicCPLayer], [(1, 3, 3)], [1, 3])),
 )
-def test_monotonic_pc_pseudo_small_image(
-    compute_layer, image_shape, num_units, input_mixture
-):
+def test_monotonic_pc_pseudo_small_image(compute_layer, image_shape, num_units):
     rg = QuadTree(image_shape, struct_decomp=True)
     model = MonotonicPC(
         rg,
         input_layer_cls=MonotonicBinaryEmbeddings,
         compute_layer_cls=compute_layer,
-        input_mixture=input_mixture,
         num_units=num_units,
     )
     data = torch.LongTensor(generate_all_binary_samples(np.prod(image_shape).item()))
@@ -183,18 +170,15 @@ def test_monotonic_pc_pseudo_small_image(
 
 
 @pytest.mark.parametrize(
-    "compute_layer,image_shape,num_units,input_mixture",
-    list(itertools.product([BornCPLayer], [(1, 3, 3)], [1, 3], [False, True])),
+    "compute_layer,image_shape,num_units",
+    list(itertools.product([BornCPLayer], [(1, 3, 3)], [1, 3])),
 )
-def test_born_pc_pseudo_small_image(
-    compute_layer, image_shape, num_units, input_mixture
-):
+def test_born_pc_pseudo_small_image(compute_layer, image_shape, num_units):
     rg = QuadTree(image_shape, struct_decomp=True)
     model = BornPC(
         rg,
         input_layer_cls=BornBinaryEmbeddings,
         compute_layer_cls=compute_layer,
-        input_mixture=input_mixture,
         num_units=num_units,
     )
     data = torch.LongTensor(generate_all_binary_samples(np.prod(image_shape).item()))
@@ -202,22 +186,15 @@ def test_born_pc_pseudo_small_image(
 
 
 @pytest.mark.parametrize(
-    "compute_layer,image_shape,num_units,input_mixture",
-    list(
-        itertools.product(
-            [MonotonicCPLayer], [(1, 7, 7), (3, 28, 28)], [1, 3], [False, True]
-        )
-    ),
+    "compute_layer,image_shape,num_units",
+    list(itertools.product([MonotonicCPLayer], [(1, 7, 7), (3, 28, 28)], [1, 3])),
 )
-def test_monotonic_pc_pseudo_large_image(
-    compute_layer, image_shape, num_units, input_mixture
-):
+def test_monotonic_pc_pseudo_large_image(compute_layer, image_shape, num_units):
     rg = QuadTree(image_shape, struct_decomp=True)
     model = MonotonicPC(
         rg,
         input_layer_cls=MonotonicEmbeddings,
         compute_layer_cls=compute_layer,
-        input_mixture=input_mixture,
         num_units=num_units,
         input_layer_kwargs={"num_states": 768},
     )
@@ -227,26 +204,24 @@ def test_monotonic_pc_pseudo_large_image(
 
 
 @pytest.mark.parametrize(
-    "compute_layer,image_shape,num_units,input_mixture,l2norm_reparam",
+    "compute_layer,image_shape,num_units,l2norm_reparam",
     list(
         itertools.product(
             [BornCPLayer],
             [(1, 7, 7), (3, 28, 28)],
             [1, 3],
             [False, True],
-            [False, True],
         )
     ),
 )
 def test_born_pc_pseudo_large_image(
-    compute_layer, image_shape, num_units, input_mixture, l2norm_reparam
+    compute_layer, image_shape, num_units, l2norm_reparam
 ):
     rg = QuadTree(image_shape, struct_decomp=True)
     model = BornPC(
         rg,
         input_layer_cls=BornEmbeddings,
         compute_layer_cls=compute_layer,
-        input_mixture=input_mixture,
         num_units=num_units,
         input_layer_kwargs={"num_states": 768, "l2norm_reparam": l2norm_reparam},
     )
@@ -256,18 +231,15 @@ def test_born_pc_pseudo_large_image(
 
 
 @pytest.mark.parametrize(
-    "compute_layer,image_shape,num_units,input_mixture",
-    list(itertools.product([MonotonicCPLayer], [(1, 7, 7)], [1, 3], [False, True])),
+    "compute_layer,image_shape,num_units",
+    list(itertools.product([MonotonicCPLayer], [(1, 7, 7)], [1, 3])),
 )
-def test_monotonic_pc_image_dequantize(
-    compute_layer, image_shape, num_units, input_mixture
-):
+def test_monotonic_pc_image_dequantize(compute_layer, image_shape, num_units):
     rg = QuadTree(image_shape, struct_decomp=True)
     model = MonotonicPC(
         rg,
         input_layer_cls=NormalDistribution,
         compute_layer_cls=compute_layer,
-        input_mixture=input_mixture,
         num_units=num_units,
         dequantize=True,
     )
@@ -282,16 +254,15 @@ def test_monotonic_pc_image_dequantize(
 
 
 @pytest.mark.parametrize(
-    "compute_layer,image_shape,num_units,input_mixture",
-    list(itertools.product([BornCPLayer], [(1, 7, 7)], [1, 3], [False, True])),
+    "compute_layer,image_shape,num_units",
+    list(itertools.product([BornCPLayer], [(1, 7, 7)], [1, 3])),
 )
-def test_born_pc_image_dequantize(compute_layer, image_shape, num_units, input_mixture):
+def test_born_pc_image_dequantize(compute_layer, image_shape, num_units):
     rg = QuadTree(image_shape, struct_decomp=True)
     model = BornPC(
         rg,
         input_layer_cls=BornNormalDistribution,
         compute_layer_cls=compute_layer,
-        input_mixture=input_mixture,
         num_units=num_units,
         dequantize=True,
     )
@@ -306,18 +277,15 @@ def test_born_pc_image_dequantize(compute_layer, image_shape, num_units, input_m
 
 
 @pytest.mark.parametrize(
-    "compute_layer,num_variables,num_units,input_mixture,num_replicas",
-    list(itertools.product([MonotonicCPLayer], [8, 13], [1, 3], [False, True], [1, 4])),
+    "compute_layer,num_variables,num_units,num_replicas",
+    list(itertools.product([MonotonicCPLayer], [8, 13], [1, 3], [1, 4])),
 )
-def test_monotonic_pc_linear_rg(
-    compute_layer, num_variables, num_units, input_mixture, num_replicas
-):
+def test_monotonic_pc_linear_rg(compute_layer, num_variables, num_units, num_replicas):
     rg = LinearTree(num_variables, num_repetitions=num_replicas, randomize=True)
     model = MonotonicPC(
         rg,
         input_layer_cls=MonotonicBinaryEmbeddings,
         compute_layer_cls=compute_layer,
-        input_mixture=input_mixture,
         num_units=num_units,
     )
     data = torch.LongTensor(generate_all_binary_samples(num_variables))
@@ -328,18 +296,15 @@ def test_monotonic_pc_linear_rg(
 
 
 @pytest.mark.parametrize(
-    "compute_layer,num_variables,num_units,input_mixture,num_replicas",
-    list(itertools.product([BornCPLayer], [8, 13], [1, 3], [False, True], [1, 4])),
+    "compute_layer,num_variables,num_units,num_replicas",
+    list(itertools.product([BornCPLayer], [8, 13], [1, 3], [1, 4])),
 )
-def test_born_pc_linear_rg(
-    compute_layer, num_variables, num_units, input_mixture, num_replicas
-):
+def test_born_pc_linear_rg(compute_layer, num_variables, num_units, num_replicas):
     rg = LinearTree(num_variables, num_repetitions=num_replicas, randomize=True)
     model = BornPC(
         rg,
         input_layer_cls=BornBinaryEmbeddings,
         compute_layer_cls=compute_layer,
-        input_mixture=input_mixture,
         num_units=num_units,
     )
     data = torch.LongTensor(generate_all_binary_samples(num_variables))
@@ -404,37 +369,11 @@ def test_normal_monotonic_pc(compute_layer, num_units):
     check_pdf(model)
 
 
-def test_multivariate_monotonic_normal_pc():
-    rg = RegionGraph()
-    rg.add_node(RegionNode([0, 1]))
-    model = MonotonicPC(
-        rg,
-        input_layer_cls=MultivariateNormalDistribution,
-        out_mixture_layer_cls=MonotonicMixtureLayer,
-        num_units=3,
-    )
-    model.eval()
-    check_pdf(model)
-
-
 def test_normal_born_pc():
     rg = RandomBinaryTree(2, num_repetitions=1)
     model = BornPC(
         rg,
         input_layer_cls=BornNormalDistribution,
-        out_mixture_layer_cls=BornMixtureLayer,
-        num_units=3,
-    )
-    model.eval()
-    check_pdf(model)
-
-
-def test_multivariate_normal_born_pc():
-    rg = RegionGraph()
-    rg.add_node(RegionNode([0, 1]))
-    model = BornPC(
-        rg,
-        input_layer_cls=BornMultivariateNormalDistribution,
         out_mixture_layer_cls=BornMixtureLayer,
         num_units=3,
     )

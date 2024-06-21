@@ -16,14 +16,13 @@ from pcs.initializers import INIT_METHODS
 from pcs.layers import COMPUTE_LAYERS
 from pcs.models import PC, PCS_MODELS, TensorizedPC
 from pcs.optimizers import OPTIMIZERS_NAMES, setup_optimizer
-from pcs.utils import num_parameters
 from region_graph import REGION_GRAPHS
 from scripts.logger import Logger
 from scripts.utils import (bits_per_dimension, build_run_id,
                            evaluate_model_log_likelihood,
-                           get_git_revision_hash, perplexity, set_global_seed,
-                           setup_data_loaders, setup_experiment_path,
-                           setup_model)
+                           get_git_revision_hash, num_parameters, perplexity,
+                           set_global_seed, setup_data_loaders,
+                           setup_experiment_path, setup_model)
 
 
 class Engine:
@@ -92,7 +91,6 @@ class Engine:
             "num_units": self.args.num_units,
             "num_input_units": self.args.num_input_units,
             "num_replicas": self.args.num_replicas,
-            "input_mixture": self.args.input_mixture,
             "compute_layer": self.args.compute_layer,
             "binomials": self.args.binomials,
             "splines": self.args.splines,
@@ -311,7 +309,6 @@ class Engine:
             num_units=self.args.num_units,
             num_input_units=self.args.num_input_units,
             complex=self.args.complex,
-            input_mixture=self.args.input_mixture,
             compute_layer=self.args.compute_layer,
             multivariate=self.args.multivariate,
             exp_reparam=self.args.exp_reparam,
@@ -408,9 +405,14 @@ class Engine:
             metrics = self._eval_step(0, metrics)
 
         # Log something
-        num_params = num_parameters(self.model)
         self.logger.info(f"Model architecture:\n{self.model}")
+        num_params = num_parameters(self.model)
         self.logger.info(f"Number of parameters: {num_params}")
+        if isinstance(self.model, PC):
+            num_sum_params = num_parameters(self.model, sum_only=True)
+            self.logger.info(f"Number of parameters of sum units: {num_sum_params}")
+        else:
+            num_sum_params = np.nan
         self.model.to(self._device)
 
         # Initialize models based on splines via least squares method
@@ -547,6 +549,7 @@ class Engine:
                 "Best/Test/bpd": metrics["test_bpd"],
                 "Best/Test/ppl": metrics["test_ppl"],
                 "num_params": num_params,
+                "num_sum_params": num_sum_params,
                 "diverged": diverged,
             },
             run_name=self._trial_unique_id,

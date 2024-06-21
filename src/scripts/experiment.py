@@ -120,12 +120,6 @@ parser.add_argument(
     default=False,
     help="Whether to use binomial instead of categoricals, in case of discrete data",
 )
-parser.add_argument(
-    "--input-mixture",
-    action="store_true",
-    default=False,
-    help="Whether to add a mixture layers just after the input layer",
-)
 parser.add_argument("--num-units", default=2, type=int, help="Number of units")
 parser.add_argument(
     "--num-input-units",

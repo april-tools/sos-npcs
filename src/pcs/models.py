@@ -9,9 +9,7 @@ from torch import nn
 
 from pcs.layers import BornComputeLayer, ComputeLayer, MonotonicComputeLayer
 from pcs.layers.candecomp import BornCPLayer, MonotonicCPLayer
-from pcs.layers.input import (BornInputLayer,
-                              BornMultivariateNormalDistribution, InputLayer,
-                              MultivariateNormalDistribution)
+from pcs.layers.input import BornInputLayer, InputLayer
 from pcs.layers.mixture import BornMixtureLayer, MonotonicMixtureLayer
 from pcs.layers.scope import BornScopeLayer, MonotonicScopeLayer, ScopeLayer
 from region_graph import PartitionNode, RegionGraph, RegionNode
@@ -111,7 +109,6 @@ class TensorizedPC(PC, abc.ABC):
         compute_layer_cls: Type[ComputeLayer],
         out_mixture_layer_cls: Type[ComputeLayer],
         in_mixture_layer_cls: Type[ComputeLayer],
-        input_mixture: bool = False,
         num_classes: int = 1,
         num_input_units: int = 2,
         num_sum_units: int = 2,
@@ -146,23 +143,19 @@ class TensorizedPC(PC, abc.ABC):
         else:
             self.scope_layer = None
 
-        # Build the input and output mixture layers, if needed
-        if input_mixture:
-            self.in_mixture = in_mixture_layer_cls(
-                len(rg_layers[0][1]),
-                num_in_components=num_input_units,
-                num_out_components=num_input_units,
-                **compute_layer_kwargs,
-            )
-        else:
-            self.in_mixture = None
+        # Build the input and output mixture layers
+        self.in_mixture = in_mixture_layer_cls(
+            len(rg_layers[0][1]),
+            num_in_components=num_input_units,
+            num_out_components=num_sum_units,
+            **compute_layer_kwargs,
+        )
 
         self.bookkeeping, inner_layers = self._build_layers(
             rg_layers,
             compute_layer_cls,
             compute_layer_kwargs,
             num_sum_units,
-            num_input_units,
             num_classes=num_classes,
         )
         self.layers = nn.ModuleList()
@@ -196,7 +189,6 @@ class TensorizedPC(PC, abc.ABC):
         compute_layer_cls: Type[ComputeLayer],
         compute_layer_kwargs: Dict[str, Any],
         num_sum_units: int,
-        num_input_units: int,
         num_classes: int = 1,
     ) -> Tuple[List[Tuple[List[int], torch.Tensor]], List[ComputeLayer]]:
         inner_layers: List[ComputeLayer] = []
@@ -258,11 +250,10 @@ class TensorizedPC(PC, abc.ABC):
             num_outputs = (
                 num_sum_units if rg_layer_idx < len(rg_layers) - 1 else num_classes
             )
-            num_inputs = num_input_units if rg_layer_idx == 1 else num_sum_units
 
             assert all(len(p.inputs) == 2 for p in lpartitions)
             layer = compute_layer_cls(
-                layer_num_folds, num_inputs, num_outputs, **compute_layer_kwargs
+                layer_num_folds, num_sum_units, num_outputs, **compute_layer_kwargs
             )
 
             inner_layers.append(layer)
@@ -336,8 +327,7 @@ class MonotonicPC(TensorizedPC):
         if self.scope_layer is not None:
             x = self.scope_layer(x)
 
-        if self.in_mixture is not None:
-            x = self.in_mixture(x)
+        x = self.in_mixture(x)
 
         layer_outputs: List[torch.Tensor] = [x]
         for layer, (in_layer_ids, fold_idx) in zip(self.layers, self.bookkeeping):
@@ -374,11 +364,6 @@ class MonotonicPC(TensorizedPC):
         mar_mask: torch.Tensor,
         log_in_z: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-
-        if isinstance(self.input_layer, MultivariateNormalDistribution):
-            raise NotImplementedError(
-                "Marginalization of multivariate input distributions is not supported"
-            )
 
         if log_in_z is None:
             if self.training:
@@ -426,8 +411,7 @@ class BornPC(TensorizedPC):
         if self.scope_layer is not None:
             x = self.scope_layer(x, square=square_mode)
 
-        if self.in_mixture is not None:
-            x = self.in_mixture(x, square=square_mode)
+        x = self.in_mixture(x, square=square_mode)
         layer_outputs: List[torch.Tensor] = [x]
 
         for layer, (in_layer_ids, fold_idx) in zip(self.layers, self.bookkeeping):
@@ -485,10 +469,6 @@ class BornPC(TensorizedPC):
         mar_mask: torch.Tensor,
         log_in_z: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        if isinstance(self.input_layer, BornMultivariateNormalDistribution):
-            raise NotImplementedError(
-                "Marginalization of multivariate input distributions is not supported"
-            )
         if log_in_z is None:
             if self.training:
                 log_in_z = self.input_layer.log_pf()

@@ -6,9 +6,7 @@ import torch
 
 from pcs.layers.candecomp import BornCPLayer
 from pcs.layers.input import (BornBinaryEmbeddings, BornBinomial, BornBSplines,
-                              BornEmbeddings,
-                              BornMultivariateNormalDistribution,
-                              BornNormalDistribution)
+                              BornEmbeddings, BornNormalDistribution)
 from pcs.layers.mixture import BornMixtureLayer
 from pcs.models import BornPC
 from region_graph import RegionGraph, RegionNode
@@ -22,14 +20,13 @@ from tests.test_utils import (generate_all_binary_samples,
 
 
 @pytest.mark.parametrize(
-    "compute_layer,num_variables,num_replicas,num_units,input_mixture,exp_reparam",
+    "compute_layer,num_variables,num_replicas,num_units,exp_reparam",
     list(
         itertools.product(
             [BornCPLayer],
             [8, 13],
             [1, 4],
             [1, 3],
-            [False, True],
             [False, True],
         )
     ),
@@ -39,7 +36,6 @@ def test_complex_born_pc_random(
     num_variables,
     num_replicas,
     num_units,
-    input_mixture,
     exp_reparam,
 ):
     rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas)
@@ -55,7 +51,6 @@ def test_complex_born_pc_random(
         compute_layer_cls=compute_layer,
         input_layer_kwargs=input_layer_kwargs,
         compute_layer_kwargs=compute_layer_kwargs,
-        input_mixture=input_mixture,
         num_units=num_units,
     )
     data = torch.LongTensor(generate_all_binary_samples(num_variables))
@@ -66,19 +61,16 @@ def test_complex_born_pc_random(
 
 
 @pytest.mark.parametrize(
-    "compute_layer,image_shape,num_units,input_mixture",
-    list(itertools.product([BornCPLayer], [(1, 3, 3)], [1, 3], [False, True])),
+    "compute_layer,image_shape,num_units",
+    list(itertools.product([BornCPLayer], [(1, 3, 3)], [1, 3])),
 )
-def test_complex_born_pc_pseudo_small_image(
-    compute_layer, image_shape, num_units, input_mixture
-):
+def test_complex_born_pc_pseudo_small_image(compute_layer, image_shape, num_units):
     rg = QuadTree(image_shape, struct_decomp=True)
     compute_layer_kwargs = input_layer_kwargs = {"complex": True}
     model = BornPC(
         rg,
         input_layer_cls=BornBinaryEmbeddings,
         compute_layer_cls=compute_layer,
-        input_mixture=input_mixture,
         num_units=num_units,
         input_layer_kwargs=input_layer_kwargs,
         compute_layer_kwargs=compute_layer_kwargs,
@@ -88,19 +80,15 @@ def test_complex_born_pc_pseudo_small_image(
 
 
 @pytest.mark.parametrize(
-    "compute_layer,image_shape,num_units,input_mixture,l2norm_reparam",
+    "compute_layer,image_shape,num_units,l2norm_reparam",
     list(
         itertools.product(
-            [BornCPLayer],
-            [(1, 7, 7), (3, 28, 28)],
-            [1, 3],
-            [False, True],
-            [False, True],
+            [BornCPLayer], [(1, 7, 7), (3, 28, 28)], [1, 3], [False, True]
         )
     ),
 )
 def test_complex_born_pc_pseudo_large_image(
-    compute_layer, image_shape, num_units, input_mixture, l2norm_reparam
+    compute_layer, image_shape, num_units, l2norm_reparam
 ):
     rg = QuadTree(image_shape, struct_decomp=True)
     compute_layer_kwargs = {"complex": True}
@@ -113,7 +101,6 @@ def test_complex_born_pc_pseudo_large_image(
         rg,
         input_layer_cls=BornEmbeddings,
         compute_layer_cls=compute_layer,
-        input_mixture=input_mixture,
         num_units=num_units,
         input_layer_kwargs=input_layer_kwargs,
         compute_layer_kwargs=compute_layer_kwargs,
@@ -124,19 +111,16 @@ def test_complex_born_pc_pseudo_large_image(
 
 
 @pytest.mark.parametrize(
-    "compute_layer,image_shape,num_units,input_mixture",
-    list(itertools.product([BornCPLayer], [(1, 7, 7)], [1, 3], [False, True])),
+    "compute_layer,image_shape,num_units",
+    list(itertools.product([BornCPLayer], [(1, 7, 7)], [1, 3])),
 )
-def test_complex_born_pc_image_dequantize(
-    compute_layer, image_shape, num_units, input_mixture
-):
+def test_complex_born_pc_image_dequantize(compute_layer, image_shape, num_units):
     rg = QuadTree(image_shape, struct_decomp=True)
     compute_layer_kwargs = {"complex": True}
     model = BornPC(
         rg,
         input_layer_cls=BornNormalDistribution,
         compute_layer_cls=compute_layer,
-        input_mixture=input_mixture,
         num_units=num_units,
         dequantize=True,
         compute_layer_kwargs=compute_layer_kwargs,
@@ -152,11 +136,11 @@ def test_complex_born_pc_image_dequantize(
 
 
 @pytest.mark.parametrize(
-    "compute_layer,num_variables,num_units,input_mixture,num_replicas",
-    list(itertools.product([BornCPLayer], [8, 13], [1, 3], [False, True], [1, 4])),
+    "compute_layer,num_variables,num_units,num_replicas",
+    list(itertools.product([BornCPLayer], [8, 13], [1, 3], [1, 4])),
 )
 def test_complex_born_pc_linear_rg(
-    compute_layer, num_variables, num_units, input_mixture, num_replicas
+    compute_layer, num_variables, num_units, num_replicas
 ):
     rg = LinearTree(num_variables, num_repetitions=num_replicas, randomize=True)
     compute_layer_kwargs = input_layer_kwargs = {"complex": True}
@@ -164,7 +148,6 @@ def test_complex_born_pc_linear_rg(
         rg,
         input_layer_cls=BornBinaryEmbeddings,
         compute_layer_cls=compute_layer,
-        input_mixture=input_mixture,
         num_units=num_units,
         compute_layer_kwargs=compute_layer_kwargs,
         input_layer_kwargs=input_layer_kwargs,
@@ -202,20 +185,6 @@ def test_complex_normal_born_pc():
     model = BornPC(
         rg,
         input_layer_cls=BornNormalDistribution,
-        out_mixture_layer_cls=BornMixtureLayer,
-        num_units=3,
-        compute_layer_kwargs={"complex": True},
-    )
-    model.eval()
-    check_pdf(model)
-
-
-def test_complex_multivariate_normal_born_pc():
-    rg = RegionGraph()
-    rg.add_node(RegionNode([0, 1]))
-    model = BornPC(
-        rg,
-        input_layer_cls=BornMultivariateNormalDistribution,
         out_mixture_layer_cls=BornMixtureLayer,
         num_units=3,
         compute_layer_kwargs={"complex": True},

@@ -13,8 +13,8 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from graphics.utils import setup_tueplots
 from pcs.models import PC
-from pcs.utils import num_parameters
-from scripts.utils import set_global_seed, setup_data_loaders, setup_model
+from scripts.utils import (num_parameters, set_global_seed, setup_data_loaders,
+                           setup_model)
 
 parser = argparse.ArgumentParser(description="Benchmark for squared circuits")
 parser.add_argument("dataset", type=str, help="The evaluation dataset")
@@ -41,7 +41,7 @@ parser.add_argument(
     "--base-batch-size", type=int, default=512, help="The default batch size"
 )
 parser.add_argument(
-    "--num-components",
+    "--num-units",
     type=str,
     default="64 128 256 512",
     help="A list of layer dimensionality separated by space",
@@ -190,7 +190,7 @@ def run_benchmark(
 if __name__ == "__main__":
     args = parser.parse_args()
     batch_sizes = sorted(map(int, args.batch_sizes.split()))
-    num_components = sorted(map(int, args.num_components.split()))
+    num_units = sorted(map(int, args.num_units.split()))
     models = ["BornPC", "BornPC"]
     settings = [{"eval_pf": False}, {"eval_pf": True}]
 
@@ -230,8 +230,7 @@ if __name__ == "__main__":
             dataset_metadata=metadata,
             rg_type="random",
             rg_replicas=32,
-            rg_depth=-1,
-            num_components=args.base_num_components,
+            num_units=args.base_num_units,
             compute_layer="cp",
             init_method="uniform",
             init_scale=1.0,
@@ -256,14 +255,14 @@ if __name__ == "__main__":
 
         print(f"Benchmarking {m} by varying the number of components ...")
         bench_nc_results = list()
-        for nc in num_components:
+        for nc in num_units:
             del model
             model = setup_model(
                 dataset_metadata=metadata,
                 rg_type="random",
                 rg_replicas=32,
                 rg_depth=-1,
-                num_components=nc,
+                num_units=nc,
                 compute_layer="cp",
                 init_method="uniform",
                 init_scale=1.0,
@@ -314,7 +313,7 @@ if __name__ == "__main__":
             marker=markers[idx],
         )
         sc_nc = ax[1].scatter(
-            num_components,
+            num_units,
             list(map(lambda t: t[0], bench_nc_results)),
             color=f"C{idx}",
             alpha=0.5,
@@ -323,7 +322,7 @@ if __name__ == "__main__":
             label=desc,
         )
         ax[1].scatter(
-            num_components,
+            num_units,
             list(map(lambda t: t[0], bench_nc_results)),
             color="k",
             alpha=0.6,

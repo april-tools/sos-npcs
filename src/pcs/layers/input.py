@@ -5,8 +5,6 @@ import numpy as np
 import torch
 from torch import distributions as ds
 from torch import nn
-from torch.distributions.multivariate_normal import \
-    _batch_mahalanobis as batch_mahalanobis
 
 from pcs.initializers import init_params_
 from pcs.utils import (log_binomial, ohe, retrieve_complex_default_dtype,
@@ -364,59 +362,6 @@ class NormalDistribution(MonotonicInputLayer):
         return log_prob
 
 
-class MultivariateNormalDistribution(InputLayer):
-    def __init__(
-        self,
-        rg_nodes: List[RegionNode],
-        num_units: int = 2,
-        init_scale: float = 1.0,
-    ):
-        super().__init__(rg_nodes, num_units)
-        if self.num_replicas > 1 or len(rg_nodes) > 1:
-            raise NotImplementedError(
-                "Multivariate distributions only implemented for single-region networks"
-            )
-        # Initialize mean
-        mu = torch.empty(1, self.num_replicas, self.num_units, self.num_variables)
-        init_params_(mu, "normal", init_scale=1.0)
-        self.mu = nn.Parameter(mu, requires_grad=True)
-        # Initialize weight for parametrizing the full covariance matrix
-        weight = torch.empty(
-            1,
-            self.num_replicas,
-            self.num_units,
-            self.num_variables,
-            self.num_variables,
-        )
-        init_params_(weight, "normal", init_scale=init_scale)
-        self.weight = nn.Parameter(weight, requires_grad=True)
-        self.register_buffer("eps_eye", 1e-5 * torch.eye(self.num_variables))
-
-    def log_pf(self) -> torch.Tensor:
-        return torch.zeros(
-            1,
-            self.num_replicas,
-            len(self.rg_nodes),
-            self.num_units,
-            device=self.mu.device,
-            requires_grad=False,
-        )
-
-    def __cholesky(self):
-        weight = self.weight.squeeze(dim=0)
-        pos_semidef_matrix = torch.matmul(weight, weight.permute(0, 1, 3, 2))
-        return torch.linalg.cholesky(pos_semidef_matrix + self.eps_eye)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # x: (-1, num_variables) -> (-1, 1, 1, num_variables)
-        x = x.unsqueeze(dim=1).unsqueeze(dim=1)
-        scale_tril = self.__cholesky()
-        # log_prob: (-1, num_replicas, 1, num_units)
-        log_prob = ds.MultivariateNormal(loc=self.mu, scale_tril=scale_tril).log_prob(x)
-        log_prob = log_prob.unsqueeze(dim=1)
-        return log_prob
-
-
 class BornNormalDistribution(BornInputLayer):
     def __init__(
         self,
@@ -463,79 +408,6 @@ class BornNormalDistribution(BornInputLayer):
         scale = torch.exp(self.log_sigma) + self.eps
         # log_prob: (-1, num_variables, num_replicas, num_units)
         log_prob = ds.Normal(loc=self.mu, scale=scale).log_prob(x)
-        return log_prob.to(self._complex_dtype)
-
-
-class BornMultivariateNormalDistribution(BornInputLayer):
-    def __init__(
-        self,
-        rg_nodes: List[RegionNode],
-        num_units: int = 2,
-        init_scale: float = 1.0,
-    ):
-        super().__init__(rg_nodes, num_units)
-        if self.num_replicas > 1 or len(rg_nodes) > 1:
-            raise NotImplementedError(
-                "Multivariate distributions only implemented for single-region networks"
-            )
-        self.log_two_pi = np.log(2.0 * np.pi)
-        # Initialize mean
-        mu = torch.empty(1, self.num_replicas, self.num_units, self.num_variables)
-        init_params_(mu, "normal", init_scale=1.0)
-        self.mu = nn.Parameter(mu, requires_grad=True)
-        # Initialize weight for parametrizing the full covariance matrix
-        weight = torch.empty(
-            1,
-            self.num_replicas,
-            self.num_units,
-            self.num_variables,
-            self.num_variables,
-        )
-        init_params_(weight, "normal", init_scale=init_scale)
-        self.weight = nn.Parameter(weight, requires_grad=True)
-        self.register_buffer("eps_eye", 1e-5 * torch.eye(self.num_variables))
-        self._complex_dtype = retrieve_complex_default_dtype()
-
-    def __covariance(self):
-        weight = self.weight
-        pos_semidef_matrix = torch.einsum("brivx,briux->brivu", weight, weight)
-        return pos_semidef_matrix + self.eps_eye
-
-    def __cholesky(self):
-        return torch.linalg.cholesky(self.__covariance())
-
-    def log_pf(self) -> torch.Tensor:
-        # mu_a: (1, num_replicas, 1, num_units, num_variables)
-        # mu_b: (1, num_replicas, num_units, 1, num_variables)
-        mu = self.mu
-        mu_a, mu_b = mu.unsqueeze(dim=-3), mu.unsqueeze(dim=-2)
-        # cov_a: (1, num_replicas, 1, num_units, num_variables, num_variables)
-        # cov_b: (1, num_replicas, num_units, 1, num_variables, num_variables)
-        cov = self.__covariance()
-        cov_a, cov_b = cov.unsqueeze(dim=-4), cov.unsqueeze(dim=-3)
-        pairwise_cov = cov_a + cov_b
-        pairwise_scale_tril = torch.linalg.cholesky(pairwise_cov)
-
-        # sq_norm_dist: (1, num_replicas, num_units, num_units)
-        sq_norm_dist = batch_mahalanobis(pairwise_scale_tril, mu_a - mu_b)
-        # log_det_cov: (1, num_replicas, num_units, num_units)
-        log_det_cov = torch.sum(
-            torch.log(pairwise_scale_tril.diagonal(dim1=-2, dim2=-1)), dim=-1
-        )
-
-        # log_z: (1, num_replicas, 1, num_units, num_units)
-        log_z = (
-            -0.5 * (self.mu.shape[-1] * self.log_two_pi + sq_norm_dist) - log_det_cov
-        )
-        log_z = log_z.unsqueeze(dim=-3)
-        return log_z.to(self._complex_dtype)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # x: (-1, num_variables) -> (-1, 1, 1, num_variables)
-        x = x.unsqueeze(dim=1).unsqueeze(dim=1)
-        scale_tril = self.__cholesky()
-        log_prob = ds.MultivariateNormal(loc=self.mu, scale_tril=scale_tril).log_prob(x)
-        log_prob = log_prob.unsqueeze(dim=1)
         return log_prob.to(self._complex_dtype)
 
 

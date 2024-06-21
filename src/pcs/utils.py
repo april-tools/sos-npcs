@@ -3,7 +3,6 @@ from typing import Optional, Tuple, Union
 import numpy as np
 import torch
 from scipy import special
-from torch import nn
 
 #: A random state type is either an integer seed value or a Numpy RandomState instance.
 RandomState = Union[int, np.random.RandomState]
@@ -69,17 +68,11 @@ def check_random_state(
     )
 
 
-def num_parameters(model: nn.Module, requires_grad: bool = True) -> int:
-    params = model.parameters()
-    if requires_grad:
-        params = filter(lambda p: p.requires_grad, params)
-    return sum(p.numel() for p in params)
+DEFAULT_TINY: float = torch.finfo(torch.get_default_dtype()).tiny
 
 
-def safelog(x: torch.Tensor, eps: Optional[float] = None) -> torch.Tensor:
-    if eps is None:
-        eps = torch.finfo(torch.get_default_dtype()).tiny
-    return torch.log(torch.clamp(x, min=eps))
+def safelog(x: torch.Tensor) -> torch.Tensor:
+    return torch.log(torch.clamp(x, min=DEFAULT_TINY))
 
 
 @torch.no_grad()

@@ -13,8 +13,8 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from graphics.utils import setup_tueplots
 from pcs.models import PC
-from pcs.utils import num_parameters
-from scripts.utils import set_global_seed, setup_data_loaders, setup_model
+from scripts.utils import (num_parameters, set_global_seed, setup_data_loaders,
+                           setup_model)
 
 parser = argparse.ArgumentParser(description="Benchmark for squared circuits")
 parser.add_argument(

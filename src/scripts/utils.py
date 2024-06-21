@@ -1,8 +1,7 @@
-import json
 import os
 import random
 import subprocess
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -10,6 +9,7 @@ import torch
 import wandb
 from sklearn.preprocessing import StandardScaler
 from tbparse import SummaryReader
+from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from zuko.flows import MAF, NICE, NSF, Flow
 
@@ -23,10 +23,9 @@ from graphics.distributions import (kde_samples_hmap,
                                     plot_bivariate_discrete_samples_hmap)
 from pcs.hmm import BornHMM, MonotonicHMM
 from pcs.layers import (BornBinaryEmbeddings, BornBinomial, BornBSplines,
-                        BornEmbeddings, BornMultivariateNormalDistribution,
-                        BornNormalDistribution, MonotonicBinaryEmbeddings,
-                        MonotonicBinomial, MonotonicBSplines,
-                        MonotonicEmbeddings, MultivariateNormalDistribution,
+                        BornEmbeddings, BornNormalDistribution,
+                        MonotonicBinaryEmbeddings, MonotonicBinomial,
+                        MonotonicBSplines, MonotonicEmbeddings,
                         NormalDistribution)
 from pcs.layers.candecomp import BornCPLayer, MonotonicCPLayer
 from pcs.layers.mixture import BornMixtureLayer, MonotonicMixtureLayer
@@ -437,7 +436,6 @@ def setup_model(
     num_units: int = 2,
     num_input_units: int = -1,
     complex: bool = False,
-    input_mixture: bool = False,
     compute_layer: str = "cp",
     multivariate: bool = False,
     binomials: bool = False,
@@ -445,7 +443,7 @@ def setup_model(
     spline_order: int = 2,
     spline_knots: int = 8,
     exp_reparam: bool = False,
-    init_method: str = "normal",
+    init_method: Optional[str] = None,
     init_scale: float = 1.0,
     dequantize: bool = False,
     l2norm_reparam: bool = False,
@@ -465,6 +463,8 @@ def setup_model(
     interval = dataset_metadata["interval"]
     input_layer_kwargs = dict()
     if model_name == "MonotonicPC":
+        if init_method is None:
+            init_method = "dirichlet"
         if dataset_type == "image":
             if splines:
                 input_layer_cls = MonotonicBSplines
@@ -490,11 +490,7 @@ def setup_model(
                 input_layer_kwargs["num_knots"] = spline_knots
                 input_layer_kwargs["interval"] = interval
             else:
-                input_layer_cls = (
-                    MultivariateNormalDistribution
-                    if multivariate
-                    else NormalDistribution
-                )
+                input_layer_cls = NormalDistribution
         model_cls = MonotonicPC
         if compute_layer == "cp":
             compute_layer_cls = MonotonicCPLayer
@@ -505,6 +501,8 @@ def setup_model(
         out_mixture_layer_cls = MonotonicMixtureLayer
         in_mixture_layer_cls = MonotonicMixtureLayer
     elif model_name == "BornPC":
+        if init_method is None:
+            init_method = "normal"
         if dataset_type == "image":
             if splines:
                 input_layer_cls = BornBSplines
@@ -531,11 +529,7 @@ def setup_model(
                 input_layer_kwargs["num_knots"] = spline_knots
                 input_layer_kwargs["interval"] = interval
             else:
-                input_layer_cls = (
-                    BornMultivariateNormalDistribution
-                    if multivariate
-                    else BornNormalDistribution
-                )
+                input_layer_cls = BornNormalDistribution
             out_mixture_layer_cls = (
                 BornMixtureLayer if multivariate else MonotonicMixtureLayer
             )
@@ -604,7 +598,6 @@ def setup_model(
                 seed=seed,
                 sd=rg_sd,
             )
-            rg.save("rg.json")
         elif rg_type == "quad-tree" and dataset_type == "image":
             rg = QuadTree(image_shape, struct_decomp=True)
         elif rg_type == "linear-tree":
@@ -676,8 +669,23 @@ def setup_model(
         in_mixture_layer_cls=in_mixture_layer_cls,
         num_units=num_units,
         num_input_units=num_input_units,
-        input_mixture=input_mixture,
         input_layer_kwargs=input_layer_kwargs,
         compute_layer_kwargs=compute_layer_kwargs,
         dequantize=dequantize,
     )
+
+
+def num_parameters(
+    model: Union[PC, nn.Module], requires_grad: bool = True, sum_only: bool = True
+) -> int:
+    if sum_only:
+        assert isinstance(model, PC)
+        params = list(model.in_mixture.parameters())
+        params.extend(model.layers.parameters())
+        if model.out_mixture is not None:
+            params.extend(model.out_mixture.parameters())
+    else:
+        params = model.parameters()
+    if requires_grad:
+        params = filter(lambda p: p.requires_grad, params)
+    return sum(p.numel() for p in params)
