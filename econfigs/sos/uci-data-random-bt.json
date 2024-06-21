@@ -3,7 +3,7 @@
     "tboard-path": "tboard-runs/uci-data",
     "checkpoint-path": "checkpoints/uci-data",
     "save-checkpoint": false,
-    "num-epochs": 1200,
+    "num-epochs": 600,
     "device": "cuda",
     "num-workers": 2,
     "patience-threshold": 1e-3,
