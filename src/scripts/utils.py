@@ -676,7 +676,7 @@ def setup_model(
 
 
 def num_parameters(
-    model: Union[PC, nn.Module], requires_grad: bool = True, sum_only: bool = True
+    model: Union[PC, nn.Module], requires_grad: bool = True, sum_only: bool = False
 ) -> int:
     if sum_only:
         assert isinstance(model, PC)
