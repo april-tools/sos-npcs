@@ -22,7 +22,6 @@ KEEP_COLS = [
     "dataset",
     "splines",
     "spline_knots",
-    "depth",
     "num_replicas",
 ]
 

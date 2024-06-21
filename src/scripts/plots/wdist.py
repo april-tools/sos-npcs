@@ -31,12 +31,6 @@ parser.add_argument("--num-replicas", default=1, type=int, help="Number of repli
 parser.add_argument(
     "--num-components", default=2, type=int, help="Number of components"
 )
-parser.add_argument(
-    "--depth",
-    default=1,
-    type=int,
-    help="The detph of the region graph. If negative, the it is the maximum depth allowed",
-)
 parser.add_argument("--exp-alias", default="", help="The experiment alias, if any")
 parser.add_argument(
     "--optimizer",

@@ -79,17 +79,13 @@ def check_pdf(model, interval: Optional[Tuple[float, float]] = None):
 
 
 @pytest.mark.parametrize(
-    "compute_layer,num_variables,num_replicas,depth,num_units,input_mixture",
-    list(
-        itertools.product(
-            [MonotonicCPLayer], [8, 13], [1, 4], [-1, 1, 3], [1, 3], [False, True]
-        )
-    ),
+    "compute_layer,num_variables,num_replicas,num_units,input_mixture",
+    list(itertools.product([MonotonicCPLayer], [8, 13], [1, 4], [1, 3], [False, True])),
 )
 def test_monotonic_pc_random(
-    compute_layer, num_variables, num_replicas, depth, num_units, input_mixture
+    compute_layer, num_variables, num_replicas, num_units, input_mixture
 ):
-    rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas, depth=depth)
+    rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas)
     model = MonotonicPC(
         rg,
         input_layer_cls=MonotonicBinaryEmbeddings,
@@ -105,13 +101,12 @@ def test_monotonic_pc_random(
 
 
 @pytest.mark.parametrize(
-    "compute_layer,num_variables,num_replicas,depth,num_units,input_mixture,exp_reparam",
+    "compute_layer,num_variables,num_replicas,num_units,input_mixture,exp_reparam",
     list(
         itertools.product(
             [BornCPLayer],
             [8, 13],
             [1, 4],
-            [-1, 1, 3],
             [1, 3],
             [False, True],
             [False, True],
@@ -122,12 +117,11 @@ def test_born_pc_random(
     compute_layer,
     num_variables,
     num_replicas,
-    depth,
     num_units,
     input_mixture,
     exp_reparam,
 ):
-    rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas, depth=depth)
+    rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas)
     init_method = "log-normal" if exp_reparam else "normal"
     compute_layer_kwargs = input_layer_kwargs = {
         "exp_reparam": exp_reparam,
@@ -356,11 +350,11 @@ def test_born_pc_linear_rg(
 
 
 @pytest.mark.parametrize(
-    "compute_layer,num_variables,depth,num_units",
-    list(itertools.product([MonotonicCPLayer], [4, 7], [1, 2], [1, 3])),
+    "compute_layer,num_variables,num_units",
+    list(itertools.product([MonotonicCPLayer], [4, 7], [1, 3])),
 )
-def test_monotonic_binomial_pc(compute_layer, num_variables, depth, num_units):
-    rg = RandomBinaryTree(num_variables, num_repetitions=1, depth=depth)
+def test_monotonic_binomial_pc(compute_layer, num_variables, num_units):
+    rg = RandomBinaryTree(num_variables, num_repetitions=1)
     model = MonotonicPC(
         rg,
         input_layer_cls=MonotonicBinomial,
@@ -376,11 +370,11 @@ def test_monotonic_binomial_pc(compute_layer, num_variables, depth, num_units):
 
 
 @pytest.mark.parametrize(
-    "compute_layer,num_variables,depth,num_units",
-    list(itertools.product([BornCPLayer], [4, 7], [1, 2], [1, 3])),
+    "compute_layer,num_variables,num_units",
+    list(itertools.product([BornCPLayer], [4, 7], [1, 3])),
 )
-def test_born_binomial_pc(compute_layer, num_variables, depth, num_units):
-    rg = RandomBinaryTree(num_variables, num_repetitions=1, depth=depth)
+def test_born_binomial_pc(compute_layer, num_variables, num_units):
+    rg = RandomBinaryTree(num_variables, num_repetitions=1)
     model = BornPC(
         rg,
         input_layer_cls=BornBinomial,
@@ -399,7 +393,7 @@ def test_born_binomial_pc(compute_layer, num_variables, depth, num_units):
     "compute_layer,num_units", list(itertools.product([MonotonicCPLayer], [3]))
 )
 def test_normal_monotonic_pc(compute_layer, num_units):
-    rg = RandomBinaryTree(2, num_repetitions=1, depth=1)
+    rg = RandomBinaryTree(2, num_repetitions=1)
     model = MonotonicPC(
         rg,
         input_layer_cls=NormalDistribution,
@@ -424,7 +418,7 @@ def test_multivariate_monotonic_normal_pc():
 
 
 def test_normal_born_pc():
-    rg = RandomBinaryTree(2, num_repetitions=1, depth=1)
+    rg = RandomBinaryTree(2, num_repetitions=1)
     model = BornPC(
         rg,
         input_layer_cls=BornNormalDistribution,
@@ -452,7 +446,7 @@ def test_multivariate_normal_born_pc():
     "compute_layer,num_units", list(itertools.product([MonotonicCPLayer], [2]))
 )
 def test_spline_monotonic_pc(compute_layer, num_units):
-    rg = RandomBinaryTree(2, num_repetitions=1, depth=1)
+    rg = RandomBinaryTree(2, num_repetitions=1)
     model = MonotonicPC(
         rg,
         input_layer_cls=MonotonicBSplines,
@@ -469,7 +463,7 @@ def test_spline_monotonic_pc(compute_layer, num_units):
     list(itertools.product([BornCPLayer], [2], [False, True])),
 )
 def test_spline_born_pc(compute_layer, num_units, exp_reparam):
-    rg = RandomBinaryTree(2, num_repetitions=1, depth=1)
+    rg = RandomBinaryTree(2, num_repetitions=1)
     init_method = "log-normal" if exp_reparam else "normal"
     model = BornPC(
         rg,

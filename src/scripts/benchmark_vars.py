@@ -38,7 +38,7 @@ parser.add_argument(
 parser.add_argument("--device", type=str, default="cpu", help="The device id")
 parser.add_argument("--batch-size", type=int, default=512, help="The batch size to use")
 parser.add_argument(
-    "--num-components", type=int, default=512, help="The layer dimensionality"
+    "--num-units", type=int, default=512, help="The layer dimensionality"
 )
 parser.add_argument(
     "--min-bubble-radius", type=float, default=40.0, help="Bubble sizes minimum"
@@ -59,7 +59,7 @@ parser.add_argument(
     help="Specific hyperparameters (separated by space) per model (separated by dash) per dataset (separated by semicolon)",
 )
 #
-# e.g., --specific-hparams "num_components=1024 batch_size=2048-num_components=1024 batch_size=512;num_components=128 batch_size=512-num_components=256 batch_size=512;num_components=32 batch_size=512-num_components=32 batch_size=512;num_components=512 batch_size=512-num_components=128 batch_size=512"
+# e.g., --specific-hparams "num_units=1024 batch_size=2048-num_units=1024 batch_size=512;num_units=128 batch_size=512-num_units=256 batch_size=512;num_units=32 batch_size=512-num_units=32 batch_size=512;num_units=512 batch_size=512-num_units=128 batch_size=512"
 #
 parser.add_argument(
     "--eval-backprop",
@@ -203,8 +203,7 @@ def entry_uniform_hparams_configuration() -> Tuple[dict, list]:
                 dataset_metadata=metadata,
                 rg_type="random",
                 rg_replicas=8,
-                rg_depth=-1,
-                num_components=num_components,
+                num_units=num_units,
                 compute_layer="cp",
                 init_method="uniform",
                 init_scale=1.0,
@@ -274,8 +273,7 @@ def entry_specific_hparams_configuration(hparams_conf: dict) -> Tuple[dict, list
                 dataset_metadata=metadata,
                 rg_type="random",
                 rg_replicas=8,
-                rg_depth=-1,
-                num_components=int(hps["num_components"]),
+                num_units=int(hps["num_units"]),
                 compute_layer="cp",
                 init_method="uniform",
                 init_scale=1.0,
@@ -321,7 +319,7 @@ def entry_specific_hparams_configuration(hparams_conf: dict) -> Tuple[dict, list
 if __name__ == "__main__":
     args = parser.parse_args()
     batch_size = args.batch_size
-    num_components = args.num_components
+    num_units = args.num_units
     models = ["MonotonicPC", "BornPC"]
 
     # Set device and the seed

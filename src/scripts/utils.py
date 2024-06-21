@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import subprocess
@@ -227,7 +228,6 @@ def build_run_id(args):
     if args.num_input_units > 0:
         rs.append(f"KI{args.num_input_units}")
     if "PC" in args.model:
-        rs.append(f"D{args.depth}")
         rs.append(f"L{args.compute_layer[:2]}")
     rs.append(f"O{args.optimizer}")
     rs.append(f"LR{args.learning_rate}")
@@ -434,7 +434,6 @@ def setup_model(
     rg_type: str = "random",
     rg_sd: bool = False,
     rg_replicas: int = 1,
-    rg_depth: int = 1,
     num_units: int = 2,
     num_input_units: int = -1,
     complex: bool = False,
@@ -602,10 +601,10 @@ def setup_model(
             rg = RandomBinaryTree(
                 num_variables,
                 num_repetitions=rg_replicas,
-                depth=rg_depth,
                 seed=seed,
                 sd=rg_sd,
             )
+            rg.save("rg.json")
         elif rg_type == "quad-tree" and dataset_type == "image":
             rg = QuadTree(image_shape, struct_decomp=True)
         elif rg_type == "linear-tree":
@@ -641,7 +640,6 @@ def setup_model(
             rg = RandomBinaryTree(
                 num_variables,
                 num_repetitions=rg_replicas,
-                depth=rg_depth,
                 seed=seed,
                 sd=rg_sd,
             )

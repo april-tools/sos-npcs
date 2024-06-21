@@ -8,7 +8,6 @@ def RandomBinaryTree(
     num_vars: int,
     num_repetitions: int = 1,
     seed: int = 42,
-    depth: int = -1,
     sd: bool = False,
 ) -> RegionGraph:
     vs = list(range(num_vars))
@@ -16,8 +15,6 @@ def RandomBinaryTree(
     graph = RegionGraph()
     graph.add_node(root)
     random_state = None
-    if depth < 0:
-        depth = float("inf")
 
     for replica_idx in range(num_repetitions):
         if sd or random_state is None:
@@ -25,7 +22,7 @@ def RandomBinaryTree(
             random_state = np.random.RandomState(seed)
         q = list()
         q.append(root)
-        while q and len(graph.topological_layers(bottom_up=False)) <= depth:
+        while q:
             region_node = q.pop()
             rvs = list(region_node.scope)
             if len(rvs) == 1:

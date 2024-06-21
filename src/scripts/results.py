@@ -69,9 +69,9 @@ def build_command(r: pd.Series) -> str:
         "exp-alias",
         "dataset",
         "model",
-        "num-components",
+        "num-units",
+        "num-input-units",
         "num-replicas",
-        "depth",
         "optimizer",
         "batch-size",
         "learning-rate",
@@ -85,9 +85,9 @@ def build_command(r: pd.Series) -> str:
         "exp-reparam",
     ]
     int_hps = {
-        "num-components",
+        "num-units",
+        "num-input-units",
         "num-replicas",
-        "depth",
         "batch-size",
         "spline-order",
         "spline-knots",

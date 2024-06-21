@@ -58,13 +58,12 @@ def check_conditional_sampling(
 
 def test_sampling_monotonic_pc():
     num_replicas = 1
-    depth = 1
     num_units = 2
     num_variables = 3
     num_samples, num_con_samples = 10000, 600000
     mis_var, evi_vars, evi_state = 1, [0, 2], torch.tensor([1, 0])
 
-    rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas, depth=depth)
+    rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas)
     model = MonotonicPC(
         rg,
         input_layer_cls=MonotonicBinaryEmbeddings,
@@ -79,13 +78,12 @@ def test_sampling_monotonic_pc():
 
 def test_sampling_born_pc():
     num_replicas = 1
-    depth = 1
     num_units = 2
     num_variables = 3
     num_samples, num_con_samples = 10000, 600000
     mis_var, evi_vars, evi_state = 1, [0, 2], torch.tensor([1, 0])
 
-    rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas, depth=depth)
+    rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas)
     model = BornPC(
         rg,
         input_layer_cls=BornBinaryEmbeddings,

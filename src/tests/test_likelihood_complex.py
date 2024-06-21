@@ -22,13 +22,12 @@ from tests.test_utils import (generate_all_binary_samples,
 
 
 @pytest.mark.parametrize(
-    "compute_layer,num_variables,num_replicas,depth,num_units,input_mixture,exp_reparam",
+    "compute_layer,num_variables,num_replicas,num_units,input_mixture,exp_reparam",
     list(
         itertools.product(
             [BornCPLayer],
             [8, 13],
             [1, 4],
-            [-1, 1, 3],
             [1, 3],
             [False, True],
             [False, True],
@@ -39,12 +38,11 @@ def test_complex_born_pc_random(
     compute_layer,
     num_variables,
     num_replicas,
-    depth,
     num_units,
     input_mixture,
     exp_reparam,
 ):
-    rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas, depth=depth)
+    rg = RandomBinaryTree(num_variables, num_repetitions=num_replicas)
     init_method = "log-normal" if exp_reparam else "normal"
     compute_layer_kwargs = input_layer_kwargs = {
         "exp_reparam": exp_reparam,
@@ -179,11 +177,11 @@ def test_complex_born_pc_linear_rg(
 
 
 @pytest.mark.parametrize(
-    "compute_layer,num_variables,depth,num_units",
-    list(itertools.product([BornCPLayer], [4, 7], [1, 2], [1, 3])),
+    "compute_layer,num_variables,num_units",
+    list(itertools.product([BornCPLayer], [4, 7], [1, 3])),
 )
-def test_complex_born_binomial_pc(compute_layer, num_variables, depth, num_units):
-    rg = RandomBinaryTree(num_variables, num_repetitions=1, depth=depth)
+def test_complex_born_binomial_pc(compute_layer, num_variables, num_units):
+    rg = RandomBinaryTree(num_variables, num_repetitions=1)
     model = BornPC(
         rg,
         input_layer_cls=BornBinomial,
@@ -200,7 +198,7 @@ def test_complex_born_binomial_pc(compute_layer, num_variables, depth, num_units
 
 
 def test_complex_normal_born_pc():
-    rg = RandomBinaryTree(2, num_repetitions=1, depth=1)
+    rg = RandomBinaryTree(2, num_repetitions=1)
     model = BornPC(
         rg,
         input_layer_cls=BornNormalDistribution,
@@ -231,7 +229,7 @@ def test_complex_multivariate_normal_born_pc():
     list(itertools.product([BornCPLayer], [2], [False, True])),
 )
 def test_complex_spline_born_pc(compute_layer, num_units, exp_reparam):
-    rg = RandomBinaryTree(2, num_repetitions=1, depth=1)
+    rg = RandomBinaryTree(2, num_repetitions=1)
     init_method = "log-normal" if exp_reparam else "normal"
     model = BornPC(
         rg,
