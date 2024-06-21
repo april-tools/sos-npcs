@@ -14,48 +14,52 @@
     "common": {
       "region-graph": "random",
       "region-graph-sd": true,
-      "depth": -1,
       "splines": false,
       "optimizer": "Adam",
       "verbose": true,
       "init-method": "uniform",
-      "init-scale": 1.0,
-      "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 128, 64], [16, 64, 16], [64, 32, 4]]
+      "init-scale": 1.0
     },
     "models": {
       "power": {
         "MonotonicPC": {
           "batch-size": 8192,
-          "learning-rate": [5e-4, 1e-3, 5e-3]
+          "learning-rate": [5e-4, 1e-3, 5e-3],
+          "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 160, 64], [16, 90, 16], [64, 47, 4]]
         },
         "BornPC": {
           "real": {
             "batch-size": 8192,
-            "learning-rate": [5e-4, 1e-3, 5e-3]
+            "learning-rate": [5e-4, 1e-3, 5e-3],
+            "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 160, 64], [16, 90, 16], [64, 47, 4]]
           }
         }
       },
       "gas": {
         "MonotonicPC": {
           "batch-size": 4096,
-          "learning-rate": [5e-4, 1e-3, 5e-3]
+          "learning-rate": [5e-4, 1e-3, 5e-3],
+          "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 158, 64], [16, 88, 16], [64, 46, 4]]
         },
         "BornPC": {
           "real": {
             "batch-size": 4096,
-            "learning-rate": [5e-4, 1e-3, 5e-3]
+            "learning-rate": [5e-4, 1e-3, 5e-3],
+            "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 160, 64], [16, 90, 16], [64, 47, 4]]
           }
         }
       },
       "hepmass": {
         "MonotonicPC": {
           "batch-size": 1024,
-          "learning-rate": [5e-4, 1e-3, 5e-3]
+          "learning-rate": [5e-4, 1e-3, 5e-3],
+          "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 153, 64], [16, 85, 16], [64, 44, 4]]
         },
         "BornPC": {
           "real": {
             "batch-size": 1024,
-            "learning-rate": [5e-4, 1e-3, 5e-3]
+            "learning-rate": [5e-4, 1e-3, 5e-3],
+            "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 153, 64], [16, 85, 16], [64, 44, 4]]
           }
         }
       }
