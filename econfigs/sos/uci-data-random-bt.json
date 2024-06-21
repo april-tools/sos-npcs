@@ -9,7 +9,7 @@
     "patience-threshold": 1e-3,
     "early-stop-patience": 10
   },
-  "datasets": ["power", "gas"],
+  "datasets": ["power", "gas", "hepmass"],
   "grid": {
     "common": {
       "region-graph": "random",
@@ -24,28 +24,38 @@
     },
     "models": {
       "power": {
+        "MonotonicPC": {
+          "batch-size": 8192,
+          "learning-rate": [5e-4, 1e-3, 5e-3]
+        },
         "BornPC": {
           "real": {
             "batch-size": 8192,
-            "learning-rate": [1e-4, 5e-3, 1e-3]
-          },
-          "complex": {
-            "complex": true,
-            "batch-size": 8192,
-            "learning-rate": [1e-4, 5e-3, 1e-3]
+            "learning-rate": [5e-4, 1e-3, 5e-3]
           }
         }
       },
       "gas": {
+        "MonotonicPC": {
+          "batch-size": 4096,
+          "learning-rate": [5e-4, 1e-3, 5e-3]
+        },
         "BornPC": {
           "real": {
             "batch-size": 4096,
-            "learning-rate": [1e-4, 5e-3, 1e-3]
-          },
-          "complex": {
-            "complex": true,
-            "batch-size": 4096,
-            "learning-rate": [1e-4, 5e-3, 1e-3]
+            "learning-rate": [5e-4, 1e-3, 5e-3]
+          }
+        }
+      },
+      "hepmass": {
+        "MonotonicPC": {
+          "batch-size": 1024,
+          "learning-rate": [5e-4, 1e-3, 5e-3]
+        },
+        "BornPC": {
+          "real": {
+            "batch-size": 1024,
+            "learning-rate": [5e-4, 1e-3, 5e-3]
           }
         }
       }
