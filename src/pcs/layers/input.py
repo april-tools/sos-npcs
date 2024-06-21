@@ -5,26 +5,16 @@ import numpy as np
 import torch
 from torch import distributions as ds
 from torch import nn
-from torch.distributions.multivariate_normal import (
-    _batch_mahalanobis as batch_mahalanobis,
-)
+from torch.distributions.multivariate_normal import \
+    _batch_mahalanobis as batch_mahalanobis
 
 from pcs.initializers import init_params_
-from pcs.utils import (
-    log_binomial,
-    ohe,
-    retrieve_complex_default_dtype,
-    retrieve_default_dtype,
-    safelog,
-)
+from pcs.utils import (log_binomial, ohe, retrieve_complex_default_dtype,
+                       retrieve_default_dtype, safelog)
 from region_graph import RegionNode
-from splines.bsplines import (
-    basis_polyint,
-    basis_polyval,
-    integrate_cartesian_basis,
-    least_squares_basis,
-    splines_uniform_polynomial,
-)
+from splines.bsplines import (basis_polyint, basis_polyval,
+                              integrate_cartesian_basis, least_squares_basis,
+                              splines_uniform_polynomial)
 
 
 class InputLayer(nn.Module, abc.ABC):
@@ -540,7 +530,7 @@ class BornMultivariateNormalDistribution(BornInputLayer):
         log_z = log_z.unsqueeze(dim=-3)
         return log_z.to(self._complex_dtype)
 
-    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (-1, num_variables) -> (-1, 1, 1, num_variables)
         x = x.unsqueeze(dim=1).unsqueeze(dim=1)
         scale_tril = self.__cholesky()

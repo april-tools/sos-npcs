@@ -7,11 +7,8 @@ from matplotlib import pyplot as plt
 from sklearn.preprocessing import StandardScaler
 
 from datasets.loaders import load_artificial_dataset
-from graphics.distributions import (
-    discrete_samples_hmap,
-    kde_samples_hmap,
-    plot_bivariate_discrete_samples_hmap,
-)
+from graphics.distributions import (discrete_samples_hmap, kde_samples_hmap,
+                                    plot_bivariate_discrete_samples_hmap)
 from graphics.utils import setup_tueplots
 
 parser = argparse.ArgumentParser(description="PDFs plotter")

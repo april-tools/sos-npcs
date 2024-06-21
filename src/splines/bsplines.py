@@ -11,7 +11,7 @@ def least_squares_basis(
     polynomials: torch.Tensor,
     data: torch.Tensor,
     num_replicas: int = 1,
-    num_components: int = 1,
+    num_units: int = 1,
     batch_size: int = 1,
     noise: float = 5e-2,
 ) -> torch.Tensor:
@@ -40,9 +40,7 @@ def least_squares_basis(
     x = x.squeeze(dim=-1)  # (num_variables, num_knots)
 
     # Add artificial noise
-    g = torch.randn(
-        [x.shape[0], num_replicas, num_components, x.shape[1]], device=x.device
-    )
+    g = torch.randn([x.shape[0], num_replicas, num_units, x.shape[1]], device=x.device)
     x = x.unsqueeze(dim=-2).unsqueeze(dim=-2)
     r = torch.linalg.norm(x, ord=2, dim=-1, keepdim=True)
     x = noise * r * g + x

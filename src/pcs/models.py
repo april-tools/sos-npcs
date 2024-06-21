@@ -9,12 +9,9 @@ from torch import nn
 
 from pcs.layers import BornComputeLayer, ComputeLayer, MonotonicComputeLayer
 from pcs.layers.candecomp import BornCPLayer, MonotonicCPLayer
-from pcs.layers.input import (
-    BornInputLayer,
-    BornMultivariateNormalDistribution,
-    InputLayer,
-    MultivariateNormalDistribution,
-)
+from pcs.layers.input import (BornInputLayer,
+                              BornMultivariateNormalDistribution, InputLayer,
+                              MultivariateNormalDistribution)
 from pcs.layers.mixture import BornMixtureLayer, MonotonicMixtureLayer
 from pcs.layers.scope import BornScopeLayer, MonotonicScopeLayer, ScopeLayer
 from region_graph import PartitionNode, RegionGraph, RegionNode
@@ -75,7 +72,7 @@ class PC(nn.Module, abc.ABC):
 
     def log_pf(self, *, return_input: bool = False) -> Union[
         torch.Tensor,
-        Tuple[Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]], torch.Tensor],
+        Tuple[torch.Tensor, torch.Tensor],
     ]:
         if self.__cache_log_pf is None:
             in_log_pf, log_pf = self.eval_log_pf()
@@ -88,7 +85,7 @@ class PC(nn.Module, abc.ABC):
     @abc.abstractmethod
     def eval_log_pf(
         self,
-    ) -> Tuple[Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]], torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         pass
 
     @abc.abstractmethod
@@ -100,9 +97,7 @@ class PC(nn.Module, abc.ABC):
         self,
         x: torch.Tensor,
         mar_mask: torch.Tensor,
-        log_in_z: Optional[
-            Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]
-        ] = None,
+        log_in_z: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         pass
 
@@ -154,7 +149,7 @@ class TensorizedPC(PC, abc.ABC):
         # Build the input and output mixture layers, if needed
         if input_mixture:
             self.in_mixture = in_mixture_layer_cls(
-                rg_layers[0][1],
+                len(rg_layers[0][1]),
                 num_in_components=num_input_units,
                 num_out_components=num_input_units,
                 **compute_layer_kwargs,
@@ -166,7 +161,6 @@ class TensorizedPC(PC, abc.ABC):
             rg_layers,
             compute_layer_cls,
             compute_layer_kwargs,
-            in_mixture_layer_cls,
             num_sum_units,
             num_input_units,
             num_classes=num_classes,
@@ -188,7 +182,7 @@ class TensorizedPC(PC, abc.ABC):
                 if isinstance(self, BornPC) and "init_method" in mixture_layer_kwargs:
                     mixture_layer_kwargs["init_method"] = "uniform"
             self.out_mixture = out_mixture_layer_cls(
-                rg_layers[-1][1],
+                len(rg_layers[-1][1]),
                 num_in_components=num_in_components,
                 num_out_components=self.num_classes,
                 **mixture_layer_kwargs,
@@ -201,7 +195,6 @@ class TensorizedPC(PC, abc.ABC):
         rg_layers: List[Tuple[List[PartitionNode], List[RegionNode]]],
         compute_layer_cls: Type[ComputeLayer],
         compute_layer_kwargs: Dict[str, Any],
-        mixture_layer_cls: Type[ComputeLayer],
         num_sum_units: int,
         num_input_units: int,
         num_classes: int = 1,
@@ -258,7 +251,8 @@ class TensorizedPC(PC, abc.ABC):
                 assert len(p.outputs) == 1
                 out_region = p.outputs[0]
                 region_id_fold[out_region.get_id()] = (i, len(inner_layers) + 1)
-            num_folds.append(len(lpartitions))
+            layer_num_folds = len(lpartitions)
+            num_folds.append(layer_num_folds)
 
             # Build the actual layer
             num_outputs = (
@@ -266,15 +260,10 @@ class TensorizedPC(PC, abc.ABC):
             )
             num_inputs = num_input_units if rg_layer_idx == 1 else num_sum_units
 
-            if all(len(p.inputs) == 1 for p in lpartitions):
-                layer = mixture_layer_cls(
-                    lregions, num_inputs, num_outputs, **compute_layer_kwargs
-                )
-            else:
-                assert all(len(p.inputs) == 2 for p in lpartitions)
-                layer = compute_layer_cls(
-                    lregions, num_inputs, num_outputs, **compute_layer_kwargs
-                )
+            assert all(len(p.inputs) == 2 for p in lpartitions)
+            layer = compute_layer_cls(
+                layer_num_folds, num_inputs, num_outputs, **compute_layer_kwargs
+            )
 
             inner_layers.append(layer)
 
@@ -481,7 +470,7 @@ class BornPC(TensorizedPC):
 
         return x.squeeze(dim=-1)
 
-    def eval_log_pf(self) -> torch.Tensor:
+    def eval_log_pf(self) -> Tuple[torch.Tensor, torch.Tensor]:
         log_in_z = self.input_layer.log_pf()
         log_z = self._eval_layers(log_in_z, square_mode=True)
         return log_in_z, log_z

@@ -19,17 +19,11 @@ from pcs.optimizers import OPTIMIZERS_NAMES, setup_optimizer
 from pcs.utils import num_parameters
 from region_graph import REGION_GRAPHS
 from scripts.logger import Logger
-from scripts.utils import (
-    bits_per_dimension,
-    build_run_id,
-    evaluate_model_log_likelihood,
-    get_git_revision_hash,
-    perplexity,
-    set_global_seed,
-    setup_data_loaders,
-    setup_experiment_path,
-    setup_model,
-)
+from scripts.utils import (bits_per_dimension, build_run_id,
+                           evaluate_model_log_likelihood,
+                           get_git_revision_hash, perplexity, set_global_seed,
+                           setup_data_loaders, setup_experiment_path,
+                           setup_model)
 
 
 class Engine:

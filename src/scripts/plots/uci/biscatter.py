@@ -14,14 +14,9 @@ import seaborn as sns
 from datasets.loaders import CONTINUOUS_DATASETS
 from graphics.utils import setup_tueplots
 from pcs.models import PCS_MODELS
-from scripts.utils import (
-    drop_na,
-    filter_dataframe,
-    format_model,
-    retrieve_tboard_runs,
-    retrieve_wandb_runs,
-    unroll_hparams,
-)
+from scripts.utils import (drop_na, filter_dataframe, format_model,
+                           retrieve_tboard_runs, retrieve_wandb_runs,
+                           unroll_hparams)
 
 PALETTE = {
     "gaussian": {

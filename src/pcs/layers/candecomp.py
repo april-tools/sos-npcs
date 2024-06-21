@@ -6,20 +6,19 @@ from torch import nn
 from pcs.initializers import init_params_
 from pcs.layers import BornComputeLayer, MonotonicComputeLayer
 from pcs.utils import retrieve_complex_default_dtype
-from region_graph import RegionNode
 
 
 class MonotonicCPLayer(MonotonicComputeLayer):
     def __init__(
         self,
-        rg_nodes: List[RegionNode],
+        num_folds: int,
         num_in_components: int,
         num_out_components: int,
         init_method: str = "dirichlet",
         init_scale: float = 1.0,
     ):
-        super().__init__(rg_nodes, num_in_components, num_out_components)
-        weight = torch.empty(len(rg_nodes), num_out_components, num_in_components)
+        super().__init__(num_folds, num_in_components, num_out_components)
+        weight = torch.empty(num_folds, num_out_components, num_in_components)
         init_params_(weight, init_method, init_scale=init_scale)
         self.weight = nn.Parameter(torch.log(weight), requires_grad=True)
 
@@ -40,7 +39,7 @@ class MonotonicCPLayer(MonotonicComputeLayer):
 class BornCPLayer(BornComputeLayer):
     def __init__(
         self,
-        rg_nodes: List[RegionNode],
+        num_folds: int,
         num_in_components: int,
         num_out_components: int,
         init_method: str = "normal",
@@ -48,10 +47,10 @@ class BornCPLayer(BornComputeLayer):
         complex: bool = False,
         exp_reparam: bool = False,
     ):
-        super().__init__(rg_nodes, num_in_components, num_out_components)
+        super().__init__(num_folds, num_in_components, num_out_components)
         complex_dtype = retrieve_complex_default_dtype()
         weight = torch.empty(
-            len(rg_nodes),
+            num_folds,
             num_out_components,
             num_in_components,
             dtype=complex_dtype if complex else None,

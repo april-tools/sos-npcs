@@ -5,11 +5,8 @@ import torch
 from matplotlib import pyplot as plt
 
 from graphics.utils import setup_tueplots
-from splines.bsplines import (
-    basis_polyval,
-    splines_uniform_knots,
-    splines_uniform_polynomial,
-)
+from splines.bsplines import (basis_polyval, splines_uniform_knots,
+                              splines_uniform_polynomial)
 
 if __name__ == "__main__":
     torch.random.manual_seed(43)

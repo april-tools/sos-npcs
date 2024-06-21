@@ -5,9 +5,7 @@ import pytest
 
 from region_graph.random_binary_tree import RandomBinaryTree
 from tests.region_graph.test_region_graph import (
-    check_region_graph_save_load,
-    check_region_partition_layers,
-)
+    check_region_graph_save_load, check_region_partition_layers)
 
 
 @pytest.mark.parametrize(

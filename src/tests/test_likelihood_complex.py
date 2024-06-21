@@ -5,27 +5,20 @@ import pytest
 import torch
 
 from pcs.layers.candecomp import BornCPLayer
-from pcs.layers.input import (
-    BornBinaryEmbeddings,
-    BornBinomial,
-    BornBSplines,
-    BornEmbeddings,
-    BornMultivariateNormalDistribution,
-    BornNormalDistribution,
-)
+from pcs.layers.input import (BornBinaryEmbeddings, BornBinomial, BornBSplines,
+                              BornEmbeddings,
+                              BornMultivariateNormalDistribution,
+                              BornNormalDistribution)
 from pcs.layers.mixture import BornMixtureLayer
 from pcs.models import BornPC
 from region_graph import RegionGraph, RegionNode
 from region_graph.linear_tree import LinearTree
 from region_graph.quad_tree import QuadTree
 from region_graph.random_binary_tree import RandomBinaryTree
-from tests.test_likelihood import (
-    check_evi_ll,
-    check_mar_ll_one,
-    check_mar_ll_pf,
-    check_pdf,
-)
-from tests.test_utils import generate_all_binary_samples, generate_all_ternary_samples
+from tests.test_likelihood import (check_evi_ll, check_mar_ll_one,
+                                   check_mar_ll_pf, check_pdf)
+from tests.test_utils import (generate_all_binary_samples,
+                              generate_all_ternary_samples)
 
 
 @pytest.mark.parametrize(
