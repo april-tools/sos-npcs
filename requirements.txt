@@ -1,4 +1,4 @@
-torch>=2.0.0
+torch>=2.2.0
 pandas<2.0.0
 portalocker
 scikit-learn

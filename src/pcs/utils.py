@@ -68,11 +68,10 @@ def check_random_state(
     )
 
 
-DEFAULT_TINY: float = torch.finfo(torch.get_default_dtype()).tiny
-
-
+@torch.compile()
 def safelog(x: torch.Tensor) -> torch.Tensor:
-    return torch.log(torch.clamp(x, min=DEFAULT_TINY))
+    eps = torch.finfo(torch.get_default_dtype()).tiny
+    return torch.log(torch.clamp(x, min=eps))
 
 
 @torch.no_grad()

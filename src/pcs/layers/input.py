@@ -11,7 +11,7 @@ from pcs.utils import (log_binomial, ohe, retrieve_complex_default_dtype,
                        retrieve_default_dtype, safelog)
 from region_graph import RegionNode
 from splines.bsplines import (basis_polyint, basis_polyval,
-                              integrate_cartesian_basis, least_squares_basis,
+                              integrate_cartesian_basis,
                               splines_uniform_polynomial)
 
 
@@ -48,7 +48,7 @@ class MonotonicEmbeddings(MonotonicInputLayer):
     def __init__(
         self,
         rg_nodes: List[RegionNode],
-        num_units: int = 2,
+        num_units: int,
         num_states: int = 2,
         init_method: str = "dirichlet",
         init_scale: float = 1.0,
@@ -84,7 +84,7 @@ class BornEmbeddings(BornInputLayer):
     def __init__(
         self,
         rg_nodes: List[RegionNode],
-        num_units: int = 2,
+        num_units: int,
         num_states: int = 2,
         init_method: str = "normal",
         init_scale: float = 1.0,
@@ -164,7 +164,7 @@ class MonotonicBinaryEmbeddings(MonotonicEmbeddings):
     def __init__(
         self,
         rg_nodes: List[RegionNode],
-        num_units: int = 2,
+        num_units: int,
         init_method: str = "dirichlet",
         init_scale: float = 1.0,
     ):
@@ -181,7 +181,7 @@ class BornBinaryEmbeddings(BornEmbeddings):
     def __init__(
         self,
         rg_nodes: List[RegionNode],
-        num_units: int = 2,
+        num_units: int,
         init_method: str = "normal",
         init_scale: float = 1.0,
         complex: bool = False,
@@ -199,9 +199,7 @@ class BornBinaryEmbeddings(BornEmbeddings):
 
 
 class MonotonicBinomial(MonotonicInputLayer):
-    def __init__(
-        self, rg_nodes: List[RegionNode], num_units: int = 2, num_states: int = 2
-    ):
+    def __init__(self, rg_nodes: List[RegionNode], num_units: int, num_states: int = 2):
         super().__init__(rg_nodes, num_units)
         self.num_states = num_states
         self.total_count = num_states - 1
@@ -247,9 +245,7 @@ class MonotonicBinomial(MonotonicInputLayer):
 
 
 class BornBinomial(BornInputLayer):
-    def __init__(
-        self, rg_nodes: List[RegionNode], num_units: int = 2, num_states: int = 2
-    ):
+    def __init__(self, rg_nodes: List[RegionNode], num_units: int, num_states: int = 2):
         super().__init__(rg_nodes, num_units)
         self.num_states = num_states
         self.total_count = num_states - 1
@@ -327,7 +323,7 @@ class NormalDistribution(MonotonicInputLayer):
     def __init__(
         self,
         rg_nodes: List[RegionNode],
-        num_units: int = 2,
+        num_units: int,
         init_scale: float = 1.0,
     ):
         super().__init__(rg_nodes, num_units)
@@ -366,7 +362,7 @@ class BornNormalDistribution(BornInputLayer):
     def __init__(
         self,
         rg_nodes: List[RegionNode],
-        num_units: int = 2,
+        num_units: int,
         init_scale: float = 1.0,
     ):
         super().__init__(rg_nodes, num_units)
@@ -415,179 +411,86 @@ class MonotonicBSplines(MonotonicInputLayer):
     def __init__(
         self,
         rg_nodes: List[RegionNode],
-        num_units: int = 2,
-        order: int = 1,
-        num_knots: int = 3,
+        num_units: int,
+        order: int = 2,
         interval: Tuple[float, float] = (0.0, 1.0),
-        init_method: str = "dirichlet",
-        init_scale: float = 1.0,
     ):
         super().__init__(rg_nodes, num_units)
         self.order = order
-        self.num_knots = num_knots
         self.interval = interval
 
         # Construct the basis functions (as polynomials) and the knots
-        knots, polynomials = splines_uniform_polynomial(
-            order, num_knots, interval=interval
+        intervals, polynomials = splines_uniform_polynomial(
+            order, num_units, interval=interval
         )
         numpy_dtype = retrieve_default_dtype(numpy=True)
-        knots = knots.astype(numpy_dtype, copy=False)
+        intervals = intervals.astype(numpy_dtype, copy=False)
         polynomials = polynomials.astype(numpy_dtype, copy=False)
-        self.register_buffer("knots", torch.from_numpy(knots))
+        self.register_buffer("intervals", torch.from_numpy(intervals))
         self.register_buffer("polynomials", torch.from_numpy(polynomials))
         self.register_buffer(
-            "_integral_basis", basis_polyint(self.knots, self.polynomials)
+            "_integral_basis", basis_polyint(self.intervals, self.polynomials)
         )
-
-        # Initialize the coefficients (in log-space) of the splines (along replicas and components dimensions)
-        weight = torch.empty(
-            self.num_variables, self.num_replicas, self.num_units, self.num_knots
-        )
-        init_params_(weight, init_method, init_scale=init_scale)
-        self.weight = nn.Parameter(torch.log(weight), requires_grad=True)
-
-    @torch.no_grad()
-    def least_squares_fit(
-        self, data: torch.Tensor, batch_size: int = 1, noise: float = 5e-2
-    ):
-        coeffs = least_squares_basis(
-            self.knots,
-            self.polynomials,
-            data,
-            num_replicas=self.num_replicas,
-            num_units=self.num_units,
-            batch_size=batch_size,
-            noise=noise,
-        )
-        coeffs = torch.log(coeffs)
-        self.weight.data.copy_(coeffs)
 
     def log_pf(self) -> torch.Tensor:
         sint = self._integral_basis
-        # log_z: (1, num_variables, num_replicas, num_units)
-        log_z = torch.logsumexp(
-            self.weight + torch.log(sint), dim=-1
-        )  # (num_variables, num_replicas, num_units)
+        # log_z: (1, 1, 1, num_units)
+        log_z = safelog(sint)
         log_z = log_z.unsqueeze(dim=0)
+        log_z = log_z.unsqueeze(dim=1)
+        log_z = log_z.unsqueeze(dim=2)
         return log_z
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (-1, num_variables)
         y = basis_polyval(
-            self.knots, self.polynomials, x
-        )  # (-1, num_variables, num_knots)
-        log_y = torch.log(y)
-        m_y, _ = torch.max(log_y, dim=-1, keepdim=True)
-        e_y = torch.exp(log_y - m_y)
-        e_w = torch.exp(self.weight)
-        # log_y: (-1, num_variables, num_replicas, num_units)
-        y = torch.einsum("vrik,bvk->bvri", e_w, e_y)
-        log_y = m_y.unsqueeze(dim=-1) + torch.log(y)
-        return log_y
+            self.intervals, self.polynomials, x
+        )  # (-1, num_variables, num_units)
+        return safelog(y).unsqueeze(dim=2)
 
 
 class BornBSplines(BornInputLayer):
     def __init__(
         self,
         rg_nodes: List[RegionNode],
-        num_units: int = 2,
-        order: int = 1,
-        num_knots: int = 3,
+        num_units: int,
+        order: int = 2,
         interval: Tuple[float, float] = (0.0, 1.0),
-        init_method: str = "normal",
-        init_scale: float = 1.0,
-        complex: bool = False,
-        exp_reparam: bool = False,
     ):
         super().__init__(rg_nodes, num_units)
         self.order = order
-        self.num_knots = num_knots
         self.interval = interval
-        complex_dtype = retrieve_complex_default_dtype()
 
         # Construct the basis functions (as polynomials) and the knots
-        knots, polynomials = splines_uniform_polynomial(
-            order, num_knots, interval=interval
+        intervals, polynomials = splines_uniform_polynomial(
+            order, num_units, interval=interval
         )
         numpy_dtype = retrieve_default_dtype(numpy=True)
-        knots = knots.astype(numpy_dtype, copy=False)
+        intervals = intervals.astype(numpy_dtype, copy=False)
         polynomials = polynomials.astype(numpy_dtype, copy=False)
-        self.register_buffer("knots", torch.from_numpy(knots))
+        self.register_buffer("intervals", torch.from_numpy(intervals))
         self.register_buffer("polynomials", torch.from_numpy(polynomials))
         self.register_buffer(
             "_integral_cartesian_basis",
-            integrate_cartesian_basis(self.knots, self.polynomials),
+            integrate_cartesian_basis(self.intervals, self.polynomials),
         )
-
-        # Initialize the coefficients (in log-space) of the splines (along replicas and components dimensions)
-        weight = torch.empty(
-            self.num_variables,
-            self.num_replicas,
-            self.num_units,
-            self.num_knots,
-            dtype=complex_dtype if complex else None,
-        )
-        init_params_(weight, init_method, init_scale=init_scale)
-        if exp_reparam:
-            weight = torch.log(weight)
-        self.weight = nn.Parameter(weight, requires_grad=True)
-        self.complex = complex
-        self.exp_reparam = exp_reparam
-        self._complex_dtype = complex_dtype
-
-    @torch.no_grad()
-    def least_squares_fit(
-        self, data: torch.Tensor, batch_size: int = 1, noise: float = 5e-2
-    ):
-        coeffs = least_squares_basis(
-            self.knots,
-            self.polynomials,
-            data,
-            num_replicas=self.num_replicas,
-            num_units=self.num_units,
-            batch_size=batch_size,
-            noise=noise,
-        )
-        if self.exp_reparam:
-            coeffs = torch.log(coeffs)
-        self.weight.data.copy_(coeffs)
-
-    def _forward_weight(self) -> Tuple[torch.Tensor, torch.Tensor]:
-        weight = torch.exp(self.weight) if self.exp_reparam else self.weight
-        weight_conj = weight.conj() if self.complex else weight
-        return weight, weight_conj
+        self._complex_dtype = retrieve_complex_default_dtype()
 
     def log_pf(self) -> torch.Tensor:
-        # Get the weight and the conjugate weight tensors
-        weight, weight_conj = self._forward_weight()
-
-        # sint: (num_knots, num_knots)
-        sint = self._integral_cartesian_basis
-        if self.complex:
-            sint = sint.to(self._complex_dtype)
-        z = torch.einsum("kl,vrik->lvri", sint, weight)
-        z = torch.einsum("lvri,vrjl->vrij", z, weight_conj)
-        if not self.complex:
-            z = z.to(self._complex_dtype)
-        # log_z: (1, num_variables, num_replicas, num_units, num_units)
-        log_z = torch.log(z)
-        return log_z.unsqueeze(dim=0)
+        # z: (num_knots, num_knots)
+        z = self._integral_cartesian_basis
+        # log_z: (1, 1, 1, num_units, num_units)
+        log_z = safelog(z)
+        log_z = log_z.unsqueeze(dim=0)
+        log_z = log_z.unsqueeze(dim=1)
+        log_z = log_z.unsqueeze(dim=2)
+        return log_z.to(self._complex_dtype)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # Get the weight and the conjugate weight tensors
-        weight, weight_conj = self._forward_weight()
-
         # x: (-1, num_variables)
-        knots = self.knots
-        polynomials = self.polynomials
-        y = basis_polyval(knots, polynomials, x)  # (-1, num_variables, num_knots)
-        if self.complex:
-            y = y.to(self._complex_dtype)
-        # y: (-1, num_variables, num_replicas, num_units)
-        y = torch.einsum("bvk,vrik->bvri", y, weight)
-        if not self.complex:
-            y = y.to(self._complex_dtype)
-        log_y = torch.log(y)
-        # log_y: (-1, num_variables, num_replicas, num_units)
-        return log_y
+        y = basis_polyval(
+            self.intervals, self.polynomials, x
+        )  # (-1, num_variables, num_units)
+        # log_y: (-1, num_variables, 1, num_units)
+        log_y = safelog(y).unsqueeze(dim=2)
+        return log_y.to(self._complex_dtype)

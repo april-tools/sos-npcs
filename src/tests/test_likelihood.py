@@ -391,7 +391,8 @@ def test_spline_monotonic_pc(compute_layer, num_units):
         input_layer_cls=MonotonicBSplines,
         compute_layer_cls=compute_layer,
         num_units=num_units,
-        input_layer_kwargs={"order": 2, "num_knots": 6, "interval": (0.0, 1.0)},
+        num_input_units=6,
+        input_layer_kwargs={"order": 2, "interval": (0.0, 1.0)},
     )
     model.eval()
     check_pdf(model, interval=(0.0, 1.0))
@@ -409,12 +410,8 @@ def test_spline_born_pc(compute_layer, num_units, exp_reparam):
         input_layer_cls=BornBSplines,
         compute_layer_cls=compute_layer,
         num_units=num_units,
-        input_layer_kwargs={
-            "order": 2,
-            "num_knots": 6,
-            "interval": (0.0, 1.0),
-            "init_method": init_method,
-        },
+        num_input_units=6,
+        input_layer_kwargs={"order": 2, "interval": (0.0, 1.0)},
         compute_layer_kwargs={"init_method": init_method, "exp_reparam": exp_reparam},
     )
     model.eval()

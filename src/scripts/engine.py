@@ -95,7 +95,6 @@ class Engine:
             "binomials": self.args.binomials,
             "splines": self.args.splines,
             "spline_order": self.args.spline_order,
-            "spline_knots": self.args.spline_knots,
             "exp_reparam": self.args.exp_reparam,
             "l2norm_reparam": self.args.l2norm_reparam,
             "optimizer": self.args.optimizer,
@@ -103,8 +102,6 @@ class Engine:
             "batch_size": self.args.batch_size,
             "init_method": self.args.init_method,
             "init_scale": self.args.init_scale,
-            "spline_lsq": self.args.spline_lsq,
-            "spline_lsq_noise": self.args.spline_lsq_noise,
             "weight_decay": self.args.weight_decay,
             "exp_alias": self.args.exp_alias,
             "git_rev_hash": self._git_rev_hash,
@@ -315,7 +312,6 @@ class Engine:
             binomials=self.args.binomials,
             splines=self.args.splines,
             spline_order=self.args.spline_order,
-            spline_knots=self.args.spline_knots,
             init_method=self.args.init_method,
             init_scale=self.args.init_scale,
             dequantize=self.args.dequantize,
@@ -414,26 +410,6 @@ class Engine:
         else:
             num_sum_params = np.nan
         self.model.to(self._device)
-
-        # Initialize models based on splines via least squares method
-        if isinstance(self.model, TensorizedPC) and not self.args.load_checkpoint:
-            if (
-                self.args.splines
-                and self.args.spline_lsq
-                and not self.args.load_checkpoint
-            ):
-                self.logger.info("Running Least Squares Method ...")
-                if isinstance(train_dataloader.dataset, TensorDataset):
-                    data_to_fit = train_dataloader.dataset.tensors[0]
-                else:
-                    raise NotImplementedError(
-                        f"Unknown raw data set class: {type(train_dataloader.dataset)}"
-                    )
-                self.model.input_layer.least_squares_fit(
-                    data=data_to_fit,
-                    batch_size=self.args.batch_size * 4,
-                    noise=self.args.spline_lsq_noise,
-                )
 
         # Instantiate the LR scheduler, if any
         if self.args.reduce_lr_plateau:

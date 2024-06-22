@@ -10,12 +10,12 @@ from splines.bsplines import (basis_polyval, splines_uniform_knots,
 
 if __name__ == "__main__":
     torch.random.manual_seed(43)
-    order, num_knots = 2, 7
+    order, num_basis = 2, 7
     clamped = True
-    knots = splines_uniform_knots(order=order, nun_knots=num_knots, clamped=clamped)
+    knots = splines_uniform_knots(order=order, num_basis=num_basis, clamped=clamped)
     print(knots)
     intervals, polynomials = splines_uniform_polynomial(
-        order=order, num_knots=num_knots, clamped=clamped
+        order=order, num_basis=num_basis, clamped=clamped
     )
     intervals = torch.tensor(intervals, dtype=torch.float64)
     polynomials = torch.tensor(polynomials, dtype=torch.float64)

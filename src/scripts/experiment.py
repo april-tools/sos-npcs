@@ -158,24 +158,6 @@ parser.add_argument(
 )
 parser.add_argument("--spline-order", type=int, default=2, help="The B-spline order")
 parser.add_argument(
-    "--spline-knots",
-    type=int,
-    default=8,
-    help="The number of uniformly-chosen knots within the data",
-)
-parser.add_argument(
-    "--spline-lsq",
-    action="store_true",
-    default=False,
-    help="Whether to initialize the splines via least squares",
-)
-parser.add_argument(
-    "--spline-lsq-noise",
-    default=1e-1,
-    type=float,
-    help="The amount of noise to apply relative to the least squares initialization method",
-)
-parser.add_argument(
     "--exp-reparam",
     action="store_true",
     default=False,

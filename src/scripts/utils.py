@@ -233,7 +233,11 @@ def build_run_id(args):
     rs.append(f"BS{args.batch_size}")
     if "PC" in args.model:
         if args.splines:
-            rs.append(f"SO{args.spline_order}_SK{args.spline_knots}")
+            num_input_units = (
+                args.num_input_units if args.num_input_units > 0 else args.num_units
+            )
+            num_knots = num_input_units - args.spline_order - 1
+            rs.append(f"SO{args.spline_order}_SK{num_knots}")
         if args.exp_reparam:
             rs.append(f"RExp")
     if "PC" in args.model or "HMM" in args.model:
@@ -441,7 +445,6 @@ def setup_model(
     binomials: bool = False,
     splines: bool = False,
     spline_order: int = 2,
-    spline_knots: int = 8,
     exp_reparam: bool = False,
     init_method: Optional[str] = None,
     init_scale: float = 1.0,
@@ -469,7 +472,6 @@ def setup_model(
             if splines:
                 input_layer_cls = MonotonicBSplines
                 input_layer_kwargs["order"] = spline_order
-                input_layer_kwargs["num_knots"] = spline_knots
                 input_layer_kwargs["interval"] = interval
             elif dequantize:
                 input_layer_cls = NormalDistribution
@@ -487,7 +489,6 @@ def setup_model(
             if splines:
                 input_layer_cls = MonotonicBSplines
                 input_layer_kwargs["order"] = spline_order
-                input_layer_kwargs["num_knots"] = spline_knots
                 input_layer_kwargs["interval"] = interval
             else:
                 input_layer_cls = NormalDistribution
@@ -507,7 +508,6 @@ def setup_model(
             if splines:
                 input_layer_cls = BornBSplines
                 input_layer_kwargs["order"] = spline_order
-                input_layer_kwargs["num_knots"] = spline_knots
                 input_layer_kwargs["interval"] = interval
             elif dequantize:
                 input_layer_cls = BornNormalDistribution
@@ -526,7 +526,6 @@ def setup_model(
             if splines:
                 input_layer_cls = BornBSplines
                 input_layer_kwargs["order"] = spline_order
-                input_layer_kwargs["num_knots"] = spline_knots
                 input_layer_kwargs["interval"] = interval
             else:
                 input_layer_cls = BornNormalDistribution
@@ -648,13 +647,17 @@ def setup_model(
             raise ValueError(
                 f"Unknown region graph type named {rg_type} for the selected data"
             )
-    if all(n not in input_layer_cls.__name__ for n in ["Normal", "Binomial"]):
+    if all(
+        n not in input_layer_cls.__name__ for n in ["Normal", "Binomial", "Splines"]
+    ):
         input_layer_kwargs["init_method"] = init_method
-    if all(n not in input_layer_cls.__name__ for n in ["Binomial"]):
+    if all(n not in input_layer_cls.__name__ for n in ["Binomial", "Splines"]):
         input_layer_kwargs["init_scale"] = init_scale
     compute_layer_kwargs = {"init_method": init_method, "init_scale": init_scale}
     if model_name == "BornPC":
-        if all(n not in input_layer_cls.__name__ for n in ["Normal", "Binomial"]):
+        if all(
+            n not in input_layer_cls.__name__ for n in ["Normal", "Binomial", "Splines"]
+        ):
             input_layer_kwargs["complex"] = complex
             input_layer_kwargs["exp_reparam"] = exp_reparam
         if "Embeddings" in input_layer_cls.__name__:
