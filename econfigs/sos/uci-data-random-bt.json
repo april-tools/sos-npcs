@@ -3,7 +3,7 @@
     "tboard-path": "tboard-runs/uci-data",
     "checkpoint-path": "checkpoints/uci-data",
     "save-checkpoint": false,
-    "num-epochs": 600,
+    "num-epochs": 500,
     "device": "cuda",
     "num-workers": 2,
     "patience-threshold": 1e-3,
@@ -15,6 +15,7 @@
       "region-graph": "random",
       "region-graph-sd": true,
       "splines": false,
+      "batch-size": 512,
       "optimizer": "Adam",
       "verbose": true,
       "init-method": "uniform",
@@ -23,42 +24,36 @@
     "models": {
       "power": {
         "MonotonicPC": {
-          "batch-size": 8192,
-          "learning-rate": [5e-4, 1e-3, 5e-3],
+          "learning-rate": [1e-3, 5e-3],
           "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 160, 64], [16, 90, 16], [64, 47, 4]]
         },
         "BornPC": {
           "real": {
-            "batch-size": 8192,
-            "learning-rate": [5e-4, 1e-3, 5e-3],
+            "learning-rate": [5e-4, 1e-3],
             "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 160, 64], [16, 90, 16], [64, 47, 4]]
           }
         }
       },
       "gas": {
         "MonotonicPC": {
-          "batch-size": 4096,
-          "learning-rate": [5e-4, 1e-3, 5e-3],
+          "learning-rate": [1e-3, 5e-3],
           "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 158, 64], [16, 88, 16], [64, 46, 4]]
         },
         "BornPC": {
           "real": {
-            "batch-size": 4096,
-            "learning-rate": [5e-4, 1e-3, 5e-3],
+            "learning-rate": [5e-4, 1e-3],
             "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 160, 64], [16, 90, 16], [64, 47, 4]]
           }
         }
       },
       "hepmass": {
         "MonotonicPC": {
-          "batch-size": 1024,
-          "learning-rate": [5e-4, 1e-3, 5e-3],
+          "learning-rate": [1e-3, 5e-3],
           "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 153, 64], [16, 85, 16], [64, 44, 4]]
         },
         "BornPC": {
           "real": {
-            "batch-size": 1024,
-            "learning-rate": [5e-4, 1e-3, 5e-3],
+            "learning-rate": [5e-4, 1e-3],
             "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 153, 64], [16, 85, 16], [64, 44, 4]]
           }
         }
