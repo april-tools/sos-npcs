@@ -68,7 +68,6 @@ def check_random_state(
     )
 
 
-@torch.compile()
 def safelog(x: torch.Tensor) -> torch.Tensor:
     eps = torch.finfo(torch.get_default_dtype()).tiny
     return torch.log(torch.clamp(x, min=eps))
