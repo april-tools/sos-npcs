@@ -173,7 +173,7 @@ def retrieve_tboard_runs(
     if not isinstance(metrics, list):
         metrics = [metrics]
 
-    print(f"N experiments: {len(df_hparams)}")
+    print(f"Number of retrieved experiments: {len(df_hparams)}")
     # Throw out rows with no result for the metric
     for m in metrics:
         df_scalars = df_scalars[~pd.isna(df_scalars[m])]
