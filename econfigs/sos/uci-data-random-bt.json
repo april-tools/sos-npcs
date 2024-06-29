@@ -9,7 +9,7 @@
     "patience-threshold": 1e-3,
     "early-stop-patience": 10
   },
-  "datasets": ["power", "gas", "hepmass"],
+  "datasets": ["power", "gas", "hepmass", "miniboone"],
   "grid": {
     "common": {
       "region-graph": "random",
@@ -24,37 +24,49 @@
     "models": {
       "power": {
         "MonotonicPC": {
-          "learning-rate": [1e-3, 5e-3],
-          "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 160, 64], [16, 90, 16], [64, 47, 4]]
+          "learning-rate": 1e-3,
+          "num-replicas,num-units,num-input-units": [[1, 256, 512], [4, 178, 128], [16, 106, 32], [64, 58, 8]]
         },
         "BornPC": {
           "real": {
-            "learning-rate": [5e-4, 1e-3],
-            "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 160, 64], [16, 90, 16], [64, 47, 4]]
+            "learning-rate": 1e-3,
+            "num-replicas,num-units,num-input-units": [[1, 256, 512], [4, 178, 128], [16, 106, 32], [64, 58, 8]]
           }
         }
       },
       "gas": {
         "MonotonicPC": {
-          "learning-rate": [1e-3, 5e-3],
-          "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 158, 64], [16, 88, 16], [64, 46, 4]]
+          "learning-rate": 1e-3,
+          "num-replicas,num-units,num-input-units": [[1, 256, 512], [4, 174, 128], [16, 104, 32], [64, 56, 8]]
         },
         "BornPC": {
           "real": {
-            "learning-rate": [5e-4, 1e-3],
-            "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 160, 64], [16, 90, 16], [64, 47, 4]]
+            "learning-rate": 1e-3,
+            "num-replicas,num-units,num-input-units": [[1, 256, 512], [4, 174, 128], [16, 104, 32], [64, 56, 8]]
           }
         }
       },
       "hepmass": {
         "MonotonicPC": {
-          "learning-rate": [1e-3, 5e-3],
-          "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 153, 64], [16, 85, 16], [64, 44, 4]]
+          "learning-rate": 1e-3,
+          "num-replicas,num-units,num-input-units": [[1, 128, 256], [4, 86, 64], [16, 50, 16], [64, 26, 4]]
         },
         "BornPC": {
           "real": {
-            "learning-rate": [5e-4, 1e-3],
-            "num-replicas,num-units,num-input-units": [[1, 256, 256], [4, 153, 64], [16, 85, 16], [64, 44, 4]]
+            "learning-rate": 1e-3,
+            "num-replicas,num-units,num-input-units": [[1, 128, 256], [4, 86, 64], [16, 50, 16], [64, 26, 4]]
+          }
+        }
+      },
+      "miniboone": {
+        "MonotonicPC": {
+          "learning-rate": 1e-3,
+          "num-replicas,num-units,num-input-units": [[1, 64, 256], [4, 48, 64], [16, 28, 16], [64, 16, 4]]
+        },
+        "BornPC": {
+          "real": {
+            "learning-rate": 1e-3,
+            "num-replicas,num-units,num-input-units": [[1, 64, 256], [4, 48, 64], [16, 28, 16], [64, 16, 4]]
           }
         }
       }
