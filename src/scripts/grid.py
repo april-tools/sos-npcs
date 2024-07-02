@@ -102,6 +102,12 @@ parser.add_argument(
     help="The list of device IDs to run in parallel, as an alternative to --n-jobs",
 )
 parser.add_argument(
+    '--start-repetition-num',
+    type=int,
+    default=0,
+    help="The starting repetition number id"
+)
+parser.add_argument(
     "--num-repetitions",
     type=int,
     default=1,
@@ -121,7 +127,7 @@ if __name__ == "__main__":
         assert num_jobs == 1, "Multiple jobs on multiple devices are not supported yet"
     else:
         device_ids_cycle_g = itertools.cycle(multi_devices)
-    assert args.num_repetitions > 0
+    assert args.start_repetition_num >= 0 and args.num_repetitions > 0
 
     common_hparams = config["common"]
     common_hparams_grid = config["grid"]["common"]
@@ -148,10 +154,10 @@ if __name__ == "__main__":
                 hp.update(common_hparams)
                 cmd = build_command_string(dataset, model, hp)
                 device = device_next_id() if multi_devices else common_hparams["device"]
-                if args.num_repetitions == 1:
+                if args.start_repetition_num == 0 and args.num_repetitions == 1:
                     commands.append((cmd, device))
                     continue
-                for k in range(args.num_repetitions):
+                for k in range(args.start_repetition_num, args.start_repetition_num + args.num_repetitions):
                     rep_seed = 123 + 42 * k
                     rep_cmd = f"{cmd} --seed {rep_seed}"
                     commands.append((rep_cmd, device))
