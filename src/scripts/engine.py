@@ -419,10 +419,9 @@ class Engine:
             for batch_idx, batch in enumerate(train_dataloader):
                 if isinstance(batch, (tuple, list)):
                     batch = batch[0]
-                if isinstance(self.model, PC):
-                    batch = batch.unsqueeze(dim=1)
                 batch = batch.to(self._device)
                 if isinstance(self.model, PC):
+                    batch = batch.unsqueeze(dim=1)
                     lls = self.model.log_likelihood(batch)
                 else:
                     lls = self.model().log_prob(batch)

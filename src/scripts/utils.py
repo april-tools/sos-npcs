@@ -246,7 +246,8 @@ def evaluate_model_log_likelihood(
             batch = batch[0]
         batch = batch.to(device)
         if isinstance(model, PC):
-            log_probs = model.log_prob(batch)
+            batch = batch.unsqueeze(dim=1)
+            log_probs = model.log_likelihood(batch)
         else:
             log_probs = model().log_prob(batch)
         if len(log_probs.shape) > 1:
