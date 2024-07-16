@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import torch
 import wandb
+from cirkit.backend.torch.layers import TorchInputLayer
 from sklearn.preprocessing import StandardScaler
 from tbparse import SummaryReader
 from torch import nn
@@ -526,7 +527,10 @@ def num_parameters(
 ) -> int:
     if sum_only:
         assert isinstance(model, PC)
-        params = itertools.chain(*tuple(l.parameters() for l in model.sum_layers()))
+        params = itertools.chain(*tuple(
+            l.parameters() for l in model.layers()
+            if not isinstance(l, TorchInputLayer)
+        ))
     else:
         params = model.parameters()
     if requires_grad:
