@@ -13,8 +13,12 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from graphics.utils import setup_tueplots
 from pcs.models import PC
-from scripts.utils import (num_parameters, set_global_seed, setup_data_loaders,
-                           setup_model)
+from scripts.utils import (
+    num_parameters,
+    set_global_seed,
+    setup_data_loaders,
+    setup_model,
+)
 
 parser = argparse.ArgumentParser(description="Benchmark for squared circuits")
 parser.add_argument(
@@ -204,7 +208,7 @@ def entry_uniform_hparams_configuration() -> Tuple[dict, list]:
                 rg_type="random",
                 rg_replicas=8,
                 num_units=num_units,
-                compute_layer="cp",
+                layer="cp",
                 init_method="uniform",
                 init_scale=1.0,
                 seed=args.seed,
@@ -274,7 +278,7 @@ def entry_specific_hparams_configuration(hparams_conf: dict) -> Tuple[dict, list
                 rg_type="random",
                 rg_replicas=8,
                 num_units=int(hps["num_units"]),
-                compute_layer="cp",
+                layer="cp",
                 init_method="uniform",
                 init_scale=1.0,
                 seed=args.seed,

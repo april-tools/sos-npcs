@@ -7,22 +7,27 @@ from typing import Any, Dict, Optional, Union
 import numpy as np
 import torch
 from torch.optim.lr_scheduler import StepLR
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader
 from zuko.flows import Flow
 
 from datasets.loaders import ALL_DATASETS
+from models import PC
 from optimization.schedulers import ReduceLROnPlateau
-from pcs.initializers import INIT_METHODS
-from pcs.layers import COMPUTE_LAYERS
-from pcs.models import PC, PCS_MODELS, TensorizedPC
-from pcs.optimizers import OPTIMIZERS_NAMES, setup_optimizer
-from region_graph import REGION_GRAPHS
+from optimization.optimizers import OPTIMIZERS_NAMES, setup_optimizer
 from scripts.logger import Logger
-from scripts.utils import (bits_per_dimension, build_run_id,
-                           evaluate_model_log_likelihood,
-                           get_git_revision_hash, num_parameters, perplexity,
-                           set_global_seed, setup_data_loaders,
-                           setup_experiment_path, setup_model)
+from scripts.utils import (
+    bits_per_dimension,
+    build_run_id,
+    evaluate_model_log_likelihood,
+    get_git_revision_hash,
+    num_parameters,
+    perplexity,
+    set_global_seed,
+    setup_data_loaders,
+    setup_experiment_path,
+    setup_model,
+)
+from utils import MODELS, REGION_GRAPHS
 
 
 class Engine:
@@ -56,7 +61,7 @@ class Engine:
                 "project": args.wandb_project,
                 "name": run_id,
                 "group": run_group,
-                "config": self._hparams,
+                "config": self.hparams,
             }
             os.makedirs(kwargs["wandb_path"], exist_ok=True)
 
@@ -78,7 +83,7 @@ class Engine:
         self.logger.close()
 
     @property
-    def _hparams(self) -> Dict[str, Any]:
+    def hparams(self) -> Dict[str, Any]:
         return {
             "seed": self.args.seed,
             "dataset": self.args.dataset,
@@ -90,18 +95,12 @@ class Engine:
             "region_graph_sd": self.args.region_graph_sd,
             "num_units": self.args.num_units,
             "num_input_units": self.args.num_input_units,
-            "num_replicas": self.args.num_replicas,
-            "compute_layer": self.args.compute_layer,
-            "binomials": self.args.binomials,
+            "num_components": self.args.num_components,
             "splines": self.args.splines,
             "spline_order": self.args.spline_order,
-            "exp_reparam": self.args.exp_reparam,
-            "l2norm_reparam": self.args.l2norm_reparam,
             "optimizer": self.args.optimizer,
             "learning_rate": self.args.learning_rate,
             "batch_size": self.args.batch_size,
-            "init_method": self.args.init_method,
-            "init_scale": self.args.init_scale,
             "weight_decay": self.args.weight_decay,
             "exp_alias": self.args.exp_alias,
             "git_rev_hash": self._git_rev_hash,
@@ -240,8 +239,7 @@ class Engine:
         if self.args.save_checkpoint and should_checkpoint:
             self.logger.save_checkpoint(
                 {
-                    "region_graph": self.args.region_graph,
-                    "region_graph_sd": self.args.region_graph_sd,
+                    "hparams": self.hparams,
                     "weights": self.model.state_dict(),
                     "opt": self.optimizer.state_dict(),
                     "best_train": {
@@ -265,7 +263,7 @@ class Engine:
                         "ppl": metrics["test_ppl"],
                     },
                 },
-                "model.pt",
+                "checkpoint.pt",
             )
         return metrics
 
@@ -300,22 +298,14 @@ class Engine:
         self.model = setup_model(
             self.args.model,
             self.metadata,
-            rg_type=self.args.region_graph,
-            rg_sd=self.args.region_graph_sd,
-            rg_replicas=self.args.num_replicas,
+            region_graph=self.args.region_graph,
+            structured_decomposable=self.args.region_graph_sd,
+            num_components=self.args.num_components,
             num_units=self.args.num_units,
             num_input_units=self.args.num_input_units,
             complex=self.args.complex,
-            compute_layer=self.args.compute_layer,
-            multivariate=self.args.multivariate,
-            exp_reparam=self.args.exp_reparam,
-            binomials=self.args.binomials,
             splines=self.args.splines,
             spline_order=self.args.spline_order,
-            init_method=self.args.init_method,
-            init_scale=self.args.init_scale,
-            dequantize=self.args.dequantize,
-            l2norm_reparam=self.args.l2norm_reparam,
             seed=self.args.seed,
         )
 
@@ -376,25 +366,6 @@ class Engine:
             state_dict = torch.load(checkpoint_filepath, map_location="cpu")
             self.model.load_state_dict(state_dict["weights"])
             self.model.to(self._device)
-
-            # TODO: figure out what this operation is doing
-            if "Born" in self.args.model and "Monotonic" in checkpoint_args.model:
-                with torch.no_grad():
-                    if any(
-                        n in self.model.input_layer.__class__.__name__
-                        for n in ["Embeddings", "Splines"]
-                    ):
-                        for p in self.model.input_layer.parameters():
-                            if not p.requires_grad:
-                                continue
-                            p.data.exp_()
-                    for layer in self.model.layers:
-                        for p in layer.parameters():
-                            if not p.requires_grad:
-                                continue
-                            p.data.exp_()
-            else:
-                self.optimizer.load_state_dict(state_dict["opt"])
             del state_dict
 
             self.logger.info(f"Checkpoint loaded from {checkpoint_filepath}")
@@ -451,7 +422,7 @@ class Engine:
                     batch = batch[0]
                 batch = batch.to(self._device)
                 if isinstance(self.model, PC):
-                    lls = self.model.log_prob(batch)
+                    lls = self.model.log_likelihood(batch)
                 else:
                     lls = self.model().log_prob(batch)
                 loss = -torch.mean(lls)
@@ -509,7 +480,7 @@ class Engine:
                 break
 
         self.logger.log_hparams(
-            self._hparams,
+            self.hparams,
             {
                 "Best/Train/epoch": metrics["best_train_epoch"],
                 "Best/Train/avg_ll": metrics["best_train_avg_ll"],
@@ -531,10 +502,9 @@ class Engine:
             run_name=self._trial_unique_id,
             hparam_domain_discrete={
                 "dataset": ALL_DATASETS,
-                "model": PCS_MODELS + ["RealNVP1d", "MAF1d"],
+                "model": MODELS,
                 "optimizer": OPTIMIZERS_NAMES,
-                "init_method": INIT_METHODS,
-                "compute_layer": COMPUTE_LAYERS,
                 "region_graph": REGION_GRAPHS,
+                "region_graph_sd": [False, True],
             },
         )

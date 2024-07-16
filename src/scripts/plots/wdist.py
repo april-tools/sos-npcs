@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from graphics.utils import setup_tueplots
 from pcs.initializers import INIT_METHODS
 from pcs.layers import COMPUTE_LAYERS
-from pcs.optimizers import OPTIMIZERS_NAMES
+from optimization.optimizers import OPTIMIZERS_NAMES
 from region_graph import REGION_GRAPHS
 from scripts.utils import build_run_id, format_model, setup_experiment_path
 

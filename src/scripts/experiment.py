@@ -6,13 +6,9 @@ from copy import copy
 import wandb
 
 from datasets.loaders import ALL_DATASETS
-from pcs.hmm import HMM_MODELS
-from pcs.initializers import INIT_METHODS
-from pcs.layers import COMPUTE_LAYERS
-from pcs.models import PCS_MODELS
-from pcs.optimizers import OPTIMIZERS_NAMES
-from region_graph import REGION_GRAPHS
+from optimization.optimizers import OPTIMIZERS_NAMES
 from scripts.engine import Engine
+from utils import MODELS, REGION_GRAPHS, INIT_METHODS
 
 parser = argparse.ArgumentParser(description="Experiment Launcher")
 parser.add_argument("--seed", default=123, type=int, help="Seed user for random states")
@@ -101,7 +97,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--model",
-    choices=PCS_MODELS + HMM_MODELS + ["NICE", "MAF", "NSF"],
+    choices=MODELS,
     required=True,
     help="The model name",
 )
@@ -127,12 +123,8 @@ parser.add_argument(
     type=int,
     help="Number of input units. If negative, then is the same as --num-units",
 )
-parser.add_argument("--num-replicas", default=1, type=int, help="Number of replicas")
 parser.add_argument(
-    "--compute-layer",
-    choices=COMPUTE_LAYERS,
-    default=COMPUTE_LAYERS[0],
-    help="The compute layer",
+    "--num-components", default=1, type=int, help="Number of squares/components"
 )
 parser.add_argument(
     "--multivariate",
@@ -157,30 +149,6 @@ parser.add_argument(
     "--splines", action="store_true", default=False, help="Whether to enable splines"
 )
 parser.add_argument("--spline-order", type=int, default=2, help="The B-spline order")
-parser.add_argument(
-    "--exp-reparam",
-    action="store_true",
-    default=False,
-    help="Whether to reparameterize the parameters of BornPCs via exponentiation",
-)
-parser.add_argument(
-    "--l2norm-reparam",
-    action="store_true",
-    default=False,
-    help="Wether to apply L2 norm to the parameters",
-)
-parser.add_argument(
-    "--init-method",
-    choices=INIT_METHODS,
-    default=INIT_METHODS[0],
-    help="Parameters initialisers",
-)
-parser.add_argument(
-    "--init-scale",
-    type=float,
-    default=1.0,
-    help="The initialization scale for the layers",
-)
 parser.add_argument(
     "--optimizer",
     choices=OPTIMIZERS_NAMES,

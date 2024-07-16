@@ -1,4 +1,4 @@
-torch>=2.2.0
+git+ssh://git@github.com/april-tools/cirkit.git@graph-opt
 pandas<2.0.0
 portalocker
 scikit-learn

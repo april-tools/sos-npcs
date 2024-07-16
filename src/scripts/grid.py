@@ -102,10 +102,10 @@ parser.add_argument(
     help="The list of device IDs to run in parallel, as an alternative to --n-jobs",
 )
 parser.add_argument(
-    '--start-repetition-num',
+    "--start-repetition-num",
     type=int,
     default=0,
-    help="The starting repetition number id"
+    help="The starting repetition number id",
 )
 parser.add_argument(
     "--num-repetitions",
@@ -157,7 +157,10 @@ if __name__ == "__main__":
                 if args.start_repetition_num == 0 and args.num_repetitions == 1:
                     commands.append((cmd, device))
                     continue
-                for k in range(args.start_repetition_num, args.start_repetition_num + args.num_repetitions):
+                for k in range(
+                    args.start_repetition_num,
+                    args.start_repetition_num + args.num_repetitions,
+                ):
                     rep_seed = 123 + 42 * k
                     rep_cmd = f"{cmd} --seed {rep_seed}"
                     commands.append((rep_cmd, device))

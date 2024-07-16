@@ -1,17 +1,19 @@
-from typing import Optional, Tuple, Union
+from typing import Optional, Union, Tuple
 
 import numpy as np
 import torch
-from scipy import special
+
+PCS_MODELS = ["MPC", "SOS"]
+
+FLOW_MODELS = ["NICE", "MAF", "NSF"]
+
+REGION_GRAPHS = ["rnd-bt", "rnd-lt", "lt"]
+
+MODELS = PCS_MODELS + FLOW_MODELS
+
 
 #: A random state type is either an integer seed value or a Numpy RandomState instance.
 RandomState = Union[int, np.random.RandomState]
-
-
-def log_binomial(n: int, k: int) -> float:
-    return (
-        special.loggamma(n + 1) - special.loggamma(k + 1) - special.loggamma(n - k + 1)
-    )
 
 
 def retrieve_default_dtype(numpy: bool = False) -> Union[torch.dtype, np.dtype]:
@@ -66,17 +68,3 @@ def check_random_state(
     raise ValueError(
         "The random state must be either None, a seed integer or a Numpy RandomState object"
     )
-
-
-def safelog(x: torch.Tensor) -> torch.Tensor:
-    eps = torch.finfo(torch.get_default_dtype()).tiny
-    return torch.log(torch.clamp(x, min=eps))
-
-
-@torch.no_grad()
-def ohe(x: torch.Tensor, k: int, dtype: Optional[torch.dtype] = None) -> torch.Tensor:
-    if dtype is None:
-        dtype = retrieve_default_dtype()
-    h = torch.zeros(x.shape + (k,), dtype=dtype, device=x.device)
-    h.scatter_(-1, x.unsqueeze(-1), 1)
-    return h

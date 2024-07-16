@@ -13,8 +13,12 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from graphics.utils import setup_tueplots
 from pcs.models import PC
-from scripts.utils import (num_parameters, set_global_seed, setup_data_loaders,
-                           setup_model)
+from scripts.utils import (
+    num_parameters,
+    set_global_seed,
+    setup_data_loaders,
+    setup_model,
+)
 
 parser = argparse.ArgumentParser(description="Benchmark for squared circuits")
 parser.add_argument("dataset", type=str, help="The evaluation dataset")
@@ -231,7 +235,7 @@ if __name__ == "__main__":
             rg_type="random",
             rg_replicas=32,
             num_units=args.base_num_units,
-            compute_layer="cp",
+            layer="cp",
             init_method="uniform",
             init_scale=1.0,
             seed=args.seed,
@@ -263,7 +267,7 @@ if __name__ == "__main__":
                 rg_replicas=32,
                 rg_depth=-1,
                 num_units=nc,
-                compute_layer="cp",
+                layer="cp",
                 init_method="uniform",
                 init_scale=1.0,
                 seed=args.seed,

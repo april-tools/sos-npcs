@@ -1,7 +1,7 @@
 import os
 import random
 import subprocess
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -13,28 +13,25 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from zuko.flows import MAF, NICE, NSF, Flow
 
-from datasets.loaders import (BINARY_DATASETS, CONTINUOUS_DATASETS,
-                              IMAGE_DATASETS, LANGUAGE_DATASETS,
-                              SMALL_UCI_DATASETS, load_artificial_dataset,
-                              load_binary_dataset, load_continuous_dataset,
-                              load_image_dataset, load_language_dataset,
-                              load_small_uci_dataset)
-from graphics.distributions import (kde_samples_hmap,
-                                    plot_bivariate_discrete_samples_hmap)
-from pcs.hmm import BornHMM, MonotonicHMM
-from pcs.layers import (BornBinaryEmbeddings, BornBinomial, BornBSplines,
-                        BornEmbeddings, BornNormalDistribution,
-                        MonotonicBinaryEmbeddings, MonotonicBinomial,
-                        MonotonicBSplines, MonotonicEmbeddings,
-                        NormalDistribution)
-from pcs.layers.candecomp import BornCPLayer, MonotonicCPLayer
-from pcs.layers.mixture import BornMixtureLayer, MonotonicMixtureLayer
-from pcs.models import PC, BornPC, MonotonicPC
-from pcs.utils import retrieve_default_dtype
-from region_graph import RegionGraph, RegionNode
-from region_graph.linear_tree import LinearTree
-from region_graph.quad_tree import QuadTree
-from region_graph.random_binary_tree import RandomBinaryTree
+from datasets.loaders import (
+    BINARY_DATASETS,
+    CONTINUOUS_DATASETS,
+    IMAGE_DATASETS,
+    LANGUAGE_DATASETS,
+    SMALL_UCI_DATASETS,
+    load_artificial_dataset,
+    load_binary_dataset,
+    load_continuous_dataset,
+    load_image_dataset,
+    load_language_dataset,
+    load_small_uci_dataset,
+)
+from graphics.distributions import (
+    kde_samples_hmap,
+    plot_bivariate_discrete_samples_hmap,
+)
+from models import PC, MPC, SOS
+from utils import retrieve_default_dtype, REGION_GRAPHS, MODELS, FLOW_MODELS, PCS_MODELS
 
 WANDB_KEY_FILE = "wandb_api.key"  # Put your wandb api key in this file, first line
 
@@ -89,14 +86,11 @@ def unroll_hparams(hparams: dict) -> List[dict]:
     return unroll_hparams
 
 
-def format_model(m: str, exp_reparam: bool = False) -> str:
-    if m == "MonotonicPC":
+def format_model(m: str) -> str:
+    if m == "MPC":
         return r"$+$"
-    elif m == "BornPC":
-        if exp_reparam:
-            return r"$+^2$"
-        else:
-            return r"$\pm^2$"
+    elif m == "SOS":
+        return r"$\Sigma^2$"
     assert False
 
 
@@ -218,31 +212,23 @@ def perplexity(average_ll: float, num_variables: int) -> float:
 
 def build_run_id(args):
     rs = list()
-    if "PC" in args.model:
-        if "Born" in args.model and args.complex:
-            rs.append(f"C")
-        rs.append(f"RG{args.region_graph[:3]}")
-        rs.append(f"R{args.num_replicas}")
+    rs.append(args.model)
+    if args.model in PCS_MODELS:
+        rs.append(f"RG{args.region_graph}")
+        rs.append(f"R{args.num_components}")
     rs.append(f"K{args.num_units}")
     if args.num_input_units > 0:
         rs.append(f"KI{args.num_input_units}")
-    if "PC" in args.model:
-        rs.append(f"L{args.compute_layer[:2]}")
     rs.append(f"O{args.optimizer}")
     rs.append(f"LR{args.learning_rate}")
     rs.append(f"BS{args.batch_size}")
-    if "PC" in args.model:
+    if args.model in PCS_MODELS:
         if args.splines:
             num_input_units = (
                 args.num_input_units if args.num_input_units > 0 else args.num_units
             )
             num_knots = num_input_units - args.spline_order - 1
             rs.append(f"SO{args.spline_order}_SK{num_knots}")
-        if args.exp_reparam:
-            rs.append(f"RExp")
-    if "PC" in args.model or "HMM" in args.model:
-        init_method_id = "".join(m[0].upper() for m in args.init_method.split("-"))
-        rs.append(f"I{init_method_id}")
     if args.weight_decay > 0.0:
         rs.append(f"WD{args.weight_decay}")
     return "_".join(rs)
@@ -434,128 +420,75 @@ def setup_data_loaders(
 def setup_model(
     model_name: str,
     dataset_metadata: dict,
-    rg_type: str = "random",
-    rg_sd: bool = False,
-    rg_replicas: int = 1,
+    region_graph: str = "rnd",
+    structured_decomposable: bool = False,
+    num_components: int = 1,
     num_units: int = 2,
     num_input_units: int = -1,
     complex: bool = False,
-    compute_layer: str = "cp",
-    multivariate: bool = False,
-    binomials: bool = False,
     splines: bool = False,
     spline_order: int = 2,
-    exp_reparam: bool = False,
-    init_method: Optional[str] = None,
-    init_scale: float = 1.0,
-    dequantize: bool = False,
-    l2norm_reparam: bool = False,
     seed: int = 123,
 ) -> Union[PC, Flow]:
-    if binomials and splines:
-        raise ValueError("At most one between --binomials and --splines must be true")
-    if complex and model_name != "BornPC":
-        raise ValueError("--complex can only be used with BornPC models")
-    if exp_reparam and model_name != "BornPC":
-        raise ValueError("--exp-reparam can only be used with BornPC models")
-    if l2norm_reparam and model_name != "BornPC":
-        raise ValueError("--l2norm-reparam can only be used with BornPC models")
+    if complex and model_name != "SOS":
+        raise ValueError("--complex can only be used with SOS circuits")
+    assert model_name in MODELS
+    if splines:
+        raise NotImplementedError()
     dataset_type = dataset_metadata["type"]
     num_variables = dataset_metadata["num_variables"]
-    image_shape = dataset_metadata["image_shape"]
+
+    if model_name in FLOW_MODELS:
+        return setup_flow_model(model_name, dataset_type, num_variables, num_units)
+
+    assert region_graph in REGION_GRAPHS
+
     interval = dataset_metadata["interval"]
-    input_layer_kwargs = dict()
-    if model_name == "MonotonicPC":
-        if init_method is None:
-            init_method = "dirichlet"
-        if dataset_type == "image":
-            if splines:
-                input_layer_cls = MonotonicBSplines
-                input_layer_kwargs["order"] = spline_order
-                input_layer_kwargs["interval"] = interval
-            elif dequantize:
-                input_layer_cls = NormalDistribution
-            else:
-                input_layer_cls = (
-                    MonotonicBinomial if binomials else MonotonicEmbeddings
-                )
-                input_layer_kwargs["num_states"] = interval[1] + 1
-        elif dataset_type in ["categorical", "language"]:
-            input_layer_cls = MonotonicBinomial if binomials else MonotonicEmbeddings
-            input_layer_kwargs["num_states"] = interval[1] + 1
-        elif dataset_type == "binary":
-            input_layer_cls = MonotonicBinaryEmbeddings
-        else:
-            if splines:
-                input_layer_cls = MonotonicBSplines
-                input_layer_kwargs["order"] = spline_order
-                input_layer_kwargs["interval"] = interval
-            else:
-                input_layer_cls = NormalDistribution
-        model_cls = MonotonicPC
-        if compute_layer == "cp":
-            compute_layer_cls = MonotonicCPLayer
-        else:
-            raise NotImplementedError(
-                f"Compute layer named '{compute_layer}' is not known"
-            )
-        out_mixture_layer_cls = MonotonicMixtureLayer
-        in_mixture_layer_cls = MonotonicMixtureLayer
-    elif model_name == "BornPC":
-        if init_method is None:
-            init_method = "normal"
-        if dataset_type == "image":
-            if splines:
-                input_layer_cls = BornBSplines
-                input_layer_kwargs["order"] = spline_order
-                input_layer_kwargs["interval"] = interval
-            elif dequantize:
-                input_layer_cls = BornNormalDistribution
-            else:
-                input_layer_cls = BornBinomial if binomials else BornEmbeddings
-                input_layer_kwargs["num_states"] = interval[1] + 1
-            out_mixture_layer_cls = MonotonicMixtureLayer
-        elif dataset_type in ["categorical", "language"]:
-            input_layer_cls = BornBinomial if binomials else BornEmbeddings
-            input_layer_kwargs["num_states"] = interval[1] + 1
-            out_mixture_layer_cls = MonotonicMixtureLayer
-        elif dataset_type == "binary":
-            input_layer_cls = BornBinaryEmbeddings
-            out_mixture_layer_cls = MonotonicMixtureLayer
-        else:
-            if splines:
-                input_layer_cls = BornBSplines
-                input_layer_kwargs["order"] = spline_order
-                input_layer_kwargs["interval"] = interval
-            else:
-                input_layer_cls = BornNormalDistribution
-            out_mixture_layer_cls = (
-                BornMixtureLayer if multivariate else MonotonicMixtureLayer
-            )
-        model_cls = BornPC
-        if compute_layer == "cp":
-            compute_layer_cls = BornCPLayer
-        else:
-            raise NotImplementedError(
-                f"Compute layer named '{compute_layer}' is not known"
-            )
-        in_mixture_layer_cls = BornMixtureLayer
-    elif "HMM" in model_name:
-        model_cls = MonotonicHMM if "Monotonic" in model_name else BornHMM
-        kwargs = (
-            dict() if "Monotonic" in model_name else {"l2norm_reparam": l2norm_reparam}
-        )
-        assert dataset_type == "language"
-        model = model_cls(
-            vocab_size=interval[1] + 1,
-            seq_length=num_variables,
-            hidden_size=num_units,
-            init_method=init_method,
-            init_scale=init_scale,
-            **kwargs,
+    if dataset_type == ["image", "categorical", "language", "binary"]:
+        input_layer = "categorical"
+        input_layer_kwargs = dict(num_categories=interval[1] + 1)
+    else:
+        input_layer = "gaussian"
+        input_layer_kwargs = dict()
+
+    if model_name == "MPC":
+        model = MPC(
+            num_variables,
+            num_input_units=num_input_units,
+            num_sum_units=num_units,
+            input_layer=input_layer,
+            input_layer_kwargs=input_layer_kwargs,
+            num_components=num_components,
+            region_graph=region_graph,
+            structured_decomposable=structured_decomposable,
+            seed=seed,
         )
         return model
-    elif model_name == "NICE":
+    elif model_name == "SOS":
+        model = SOS(
+            num_variables,
+            num_input_units=num_input_units,
+            num_sum_units=num_units,
+            input_layer=input_layer,
+            input_layer_kwargs=input_layer_kwargs,
+            num_squares=num_components,
+            region_graph=region_graph,
+            structured_decomposable=structured_decomposable,
+            seed=seed,
+        )
+        return model
+    else:
+        raise ValueError(f"Unknown model called {model_name}")
+
+
+def setup_flow_model(
+    model_name: str,
+    dataset_type: str,
+    num_variables: int,
+    num_units: int,
+) -> Flow:
+    assert model_name in FLOW_MODELS
+    if model_name == "NICE":
         if dataset_type not in ["continuous", "artificial"]:
             raise ValueError("NICE is not supported for the requested data set")
         model = NICE(
@@ -583,99 +516,7 @@ def setup_model(
             bins=8,
         )
         return model
-    else:
-        raise ValueError(f"Unknown model called {model_name}")
-    # Instantiate the region graph and the model
-    if dataset_type in ["image", "binary", "continuous"]:
-        if dataset_type == "continuous" and multivariate:
-            rg = RegionGraph()
-            rg.add_node(RegionNode(range(num_variables)))
-        elif rg_type == "random":
-            rg = RandomBinaryTree(
-                num_variables,
-                num_repetitions=rg_replicas,
-                seed=seed,
-                sd=rg_sd,
-            )
-        elif rg_type == "quad-tree" and dataset_type == "image":
-            rg = QuadTree(image_shape, struct_decomp=True)
-        elif rg_type == "linear-tree":
-            rg = LinearTree(
-                num_variables,
-                num_repetitions=rg_replicas,
-                randomize=True,
-                seed=seed,
-                sd=rg_sd,
-            )
-        else:
-            raise ValueError(
-                f"Unknown region graph type named {rg_type} for the selected data"
-            )
-    elif dataset_type in ["language"]:
-        if rg_type == "linear-tree":
-            rg = LinearTree(
-                num_variables,
-                num_repetitions=rg_replicas,
-                randomize=False,
-                seed=seed,
-                sd=rg_sd,
-            )
-        else:
-            raise ValueError(
-                f"Unknown region graph type named {rg_type} for the selected data"
-            )
-    else:
-        if multivariate:
-            rg = RegionGraph()
-            rg.add_node(RegionNode(range(num_variables)))
-        elif rg_type == "random":
-            rg = RandomBinaryTree(
-                num_variables,
-                num_repetitions=rg_replicas,
-                seed=seed,
-                sd=rg_sd,
-            )
-        elif rg_type == "linear-tree":
-            rg = LinearTree(
-                num_variables,
-                num_repetitions=rg_replicas,
-                randomize=True,
-                seed=seed,
-                sd=rg_sd,
-            )
-        else:
-            raise ValueError(
-                f"Unknown region graph type named {rg_type} for the selected data"
-            )
-    if all(
-        n not in input_layer_cls.__name__ for n in ["Normal", "Binomial", "Splines"]
-    ):
-        input_layer_kwargs["init_method"] = init_method
-    if all(n not in input_layer_cls.__name__ for n in ["Binomial", "Splines"]):
-        input_layer_kwargs["init_scale"] = init_scale
-    compute_layer_kwargs = {"init_method": init_method, "init_scale": init_scale}
-    if model_name == "BornPC":
-        if all(
-            n not in input_layer_cls.__name__ for n in ["Normal", "Binomial", "Splines"]
-        ):
-            input_layer_kwargs["complex"] = complex
-            input_layer_kwargs["exp_reparam"] = exp_reparam
-        if "Embeddings" in input_layer_cls.__name__:
-            input_layer_kwargs["l2norm_reparam"] = l2norm_reparam
-        compute_layer_kwargs["complex"] = complex
-        compute_layer_kwargs["exp_reparam"] = exp_reparam
-    return model_cls(
-        rg,
-        input_layer_cls=input_layer_cls,
-        compute_layer_cls=compute_layer_cls,
-        out_mixture_layer_cls=out_mixture_layer_cls,
-        in_mixture_layer_cls=in_mixture_layer_cls,
-        num_units=num_units,
-        num_input_units=num_input_units,
-        input_layer_kwargs=input_layer_kwargs,
-        compute_layer_kwargs=compute_layer_kwargs,
-        dequantize=dequantize,
-    )
+    raise NotImplementedError()
 
 
 def num_parameters(
@@ -683,10 +524,7 @@ def num_parameters(
 ) -> int:
     if sum_only:
         assert isinstance(model, PC)
-        params = list(model.in_mixture.parameters())
-        params.extend(model.layers.parameters())
-        if model.out_mixture is not None:
-            params.extend(model.out_mixture.parameters())
+        params = map(lambda l: l.parameters(), model.sum_layers())
     else:
         params = model.parameters()
     if requires_grad:
