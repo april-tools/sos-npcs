@@ -77,7 +77,7 @@ if __name__ == '__main__':
     num_rows = 1
     num_cols = 1
 
-    setup_tueplots(num_rows, num_cols, rel_width=0.5, hw_ratio=0.8)
+    setup_tueplots(num_rows, num_cols, rel_width=0.415, hw_ratio=0.8)
     fig, ax = plt.subplots(num_rows, num_cols, squeeze=True, sharey=True)
     g = sb.swarmplot(
         df,
