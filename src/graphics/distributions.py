@@ -7,7 +7,7 @@ from sklearn.neighbors import KernelDensity
 
 from graphics.utils import matplotlib_buffer_to_image, setup_tueplots
 from models import PC
-from utils import retrieve_default_dtype
+from utilities import retrieve_default_dtype
 
 
 def plot_bivariate_samples_hmap(

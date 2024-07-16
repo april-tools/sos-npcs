@@ -31,7 +31,7 @@ from graphics.distributions import (
     plot_bivariate_discrete_samples_hmap,
 )
 from models import PC, MPC, SOS
-from utils import retrieve_default_dtype, REGION_GRAPHS, MODELS, FLOW_MODELS, PCS_MODELS
+from utilities import retrieve_default_dtype, REGION_GRAPHS, MODELS, FLOW_MODELS, PCS_MODELS
 
 WANDB_KEY_FILE = "wandb_api.key"  # Put your wandb api key in this file, first line
 

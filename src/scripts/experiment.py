@@ -8,7 +8,7 @@ import wandb
 from datasets.loaders import ALL_DATASETS
 from optimization.optimizers import OPTIMIZERS_NAMES
 from scripts.engine import Engine
-from utils import MODELS, REGION_GRAPHS
+from utilities import MODELS, REGION_GRAPHS
 
 parser = argparse.ArgumentParser(description="Experiment Launcher")
 parser.add_argument("--seed", default=123, type=int, help="Seed user for random states")

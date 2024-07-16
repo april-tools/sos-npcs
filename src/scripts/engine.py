@@ -27,7 +27,7 @@ from scripts.utils import (
     setup_experiment_path,
     setup_model,
 )
-from utils import MODELS, REGION_GRAPHS
+from utilities import MODELS, REGION_GRAPHS
 
 
 class Engine:
