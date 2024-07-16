@@ -120,8 +120,6 @@ def bivariate_pdf_heatmap(
     ylim: Tuple[float, float],
     zm: float = 0.0,
     nbins: int = 256,
-    batch_size: Optional[int] = None,
-    variables: Optional[Tuple[int, int]] = None,
     device: Optional[Union[str, torch.device]] = None,
 ) -> np.ndarray:
     if device is None:

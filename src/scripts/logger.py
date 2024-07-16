@@ -9,7 +9,7 @@ import wandb
 from PIL import Image as pillow
 from torch.utils.tensorboard import SummaryWriter
 
-from graphics.distributions import bivariate_pmf_heatmap
+from graphics.distributions import bivariate_pmf_heatmap, bivariate_pdf_heatmap
 from models import PC
 
 
