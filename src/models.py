@@ -83,8 +83,7 @@ class MPC(PC):
         structured_decomposable: bool = False,
         seed: int = 42,
     ) -> None:
-        assert num_variables > 1
-        assert num_components > 1
+        assert num_components > 0
         super().__init__(num_variables)
         self._ctx = PipelineContext(
             backend="torch", semiring="lse-sum", fold=True, optimize=True
@@ -95,6 +94,7 @@ class MPC(PC):
             input_layer=input_layer,
             input_layer_kwargs=input_layer_kwargs,
             num_components=num_components,
+            region_graph=region_graph,
             structured_decomposable=structured_decomposable,
             seed=seed,
         )
@@ -174,8 +174,7 @@ class SOS(PC):
         structured_decomposable: bool = False,
         seed: int = 42,
     ) -> None:
-        assert num_variables > 1
-        assert num_squares > 1
+        assert num_squares > 0
         super().__init__(num_variables)
         self._ctx = PipelineContext(
             backend="torch", semiring="complex-lse-sum", fold=True, optimize=True
@@ -357,7 +356,7 @@ def _build_symbolic_circuits(
         assert input_layer in ["categorical", "gaussian"]
         if input_layer == "categorical":
             input_factory = categorical_layer_factory
-        elif input_layer == "guassian":
+        elif input_layer == "gaussian":
             input_factory = gaussian_layer_factory
         else:
             raise NotImplementedError()

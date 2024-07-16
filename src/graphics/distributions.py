@@ -4,11 +4,10 @@ import numpy as np
 import torch
 from matplotlib import pyplot as plt
 from sklearn.neighbors import KernelDensity
-from torch.utils.data import DataLoader, TensorDataset
 
 from graphics.utils import matplotlib_buffer_to_image, setup_tueplots
-from pcs.models import PC
-from pcs.utils import retrieve_default_dtype
+from models import PC
+from utils import retrieve_default_dtype
 
 
 def plot_bivariate_samples_hmap(
@@ -144,28 +143,7 @@ def bivariate_pdf_heatmap(
         else:
             zi = model().log_prob(xy)
     else:
-        if batch_size is None:
-            batch_size = 128
-        if variables is None or len(variables) != 2:
-            raise ValueError("The two variables to show the PDF of cannot be None")
-        # Perform variable marginalization
-        points = TensorDataset(xy[0], xy[1])
-        points = DataLoader(
-            points, batch_size=batch_size, shuffle=False, drop_last=False
-        )
-        mar_mask = torch.ones(1, model.num_variables, dtype=torch.bool, device=device)
-        mar_mask[:, variables] = False
-        zi = list()
-        for xf, yf in points:
-            samples = torch.zeros(
-                size=(xf.shape[0], model.num_variables), dtype=xf.dtype
-            )
-            samples[:, variables[0]] = xf
-            samples[:, variables[1]] = yf
-            samples.to(device)
-            log_probs = model.log_marginal_prob(samples, mar_mask)
-            zi.append(log_probs)
-        zi = torch.concatenate(zi, dim=0)
+        raise NotImplementedError()
     zi = torch.exp(zi).cpu().numpy().reshape(xi.shape)
     return zi
 
@@ -182,6 +160,6 @@ def bivariate_pmf_heatmap(
     if device is None:
         device = "cpu"
     xy = torch.from_numpy(xy).to(device)
-    zi = model.log_prob(xy)
+    zi = model.log_likelihood(xy)
     zi = torch.exp(zi).cpu().numpy().reshape(xi.shape)
     return zi

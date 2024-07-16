@@ -277,7 +277,6 @@ class Engine:
                 num_workers=self.args.num_workers,
                 num_samples=self.args.num_samples,
                 standardize=self.args.standardize,
-                dequantize=self.args.dequantize,
                 discretize_unique=self.args.discretize_unique,
                 discretize=self.args.discretize,
                 discretize_bins=self.args.discretize_bins,

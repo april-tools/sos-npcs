@@ -1,15 +1,16 @@
+import json
 import os
+from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
 import wandb
 from PIL import Image as pillow
-from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from graphics.distributions import bivariate_pdf_heatmap, bivariate_pmf_heatmap
-from pcs.models import PC, TensorizedPC
+from graphics.distributions import bivariate_pmf_heatmap
+from models import PC
 
 
 class Logger:
@@ -34,6 +35,9 @@ class Logger:
             self._setup_wandb(wandb_path, **wandb_kwargs)
 
         self._best_distribution = None
+        self._logged_scalars: Dict[str, List[Tuple[float, Optional[int]]]] = (
+            defaultdict(list)
+        )
         self._logged_distributions = list()
         self._logged_wcoords = list()
 
@@ -72,6 +76,7 @@ class Logger:
             self._tboard_writer.add_scalar(tag, value, global_step=step)
         if wandb.run:
             wandb.log({tag: value}, step=step)
+        self._logged_scalars[tag].append((value, step))
 
     def log_image(
         self,
@@ -155,6 +160,7 @@ class Logger:
             self._tboard_writer.close()
         if wandb.run:
             wandb.finish(quiet=True)
+        self.save_dict(self._logged_scalars, "scalars.json")
 
     def save_checkpoint(self, data: Dict[str, Any], filepath: str):
         if self.checkpoint_path:
@@ -169,6 +175,10 @@ class Logger:
     def save_array(self, array: np.ndarray, filepath: str):
         if self.checkpoint_path:
             np.save(os.path.join(self.checkpoint_path, filepath), array)
+
+    def save_dict(self, data: dict, filepath: str):
+        with open(os.path.join(self.checkpoint_path, filepath), "w") as fp:
+            json.dump(data, fp)
 
     def load_array(self, filepath: str) -> Optional[np.ndarray]:
         if self.checkpoint_path:

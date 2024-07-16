@@ -8,7 +8,7 @@ import wandb
 from datasets.loaders import ALL_DATASETS
 from optimization.optimizers import OPTIMIZERS_NAMES
 from scripts.engine import Engine
-from utils import MODELS, REGION_GRAPHS, INIT_METHODS
+from utils import MODELS, REGION_GRAPHS
 
 parser = argparse.ArgumentParser(description="Experiment Launcher")
 parser.add_argument("--seed", default=123, type=int, help="Seed user for random states")
@@ -69,12 +69,6 @@ parser.add_argument(
     help="Whether to standardize the dataset",
 )
 parser.add_argument(
-    "--dequantize",
-    action="store_true",
-    default=False,
-    help="Whether to dequantize images",
-)
-parser.add_argument(
     "--discretize",
     action="store_true",
     default=False,
@@ -110,12 +104,6 @@ parser.add_argument(
 parser.add_argument(
     "--num-workers", type=int, default=0, help="The number of data loader workers"
 )
-parser.add_argument(
-    "--binomials",
-    action="store_true",
-    default=False,
-    help="Whether to use binomial instead of categoricals, in case of discrete data",
-)
 parser.add_argument("--num-units", default=2, type=int, help="Number of units")
 parser.add_argument(
     "--num-input-units",
@@ -125,12 +113,6 @@ parser.add_argument(
 )
 parser.add_argument(
     "--num-components", default=1, type=int, help="Number of squares/components"
-)
-parser.add_argument(
-    "--multivariate",
-    action="store_true",
-    default=False,
-    help="Whether to allow multivariate dists",
 )
 parser.add_argument(
     "--region-graph",
