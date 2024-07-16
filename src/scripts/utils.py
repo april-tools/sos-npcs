@@ -1,3 +1,4 @@
+import itertools
 import os
 import random
 import subprocess
@@ -524,7 +525,7 @@ def num_parameters(
 ) -> int:
     if sum_only:
         assert isinstance(model, PC)
-        params = map(lambda l: l.parameters(), model.sum_layers())
+        params = itertools.chain(*tuple(l.parameters() for l in model.sum_layers()))
     else:
         params = model.parameters()
     if requires_grad:
