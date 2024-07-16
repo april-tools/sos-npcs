@@ -216,7 +216,10 @@ def build_run_id(args):
     rs = list()
     rs.append(args.model)
     if args.model in PCS_MODELS:
-        rs.append(f"RG{args.region_graph}")
+        if args.region_graph_sd:
+            rs.append(f"RG{args.region_graph}-sd")
+        else:
+            rs.append(f"RG{args.region_graph}")
         rs.append(f"R{args.num_components}")
     rs.append(f"K{args.num_units}")
     if args.num_input_units > 0:
