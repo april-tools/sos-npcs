@@ -1,0 +1,32 @@
+{
+  "common": {
+    "tboard-path": "tboard-runs/uci-data",
+    "checkpoint-path": "checkpoints/uci-data",
+    "save-checkpoint": false,
+    "num-epochs": 1200,
+    "device": "cuda",
+    "num-workers": 2,
+    "patience-threshold": 1e-3,
+    "early-stop-patience": 30
+  },
+  "datasets": ["miniboone"],
+  "grid": {
+    "common": {
+      "region-graph": "rnd-bt",
+      "region-graph-sd": true,
+      "batch-size": 512,
+      "optimizer": "Adam",
+      "verbose": true
+    },
+    "models": {
+      "miniboone": {
+        "SOS": {
+          "real": {
+            "learning-rate": 1e-3,
+            "num-components,num-units,num-input-units": [[8, 32, 32]]
+          }
+        }
+      }
+    }
+  }
+}
