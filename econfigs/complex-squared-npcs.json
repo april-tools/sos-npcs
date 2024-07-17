@@ -1,7 +1,7 @@
 {
   "common": {
-    "tboard-path": "tboard-runs/uci-data",
-    "checkpoint-path": "checkpoints/uci-data",
+    "tboard-path": "tboard-runs/uci-data-complex",
+    "checkpoint-path": "checkpoints/uci-data-complex",
     "save-checkpoint": false,
     "num-epochs": 1000,
     "device": "cuda",
