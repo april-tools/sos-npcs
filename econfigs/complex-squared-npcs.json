@@ -1,9 +1,9 @@
 {
   "common": {
-    "tboard-path": "tboard-runs/uci-data",
-    "checkpoint-path": "checkpoints/uci-data",
+    "tboard-path": "tboard-runs/uci-data-complex",
+    "checkpoint-path": "checkpoints/uci-data-complex",
     "save-checkpoint": false,
-    "num-epochs": 1200,
+    "num-epochs": 1000,
     "device": "cuda",
     "num-workers": 2,
     "patience-threshold": 1e-3,
@@ -24,17 +24,17 @@
       "power|gas": {
         "MPC": {
           "num-units": 256,
-          "num-input-units": 512
+          "num-input-units": 256
         },
         "SOS": {
           "real": {
             "num-units": 256,
-            "num-input-units": 512,
+            "num-input-units": 256,
             "complex": false
           },
           "complex": {
             "num-units": 128,
-            "num-input-units": 512,
+            "num-input-units": 256,
             "complex": true
           }
         }
@@ -42,17 +42,17 @@
       "hepmass": {
         "MPC": {
           "num-units": 128,
-          "num-input-units": 256
+          "num-input-units": 128
         },
         "SOS": {
           "real": {
             "num-units": 128,
-            "num-input-units": 256,
+            "num-input-units": 128,
             "complex": false
           },
           "complex": {
             "num-units": 64,
-            "num-input-units": 256,
+            "num-input-units": 128,
             "complex": true
           }
         }
@@ -60,17 +60,17 @@
       "miniboone": {
         "MPC": {
           "num-units": 64,
-          "num-input-units": 128
+          "num-input-units": 64
         },
         "SOS": {
           "real": {
             "num-units": 64,
-            "num-input-units": 128,
+            "num-input-units": 64,
             "complex": false
           },
           "complex": {
             "num-units": 32,
-            "num-input-units": 128,
+            "num-input-units": 64,
             "complex": true
           }
         }
