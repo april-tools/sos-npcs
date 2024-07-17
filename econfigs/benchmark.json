@@ -1,15 +1,15 @@
 {
   "common": {
-    "tboard-path": "tboard-runs/uci-data",
-    "checkpoint-path": "checkpoints/uci-data",
+    "tboard-path": "tboard-runs/uci-data-benchmark",
+    "checkpoint-path": "checkpoints/uci-data-benchmark",
     "save-checkpoint": false,
-    "num-epochs": 100,
+    "num-epochs": 25,
     "device": "cuda",
     "num-workers": 2,
     "patience-threshold": 1e-3,
     "early-stop-patience": 30
   },
-  "datasets": ["miniboone"],
+  "datasets": ["gas", "miniboone"],
   "grid": {
     "common": {
       "region-graph": "rnd-bt",
@@ -19,11 +19,19 @@
       "verbose": true
     },
     "models": {
+      "gas": {
+        "SOS": {
+          "real": {
+            "learning-rate": 1e-3,
+            "num-components,num-units,num-input-units": [[8, 512, 512]]
+          }
+        }
+      },
       "miniboone": {
         "SOS": {
           "real": {
             "learning-rate": 1e-3,
-            "num-components,num-units,num-input-units": [[8, 32, 32]]
+            "num-components,num-units,num-input-units": [[8, 64, 64]]
           }
         }
       }
