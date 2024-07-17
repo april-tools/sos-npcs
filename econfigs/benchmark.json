@@ -3,7 +3,7 @@
     "tboard-path": "tboard-runs/uci-data-benchmark",
     "checkpoint-path": "checkpoints/uci-data-benchmark",
     "save-checkpoint": false,
-    "num-epochs": 25,
+    "num-epochs": 3,
     "device": "cuda",
     "num-workers": 2,
     "patience-threshold": 1e-3,
@@ -23,7 +23,7 @@
         "SOS": {
           "real": {
             "learning-rate": 1e-3,
-            "num-components,num-units,num-input-units": [[8, 512, 512]]
+            "num-components,num-units,num-input-units": [[8, 256, 256]]
           }
         }
       },
