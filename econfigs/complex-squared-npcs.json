@@ -33,7 +33,7 @@
             "complex": false
           },
           "complex": {
-            "num-units": 256,
+            "num-units": 128,
             "num-input-units": 512,
             "complex": true
           }
@@ -51,7 +51,7 @@
             "complex": false
           },
           "complex": {
-            "num-units": 128,
+            "num-units": 64,
             "num-input-units": 256,
             "complex": true
           }
@@ -69,7 +69,7 @@
             "complex": false
           },
           "complex": {
-            "num-units": 64,
+            "num-units": 32,
             "num-input-units": 128,
             "complex": true
           }
