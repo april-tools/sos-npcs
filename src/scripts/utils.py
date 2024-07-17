@@ -33,7 +33,13 @@ from graphics.distributions import (
     plot_bivariate_discrete_samples_hmap,
 )
 from models import PC, MPC, SOS
-from utilities import retrieve_default_dtype, REGION_GRAPHS, MODELS, FLOW_MODELS, PCS_MODELS
+from utilities import (
+    retrieve_default_dtype,
+    REGION_GRAPHS,
+    MODELS,
+    FLOW_MODELS,
+    PCS_MODELS,
+)
 
 WANDB_KEY_FILE = "wandb_api.key"  # Put your wandb api key in this file, first line
 
@@ -214,7 +220,10 @@ def perplexity(average_ll: float, num_variables: int) -> float:
 
 def build_run_id(args):
     rs = list()
-    rs.append(args.model)
+    if args.complex:
+        rs.append(args.model + "-C")
+    else:
+        rs.append(args.model)
     if args.model in PCS_MODELS:
         if args.region_graph_sd:
             rs.append(f"RG{args.region_graph}-sd")
@@ -480,6 +489,7 @@ def setup_model(
             num_squares=num_components,
             region_graph=region_graph,
             structured_decomposable=structured_decomposable,
+            complex=complex,
             seed=seed,
         )
         return model
@@ -530,10 +540,13 @@ def num_parameters(
 ) -> int:
     if sum_only:
         assert isinstance(model, PC)
-        params = itertools.chain(*tuple(
-            l.parameters() for l in model.layers()
-            if not isinstance(l, TorchInputLayer)
-        ))
+        params = itertools.chain(
+            *tuple(
+                l.parameters()
+                for l in model.layers()
+                if not isinstance(l, TorchInputLayer)
+            )
+        )
     else:
         params = model.parameters()
     if requires_grad:

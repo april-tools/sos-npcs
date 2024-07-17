@@ -506,5 +506,6 @@ class Engine:
                 "optimizer": OPTIMIZERS_NAMES,
                 "region_graph": REGION_GRAPHS,
                 "region_graph_sd": [False, True],
+                "complex": [False, True],
             },
         )

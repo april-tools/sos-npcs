@@ -86,6 +86,30 @@ def test_discrete_sos_pc(num_variables, num_squares, num_units, region_graph, sd
 
 
 @pytest.mark.parametrize(
+    "num_variables,num_squares,num_units,region_graph,sd",
+    list(
+        itertools.product([8, 13], [1, 4], [1, 3], ["rnd-bt", "rnd-lt"], [False, True])
+    ),
+)
+def test_discrete_complex_sos_pc(
+    num_variables, num_squares, num_units, region_graph, sd
+):
+    model = SOS(
+        num_variables,
+        num_input_units=num_units,
+        num_sum_units=num_units,
+        input_layer="categorical",
+        input_layer_kwargs={"num_categories": 2},
+        num_squares=num_squares,
+        region_graph=region_graph,
+        structured_decomposable=sd,
+        complex=True,
+    )
+    data = torch.LongTensor(generate_all_binary_samples(num_variables))
+    check_evi_ll(model, data)
+
+
+@pytest.mark.parametrize(
     "num_components,num_units,region_graph",
     list(itertools.product([1], [2], ["rnd-bt"])),
 )

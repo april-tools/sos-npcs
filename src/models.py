@@ -5,8 +5,9 @@ import numpy as np
 import torch
 from cirkit.backend.torch.circuits import TorchCircuit, TorchConstantCircuit
 from cirkit.backend.torch.layers import TorchSumLayer, TorchLayer
-from cirkit.pipeline import PipelineContext
+from cirkit.pipeline import PipelineContext, compile
 from cirkit.symbolic.circuit import Circuit
+from cirkit.symbolic.dtypes import DataType
 from cirkit.symbolic.initializers import NormalInitializer, UniformInitializer
 from cirkit.symbolic.layers import (
     GaussianLayer,
@@ -18,7 +19,7 @@ from cirkit.symbolic.parameters import (
     ExpParameter,
     Parameter,
     ClampParameter,
-    LogSoftmaxParameter,
+    TensorParameter,
 )
 from cirkit.templates.region_graph import (
     RegionGraph,
@@ -85,7 +86,7 @@ class MPC(PC):
     ) -> None:
         assert num_components > 0
         super().__init__(num_variables)
-        self._ctx = PipelineContext(
+        self._pipeline = PipelineContext(
             backend="torch", semiring="lse-sum", fold=True, optimize=True
         )
         self._circuit, self._int_circuit = self._build_circuits(
@@ -137,7 +138,7 @@ class MPC(PC):
         )
 
         # Build one symbolic circuit for each region graph
-        symbolic_circuits = _build_symbolic_circuits(
+        symbolic_circuits = _build_monotonic_symbolic_circuits(
             rgs,
             num_input_units,
             num_sum_units,
@@ -145,17 +146,16 @@ class MPC(PC):
             input_layer_kwargs=input_layer_kwargs,
         )
 
-        # Merge the symbolic circuits into a single one having multiple outputs
-        symbolic_circuit = SF.merge(symbolic_circuits)
+        with self._pipeline:
+            # Merge the symbolic circuits into a single one having multiple outputs
+            symbolic_circuit = SF.merge(symbolic_circuits)
 
-        # Integrate the circuits (by integrating the merged symbolic representation)
-        symbolic_int_circuit = SF.integrate(symbolic_circuit)
+            # Integrate the circuits (by integrating the merged symbolic representation)
+            symbolic_int_circuit = SF.integrate(symbolic_circuit)
 
-        # Compile the symbolic circuits
-        circuit = cast(TorchCircuit, self._ctx.compile(symbolic_circuit))
-        int_circuit = cast(
-            TorchConstantCircuit, self._ctx.compile(symbolic_int_circuit)
-        )
+            # Compile the symbolic circuits
+            circuit = cast(TorchCircuit, compile(symbolic_circuit))
+            int_circuit = cast(TorchConstantCircuit, compile(symbolic_int_circuit))
 
         return circuit, int_circuit
 
@@ -172,11 +172,12 @@ class SOS(PC):
         num_squares: int = 1,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
+        complex: bool = False,
         seed: int = 42,
     ) -> None:
         assert num_squares > 0
         super().__init__(num_variables)
-        self._ctx = PipelineContext(
+        self._pipeline = PipelineContext(
             backend="torch", semiring="complex-lse-sum", fold=True, optimize=True
         )
         self._circuit, self._int_sq_circuit = self._build_circuits(
@@ -187,6 +188,7 @@ class SOS(PC):
             num_squares=num_squares,
             region_graph=region_graph,
             structured_decomposable=structured_decomposable,
+            complex=complex,
             seed=seed,
         )
         self.register_buffer(
@@ -217,6 +219,7 @@ class SOS(PC):
         num_squares: int = 1,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
+        complex: bool = False,
         seed: int = 42,
     ) -> Tuple[TorchCircuit, TorchConstantCircuit]:
         # Build the region graphs
@@ -229,30 +232,34 @@ class SOS(PC):
         )
 
         # Build one symbolic circuit for each region graph
-        symbolic_circuits = _build_symbolic_circuits(
+        symbolic_circuits = _build_non_monotonic_symbolic_circuits(
             rgs,
             num_input_units,
             num_sum_units,
             input_layer=input_layer,
             input_layer_kwargs=input_layer_kwargs,
+            complex=complex,
         )
 
-        # Merge the symbolic circuits into a single one having multiple outputs
-        symbolic_circuit = SF.merge(symbolic_circuits)
+        with self._pipeline:
+            # Merge the symbolic circuits into a single one having multiple outputs
+            symbolic_circuit = SF.merge(symbolic_circuits)
 
-        # Square each symbolic circuit and merge them into a single one having multiple outputs
-        symbolic_sq_circuit = SF.merge(
-            [SF.multiply(sc, sc) for sc in symbolic_circuits]
-        )
+            # Square each symbolic circuit and merge them into a single one having multiple outputs
+            symbolic_sq_circuits = [
+                (SF.multiply(SF.conjugate(sc), sc) if complex else SF.multiply(sc, sc))
+                for sc in symbolic_circuits
+            ]
+            symbolic_sq_circuit = SF.merge(symbolic_sq_circuits)
 
-        # Integrate the squared circuits (by integrating the merged symbolic representation)
-        symbolic_int_sq_circuit = SF.integrate(symbolic_sq_circuit)
+            # Integrate the squared circuits (by integrating the merged symbolic representation)
+            symbolic_int_sq_circuit = SF.integrate(symbolic_sq_circuit)
 
-        # Compile the symbolic circuits
-        circuit = cast(TorchCircuit, self._ctx.compile(symbolic_circuit))
-        int_sq_circuit = cast(
-            TorchConstantCircuit, self._ctx.compile(symbolic_int_sq_circuit)
-        )
+            # Compile the symbolic circuits
+            circuit = cast(TorchCircuit, compile(symbolic_circuit))
+            int_sq_circuit = cast(
+                TorchConstantCircuit, compile(symbolic_int_sq_circuit)
+            )
 
         return circuit, int_sq_circuit
 
@@ -297,7 +304,7 @@ def _build_lt_region_graph(
     return LinearRegionGraph(num_variables, random=random, seed=seed)
 
 
-def _build_symbolic_circuits(
+def _build_monotonic_symbolic_circuits(
     region_graphs: Sequence[RegionGraph],
     num_input_units: int,
     num_sum_units: int,
@@ -317,8 +324,8 @@ def _build_symbolic_circuits(
             num_units,
             num_channels,
             num_categories=input_layer_kwargs["num_categories"],
-            parameterization=lambda p: Parameter.from_sequence(
-                p, LogSoftmaxParameter(p.shape)
+            logits_factory=lambda shape: Parameter.from_leaf(
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 3e-1))
             ),
         )
 
@@ -329,10 +336,13 @@ def _build_symbolic_circuits(
             scope,
             num_units,
             num_channels,
-            mean_initializer=NormalInitializer(0.0, 1.0),
-            stddev_initializer=NormalInitializer(0.0, 1.0),
-            stddev_parameterization=lambda p: Parameter.from_sequence(
-                p, ExpParameter(p.shape), ClampParameter(p.shape, vmin=1e-5)
+            mean_factory=lambda shape: Parameter.from_leaf(
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0))
+            ),
+            stddev_factory=lambda shape: Parameter.from_sequence(
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 3e-1)),
+                ExpParameter(shape),
+                ClampParameter(shape, vmin=1e-5),
             ),
         )
 
@@ -348,8 +358,93 @@ def _build_symbolic_circuits(
             scope,
             num_input_units,
             num_output_units,
-            initializer=UniformInitializer(0.0, 1.0),
-            parameterization=lambda p: Parameter.from_unary(ExpParameter(p.shape), p),
+            weight_factory=lambda shape: Parameter.from_unary(
+                ExpParameter(shape),
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 3e-1)),
+            ),
+        )
+
+    def build_symbolic_circuit(rg: RegionGraph) -> Circuit:
+        assert input_layer in ["categorical", "gaussian"]
+        if input_layer == "categorical":
+            input_factory = categorical_layer_factory
+        elif input_layer == "gaussian":
+            input_factory = gaussian_layer_factory
+        else:
+            raise NotImplementedError()
+        return Circuit.from_region_graph(
+            rg,
+            num_input_units=num_input_units,
+            num_sum_units=num_sum_units,
+            input_factory=input_factory,
+            sum_factory=dense_layer_factory,
+            prod_factory=hadamard_layer_factory,
+        )
+
+    return list(map(lambda rg: build_symbolic_circuit(rg), region_graphs))
+
+
+def _build_non_monotonic_symbolic_circuits(
+    region_graphs: Sequence[RegionGraph],
+    num_input_units: int,
+    num_sum_units: int,
+    *,
+    input_layer: str,
+    input_layer_kwargs: Optional[Dict[str, Any]] = None,
+    complex: bool = False,
+) -> List[Circuit]:
+    if input_layer_kwargs is None:
+        input_layer_kwargs = {}
+
+    def categorical_layer_factory(
+        scope: Scope, num_units: int, num_channels: int
+    ) -> CategoricalLayer:
+        assert "num_categories" in input_layer_kwargs
+        return CategoricalLayer(
+            scope,
+            num_units,
+            num_channels,
+            num_categories=input_layer_kwargs["num_categories"],
+            logits_factory=lambda shape: Parameter.from_leaf(
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 3e-1))
+            ),
+        )
+
+    def gaussian_layer_factory(
+        scope: Scope, num_units: int, num_channels: int
+    ) -> GaussianLayer:
+        return GaussianLayer(
+            scope,
+            num_units,
+            num_channels,
+            mean_factory=lambda shape: Parameter.from_leaf(
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0))
+            ),
+            stddev_factory=lambda shape: Parameter.from_sequence(
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 3e-1)),
+                ExpParameter(shape),
+                ClampParameter(shape, vmin=1e-5),
+            ),
+        )
+
+    def hadamard_layer_factory(
+        scope: Scope, num_input_units: int, arity: int
+    ) -> HadamardLayer:
+        return HadamardLayer(scope, num_input_units, arity)
+
+    def dense_layer_factory(
+        scope: Scope, num_input_units: int, num_output_units: int
+    ) -> DenseLayer:
+        weight_dtype = DataType.COMPLEX if complex else DataType.REAL
+        return DenseLayer(
+            scope,
+            num_input_units,
+            num_output_units,
+            weight_factory=lambda shape: Parameter.from_leaf(
+                TensorParameter(
+                    *shape, initializer=UniformInitializer(0.0, 1.0), dtype=weight_dtype
+                )
+            ),
         )
 
     def build_symbolic_circuit(rg: RegionGraph) -> Circuit:
