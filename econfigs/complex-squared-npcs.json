@@ -1,0 +1,80 @@
+{
+  "common": {
+    "tboard-path": "tboard-runs/uci-data",
+    "checkpoint-path": "checkpoints/uci-data",
+    "save-checkpoint": false,
+    "num-epochs": 1200,
+    "device": "cuda",
+    "num-workers": 2,
+    "patience-threshold": 1e-3,
+    "early-stop-patience": 30
+  },
+  "datasets": ["power", "gas", "hepmass", "miniboone"],
+  "grid": {
+    "common": {
+      "region-graph": "rnd-bt",
+      "region-graph-sd": true,
+      "batch-size": 512,
+      "optimizer": "Adam",
+      "verbose": true,
+      "learning-rate": [5e-4, 1e-3, 5e-3, 1e-2],
+      "num-components": 1
+    },
+    "models": {
+      "power|gas": {
+        "MPC": {
+          "num-units": 256,
+          "num-input-units": 512
+        },
+        "SOS": {
+          "real": {
+            "num-units": 256,
+            "num-input-units": 512,
+            "complex": false
+          },
+          "complex": {
+            "num-units": 256,
+            "num-input-units": 512,
+            "complex": true
+          }
+        }
+      },
+      "hepmass": {
+        "MPC": {
+          "num-units": 128,
+          "num-input-units": 256
+        },
+        "SOS": {
+          "real": {
+            "num-units": 128,
+            "num-input-units": 256,
+            "complex": false
+          },
+          "complex": {
+            "num-units": 128,
+            "num-input-units": 256,
+            "complex": true
+          }
+        }
+      },
+      "miniboone": {
+        "MPC": {
+          "num-units": 64,
+          "num-input-units": 128
+        },
+        "SOS": {
+          "real": {
+            "num-units": 64,
+            "num-input-units": 128,
+            "complex": false
+          },
+          "complex": {
+            "num-units": 64,
+            "num-input-units": 128,
+            "complex": true
+          }
+        }
+      }
+    }
+  }
+}
