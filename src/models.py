@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from cirkit.backend.torch.circuits import TorchCircuit, TorchConstantCircuit
 from cirkit.backend.torch.layers import TorchSumLayer, TorchLayer
+from cirkit.backend.torch.optimization.layers import DenseKroneckerPattern
 from cirkit.pipeline import PipelineContext, compile
 from cirkit.symbolic.circuit import Circuit
 from cirkit.symbolic.dtypes import DataType
@@ -30,6 +31,8 @@ from cirkit.utils.scope import Scope
 from torch import Tensor, nn
 
 import cirkit.symbolic.functional as SF
+
+from layers import apply_dense_product
 
 
 class PC(nn.Module, ABC):
@@ -180,6 +183,7 @@ class SOS(PC):
         self._pipeline = PipelineContext(
             backend="torch", semiring="complex-lse-sum", fold=True, optimize=True
         )
+        self._pipeline._compiler._optimization_registry['layer_shatter']._rules[DenseKroneckerPattern] = apply_dense_product
         self._circuit, self._int_sq_circuit = self._build_circuits(
             num_input_units,
             num_sum_units,
