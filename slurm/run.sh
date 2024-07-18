@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# Find a suitable scratch directory
+SCRATCH_DIR="/disk/scratch_big"
+if [ ! -w "$SCRATCH_DIR" ]
+then
+	SCRATCH_DIR="/disk/scratch"
+fi
+
+echo "Running job on the partition $SLURM_JOB_PARTITION"
+echo "        and on the node $SLURMD_NODENAME"
+echo "Using scratch directory $SCRATCH_DIR"
+
 RESULTS_PATH="$SCRATCH_DIR/$SLURM_JOB_ID"
 DESTINATION_PATH="$HOME/$PROJECT_NAME"
 TBOARD_DIR="$RESULTS_PATH/tboard-runs/$EXPS_ID"
