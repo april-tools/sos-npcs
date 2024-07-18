@@ -183,7 +183,10 @@ class SOS(PC):
         self._pipeline = PipelineContext(
             backend="torch", semiring="complex-lse-sum", fold=True, optimize=True
         )
-        self._pipeline._compiler._optimization_registry['layer_shatter']._rules[DenseKroneckerPattern] = apply_dense_product
+        # Use a different optimization rule for the dense-kronecker pattern
+        self._pipeline._compiler._optimization_registry['layer_shatter'].add_rule(
+            apply_dense_product, signature=DenseKroneckerPattern
+        )
         self._circuit, self._int_sq_circuit = self._build_circuits(
             num_input_units,
             num_sum_units,
