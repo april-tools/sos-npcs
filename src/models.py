@@ -19,8 +19,7 @@ from cirkit.symbolic.layers import (
 from cirkit.symbolic.parameters import (
     ExpParameter,
     Parameter,
-    ClampParameter,
-    TensorParameter,
+    TensorParameter, ScaledSigmoidParameter,
 )
 from cirkit.templates.region_graph import (
     RegionGraph,
@@ -348,8 +347,7 @@ def _build_monotonic_symbolic_circuits(
             ),
             stddev_factory=lambda shape: Parameter.from_sequence(
                 TensorParameter(*shape, initializer=NormalInitializer(0.0, 1e-1)),
-                ExpParameter(shape),
-                ClampParameter(shape, vmin=1e-5),
+                ScaledSigmoidParameter(shape, vmin=1e-5, vmax=1.0),
             ),
         )
 
@@ -429,8 +427,7 @@ def _build_non_monotonic_symbolic_circuits(
             ),
             stddev_factory=lambda shape: Parameter.from_sequence(
                 TensorParameter(*shape, initializer=NormalInitializer(0.0, 1e-1)),
-                ExpParameter(shape),
-                ClampParameter(shape, vmin=1e-5),
+                ScaledSigmoidParameter(shape, vmin=1e-5, vmax=1.0)
             ),
         )
 
