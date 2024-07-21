@@ -24,7 +24,11 @@ class TorchDenseProductLayer(TorchSumLayer):
         assert weight1.num_folds == num_folds
         assert weight2.num_folds == num_folds
         super().__init__(
-            num_input_units, num_output_units, arity=1, num_folds=num_folds, semiring=semiring
+            num_input_units,
+            num_output_units,
+            arity=1,
+            num_folds=num_folds,
+            semiring=semiring,
         )
         self._in_shape = (weight1.shape[1], weight2.shape[1])
         self.weight1 = weight1

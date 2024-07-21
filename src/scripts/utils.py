@@ -111,6 +111,7 @@ def set_global_seed(seed: int, is_deterministic=True):
         if is_deterministic is True:
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False
+    torch._dynamo.config.cache_size_limit = 24
 
 
 def get_git_revision_hash() -> str:
