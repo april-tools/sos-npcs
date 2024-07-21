@@ -8,19 +8,20 @@ then
 fi
 SCRATCH_DIR="$SCRATCH_DIR/$USER"
 
-echo "Running job on the partition $SLURM_JOB_PARTITION"
-echo "        and on the node $SLURMD_NODENAME"
-echo "Using scratch directory $SCRATCH_DIR"
-
-RESULTS_PATH="$SCRATCH_DIR/$SLURM_JOB_ID"
+echo "Running job on partition '$SLURM_JOB_PARTITION' and node '$SLURMD_NODENAME'"
+echo "Using scratch directory '$SCRATCH_DIR'"
+echo "Starting job ..."
 DESTINATION_PATH="$HOME/$PROJECT_NAME"
+RESULTS_PATH="$SCRATCH_DIR/$SLURM_JOB_ID"
 TBOARD_DIR="$RESULTS_PATH/tboard-runs/$EXPS_ID"
-CHECKPOINT_DIR="$RESULTS_PATH/checkpoints/$EXPS_ID"
+CHECKP_DIR="$RESULTS_PATH/checkpoints/$EXPS_ID"
+DEST_TBOARD_DIR="$DESTINATION_PATH/tboard-runs"
+DEST_CHECKP_DIR="$DESTINATION_PATH/checkpoints"
 
 # Create local directories where to save model checkpoints and tensorboard logs
-mkdir -p "$DESTINATION_PATH/tboard-runs" || exit 1
-mkdir -p "$DESTINATION_PATH/checkpoints" || exit 1
 mkdir -p "$RESULTS_PATH" || exit 1
+mkdir -p "$DEST_TBOARD_DIR" || exit 1
+mkdir -p "$DEST_CHECKP_DIR" || exit 1
 
 # Get the command to run
 COMMAND="`sed \"${SLURM_ARRAY_TASK_ID}q;d\" $1`"
@@ -29,11 +30,13 @@ COMMAND="`sed \"${SLURM_ARRAY_TASK_ID}q;d\" $1`"
 # Then, rsync is used to copy the model checkpoints and tensorboard logs from the
 # nodes local disk to the shared disk.
 source "$VENV_PATH/bin/activate" && \
-  $COMMAND --device cuda --tboard-path "$TBOARD_DIR" --checkpoint-path "$CHECKPOINT_DIR" && \
+  $COMMAND --device cuda \
+  --tboard-path "$TBOARD_DIR" --checkpoint-path "$CHECKP_DIR" && \
   deactivate && \
-  rsync -r -a --verbose --ignore-existing "$TBOARD_DIR" "$DESTINATION_PATH/tboard-runs/" && \
-  rsync -r -a --verbose --ignore-existing "$CHECKPOINT_DIR" "$DESTINATION_PATH/checkpoints/"
+  rsync -r -a --verbose --ignore-existing "$TBOARD_DIR" "$DEST_TBOARD_DIR/" && \
+  rsync -r -a --verbose --ignore-existing "$CHECKPOINT_DIR" "$DEST_CHECKP_DIR/"
 
 # Cleanup before exiting
 rm -rf "$RESULTS_PATH"
 rmdir "$SCRATCH_DIR"
+

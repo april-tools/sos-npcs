@@ -9,7 +9,6 @@ export PYTHONPATH=${PYTHONPATH:-src}
 # DATA_PATH: the path containing the data
 export EXPS_ID=${EXPS_ID:-exps}
 export VENV_PATH=${VENV_PATH:-venv}
-export DATA_PATH=${DATA_PATH:-datasets}
 
 # The Slurm partition to use, e.g.,
 #PARTITION=PGR-Standard
@@ -18,12 +17,12 @@ PARTITION=${PARTITION:-PGR-Standard}
 #EXCL_NODES=${EXCL_NODES:-busynode[01-07]}
 EXCL_NODES=${EXCL_NODES:-crannog[01-07],damnii[05-08]}
 # The maximum number of parallel jobs to dispatch
-MAX_PARALLEL_JOBS=12
+MAX_PARALLEL_JOBS=16
 
 # Resources and maximum execution time
 NUM_CPUS=2
 NUM_GPUS=1
-TIME=167:00:00
+TIME=167:59:00
 
 JOB_NAME="$PROJECT_NAME-$EXPS_ID"
 LOG_DIRECTORY="slurm/logs/$PROJECT_NAME/$EXPS_ID"
