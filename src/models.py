@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from cirkit.backend.torch.circuits import TorchCircuit, TorchConstantCircuit
 from cirkit.backend.torch.layers import TorchSumLayer, TorchLayer
+from cirkit.backend.torch.optimization.layers import DenseKroneckerPattern
 from cirkit.pipeline import PipelineContext, compile
 from cirkit.symbolic.circuit import Circuit
 from cirkit.symbolic.dtypes import DataType
@@ -18,8 +19,7 @@ from cirkit.symbolic.layers import (
 from cirkit.symbolic.parameters import (
     ExpParameter,
     Parameter,
-    ClampParameter,
-    TensorParameter,
+    TensorParameter, ScaledSigmoidParameter,
 )
 from cirkit.templates.region_graph import (
     RegionGraph,
@@ -30,6 +30,8 @@ from cirkit.utils.scope import Scope
 from torch import Tensor, nn
 
 import cirkit.symbolic.functional as SF
+
+from layers import apply_dense_product
 
 
 class PC(nn.Module, ABC):
@@ -180,6 +182,10 @@ class SOS(PC):
         self._pipeline = PipelineContext(
             backend="torch", semiring="complex-lse-sum", fold=True, optimize=True
         )
+        # Use a different optimization rule for the dense-kronecker pattern
+        self._pipeline._compiler._optimization_registry["layer_shatter"].add_rule(
+            apply_dense_product, signature=DenseKroneckerPattern
+        )
         self._circuit, self._int_sq_circuit = self._build_circuits(
             num_input_units,
             num_sum_units,
@@ -325,7 +331,7 @@ def _build_monotonic_symbolic_circuits(
             num_channels,
             num_categories=input_layer_kwargs["num_categories"],
             logits_factory=lambda shape: Parameter.from_leaf(
-                TensorParameter(*shape, initializer=NormalInitializer(0.0, 3e-1))
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1e-1))
             ),
         )
 
@@ -340,9 +346,8 @@ def _build_monotonic_symbolic_circuits(
                 TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0))
             ),
             stddev_factory=lambda shape: Parameter.from_sequence(
-                TensorParameter(*shape, initializer=NormalInitializer(0.0, 3e-1)),
-                ExpParameter(shape),
-                ClampParameter(shape, vmin=1e-5),
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1e-1)),
+                ScaledSigmoidParameter(shape, vmin=1e-5, vmax=1.0),
             ),
         )
 
@@ -360,7 +365,7 @@ def _build_monotonic_symbolic_circuits(
             num_output_units,
             weight_factory=lambda shape: Parameter.from_unary(
                 ExpParameter(shape),
-                TensorParameter(*shape, initializer=NormalInitializer(0.0, 3e-1)),
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1e-1)),
             ),
         )
 
@@ -406,7 +411,7 @@ def _build_non_monotonic_symbolic_circuits(
             num_channels,
             num_categories=input_layer_kwargs["num_categories"],
             logits_factory=lambda shape: Parameter.from_leaf(
-                TensorParameter(*shape, initializer=NormalInitializer(0.0, 3e-1))
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1e-1))
             ),
         )
 
@@ -421,9 +426,8 @@ def _build_non_monotonic_symbolic_circuits(
                 TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0))
             ),
             stddev_factory=lambda shape: Parameter.from_sequence(
-                TensorParameter(*shape, initializer=NormalInitializer(0.0, 3e-1)),
-                ExpParameter(shape),
-                ClampParameter(shape, vmin=1e-5),
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1e-1)),
+                ScaledSigmoidParameter(shape, vmin=1e-5, vmax=1.0)
             ),
         )
 

@@ -109,6 +109,7 @@ def test_discrete_complex_sos_pc(
     check_evi_ll(model, data)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "num_components,num_units,region_graph",
     list(itertools.product([1], [2], ["rnd-bt"])),
@@ -126,6 +127,7 @@ def test_continuous_monotonic_pc(num_components, num_units, region_graph):
     check_pdf(model)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "num_squares,num_units,region_graph",
     list(itertools.product([1], [2], ["rnd-bt"])),
