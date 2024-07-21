@@ -9,7 +9,7 @@
     "patience-threshold": 1e-3,
     "early-stop-patience": 30
   },
-  "datasets": ["power", "gas", "hepmass", "miniboone"],
+  "datasets": ["miniboone", "hepmass", "gas", "power"],
   "grid": {
     "common": {
       "region-graph": "rnd-bt",
