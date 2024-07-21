@@ -6,8 +6,10 @@ export PYTHONPATH=${PYTHONPATH:-src}
 # These flags need to be updated accordingly:
 # EXPS_ID: some identifier for the experiments
 # VENV_PATH: the path containing the pip virtual environment
+# DATA_PATH: the path containing the data
 export EXPS_ID=${EXPS_ID:-exps}
 export VENV_PATH=${VENV_PATH:-venv}
+export DATA_PATH=${DATA_PATH:-datasets}
 
 # The Slurm partition to use, e.g.,
 #PARTITION=PGR-Standard

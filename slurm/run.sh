@@ -6,6 +6,7 @@ if [ ! -w "$SCRATCH_DIR" ]
 then
 	SCRATCH_DIR="/disk/scratch"
 fi
+SCRATCH_DIR="$SCRATCH_DIR/$USER"
 
 echo "Running job on the partition $SLURM_JOB_PARTITION"
 echo "        and on the node $SLURMD_NODENAME"
