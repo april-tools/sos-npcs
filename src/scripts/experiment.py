@@ -224,7 +224,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--dtype",
-    default="float64",
+    default="float32",
     choices=["float32", "float64"],
     help="The default Torch dtype to use",
 )
