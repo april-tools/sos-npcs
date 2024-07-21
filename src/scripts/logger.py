@@ -16,6 +16,7 @@ from models import PC
 class Logger:
     def __init__(
         self,
+        trail_id: str,
         verbose: bool,
         *,
         checkpoint_path: Optional[str] = None,
@@ -23,6 +24,7 @@ class Logger:
         wandb_path: Optional[str] = None,
         wandb_kwargs: Optional[Dict[str, Any]] = None
     ):
+        self.trial_id = trail_id
         self.verbose = verbose
         self.checkpoint_path = checkpoint_path
         self._tboard_writer: Optional[SummaryWriter] = None
@@ -150,17 +152,17 @@ class Logger:
 
     def close(self):
         if self._logged_distributions:
-            self.save_array(self._best_distribution, "distbest.npy")
+            self.save_array(self._best_distribution, f"distbest-{self.trial_id}.npy")
             self.save_array(
-                np.stack(self._logged_distributions, axis=0), "diststeps.npy"
+                np.stack(self._logged_distributions, axis=0), f"diststeps-{self.trial_id}.npy"
             )
         if self._logged_wcoords:
-            self.save_array(np.stack(self._logged_wcoords, axis=0), "wcoords.npy")
+            self.save_array(np.stack(self._logged_wcoords, axis=0), f"wcoords-{self.trial_id}.npy")
         if self._tboard_writer is not None:
             self._tboard_writer.close()
         if wandb.run:
             wandb.finish(quiet=True)
-        self.save_dict(self._logged_scalars, "scalars.json")
+        self.save_dict(self._logged_scalars, f"scalars-{self.trial_id}.json")
 
     def save_checkpoint(self, data: Dict[str, Any], filepath: str):
         if self.checkpoint_path:

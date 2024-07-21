@@ -12,19 +12,26 @@ def setup_tueplots(
     ncols: int,
     rel_width: float = 1.0,
     hw_ratio: Optional[float] = None,
-    inc_font_size: int = 0,
+    default_smaller: int = -1,
     use_tex: bool = True,
     **kwargs
 ):
     if use_tex:
-        font_config = fonts.iclr2023_tex(family="serif")
+        font_config = fonts.neurips2024_tex(family="serif")
     else:
-        font_config = fonts.iclr2023(family="serif")
+        font_config = fonts.neurips2024(family="serif")
     if hw_ratio is not None:
         kwargs["height_to_width_ratio"] = hw_ratio
-    size = figsizes.iclr2023(rel_width=rel_width, nrows=nrows, ncols=ncols, **kwargs)
-    fontsize_config = fontsizes.iclr2023(default_smaller=-inc_font_size)
-    rc_params = {**font_config, **size, **fontsize_config}
+    size = figsizes.neurips2024(rel_width=rel_width, nrows=nrows, ncols=ncols, **kwargs)
+    fontsize_config = fontsizes.neurips2024(default_smaller=default_smaller)
+    rc_params = {
+        **font_config,
+        **size,
+        **fontsize_config,
+    }
+    rc_params.update({
+        'text.latex.preamble': r'\usepackage{amsfonts}'
+    })
     plt.rcParams.update(rc_params)
     # plt.rcParams.update({
     #    "axes.prop_cycle": plt.cycler(

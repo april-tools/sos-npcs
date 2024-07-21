@@ -65,7 +65,7 @@ class Engine:
             }
             os.makedirs(kwargs["wandb_path"], exist_ok=True)
 
-        self.logger = Logger(args.verbose, **kwargs)
+        self.logger = Logger(self._trial_unique_id, args.verbose, **kwargs)
         self.metadata: Dict[str, Any] = dict()
 
         self.dataloaders: Dict[str, Optional[DataLoader]] = {
@@ -263,7 +263,7 @@ class Engine:
                         "ppl": metrics["test_ppl"],
                     },
                 },
-                "checkpoint.pt",
+                f"checkpoint-{self._trial_unique_id}.pt",
             )
         return metrics
 
