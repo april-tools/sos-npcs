@@ -33,6 +33,7 @@ from graphics.distributions import (
     plot_bivariate_discrete_samples_hmap,
 )
 from models import PC, MPC, SOS
+from scripts.logger import Logger
 from utilities import (
     retrieve_default_dtype,
     REGION_GRAPHS,
@@ -279,7 +280,8 @@ def setup_experiment_path(
 def setup_data_loaders(
     dataset: str,
     path: str,
-    batch_size: int,
+    logger: Logger,
+    batch_size: int = 128,
     num_workers: int = 0,
     num_samples: int = 1000,
     standardize: bool = False,
@@ -289,7 +291,8 @@ def setup_data_loaders(
     discretize_bins: int = 32,
     shuffle_bins: bool = False,
 ) -> Tuple[dict, Tuple[DataLoader, DataLoader, DataLoader]]:
-    seed = 123
+    logger.info(f"Loading dataset '{dataset}' ...")
+
     numpy_dtype = retrieve_default_dtype(numpy=True)
     metadata = dict()
     # Load the dataset
@@ -300,7 +303,7 @@ def setup_data_loaders(
     language_dataset = dataset in LANGUAGE_DATASETS
     if small_uci_dataset:
         train_data, valid_data, test_data = load_small_uci_dataset(
-            dataset, path=path, seed=seed
+            dataset, path=path, seed=123
         )
         metadata["image_shape"] = None
         metadata["num_variables"] = train_data.shape[1]
@@ -371,7 +374,7 @@ def setup_data_loaders(
         test_data = TensorDataset(torch.tensor(test_data))
     elif language_dataset:
         train_data, valid_data, test_data = load_language_dataset(
-            dataset, path=path, seed=seed
+            dataset, path=path, seed=123
         )
         seq_length = train_data.shape[1]
         metadata["image_shape"] = None
@@ -436,6 +439,7 @@ def setup_data_loaders(
 def setup_model(
     model_name: str,
     dataset_metadata: dict,
+    logger: Logger,
     region_graph: str = "rnd",
     structured_decomposable: bool = False,
     num_components: int = 1,
@@ -446,6 +450,8 @@ def setup_model(
     spline_order: int = 2,
     seed: int = 123,
 ) -> Union[PC, Flow]:
+    logger.info(f"Building model '{model_name}' ...")
+
     if complex and model_name != "SOS":
         raise ValueError("--complex can only be used with SOS circuits")
     assert model_name in MODELS

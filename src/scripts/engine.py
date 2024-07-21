@@ -273,7 +273,8 @@ class Engine:
             setup_data_loaders(
                 self.args.dataset,
                 self.args.data_path,
-                self.args.batch_size,
+                logger=self.logger,
+                batch_size=self.args.batch_size,
                 num_workers=self.args.num_workers,
                 num_samples=self.args.num_samples,
                 standardize=self.args.standardize,
@@ -297,6 +298,7 @@ class Engine:
         self.model = setup_model(
             self.args.model,
             self.metadata,
+            logger=self.logger,
             region_graph=self.args.region_graph,
             structured_decomposable=self.args.region_graph_sd,
             num_components=self.args.num_components,
