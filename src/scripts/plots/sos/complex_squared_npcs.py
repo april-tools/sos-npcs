@@ -73,7 +73,6 @@ if __name__ == "__main__":
     df = df[df["dataset"] == args.dataset]
     df = df[df["model"].isin(models)]
     df = df.sort_values("model", ascending=True)
-    df.to_csv('hepmass.csv')
     df["model_id"] = df.apply(
         lambda row: format_model(row.model, row.exp_alias),
         axis=1
