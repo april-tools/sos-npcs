@@ -1,4 +1,4 @@
-git+ssh://git@github.com/april-tools/cirkit.git@complex-circuits
+git+ssh://git@github.com/april-tools/cirkit.git@main
 pandas<2.0.0
 scikit-learn
 zuko
