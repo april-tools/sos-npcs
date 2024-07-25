@@ -42,11 +42,11 @@
       },
       "hepmass": {
         "MPC": {
-          "num-components,num-units,num-input-units": [[4, 78, 32], [8, 58, 16], [16, 42, 8]]
+          "num-components,num-units,num-input-units": [[4, 76, 32], [8, 58, 16], [16, 42, 8]]
         },
         "SOS": {
           "real": {
-            "num-components,num-units,num-input-units": [[4, 78, 32], [8, 58, 16], [16, 42, 8]]
+            "num-components,num-units,num-input-units": [[4, 76, 32], [8, 58, 16], [16, 42, 8]]
           }
         }
       },
