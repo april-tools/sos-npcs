@@ -34,7 +34,7 @@ source "$VENV_PATH/bin/activate" && \
   --tboard-path "$TBOARD_DIR" --checkpoint-path "$CHECKP_DIR" && \
   deactivate && \
   rsync -r -a --verbose --ignore-existing "$TBOARD_DIR" "$DEST_TBOARD_DIR/" && \
-  rsync -r -a --verbose --ignore-existing "$CHECKPOINT_DIR" "$DEST_CHECKP_DIR/"
+  rsync -r -a --verbose --ignore-existing "$CHECKP_DIR" "$DEST_CHECKP_DIR/"
 
 # Cleanup before exiting
 rm -rf "$RESULTS_PATH"
