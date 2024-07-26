@@ -10,10 +10,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from pcs.models import PCS_MODELS
 
 from datasets.loaders import CONTINUOUS_DATASETS
 from graphics.utils import setup_tueplots
-from pcs.models import PCS_MODELS
 from scripts.utils import (
     drop_na,
     filter_dataframe,

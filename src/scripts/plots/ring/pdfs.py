@@ -6,10 +6,10 @@ import matplotlib as mpl
 import numpy as np
 import torch
 from matplotlib import pyplot as plt
+from pcs.models import PC, MonotonicPC, TensorizedPC
 from scipy import special
 
 from graphics.utils import setup_tueplots
-from pcs.models import PC, MonotonicPC, TensorizedPC
 from scripts.utils import setup_data_loaders, setup_model
 
 parser = argparse.ArgumentParser(description="PDFs and ellipses plotter")

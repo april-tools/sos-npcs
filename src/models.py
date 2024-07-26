@@ -1,37 +1,39 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, List, Sequence, cast, Iterator, Dict, Any
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, cast
 
+import cirkit.symbolic.functional as SF
 import numpy as np
 import torch
 from cirkit.backend.torch.circuits import TorchCircuit, TorchConstantCircuit
-from cirkit.backend.torch.layers import TorchSumLayer, TorchLayer
+from cirkit.backend.torch.layers import TorchLayer, TorchSumLayer
 from cirkit.backend.torch.optimization.layers import DenseKroneckerPattern
 from cirkit.pipeline import PipelineContext, compile
 from cirkit.symbolic.circuit import Circuit
 from cirkit.symbolic.dtypes import DataType
 from cirkit.symbolic.initializers import NormalInitializer, UniformInitializer
 from cirkit.symbolic.layers import (
+    CategoricalLayer,
+    DenseLayer,
     GaussianLayer,
     HadamardLayer,
-    DenseLayer,
-    CategoricalLayer,
 )
 from cirkit.symbolic.parameters import (
     ExpParameter,
     Parameter,
-    TensorParameter, ScaledSigmoidParameter,
+    ScaledSigmoidParameter,
+    TensorParameter,
 )
 from cirkit.templates.region_graph import (
-    RegionGraph,
-    RandomBinaryTree,
     LinearRegionGraph,
+    RandomBinaryTree,
+    RegionGraph,
 )
 from cirkit.utils.scope import Scope
 from torch import Tensor, nn
 
-import cirkit.symbolic.functional as SF
-
-from layers import apply_dense_product
+from layers import (
+    apply_dense_product,
+)
 
 
 class PC(nn.Module, ABC):
@@ -140,7 +142,7 @@ class MPC(PC):
         )
 
         # Build one symbolic circuit for each region graph
-        symbolic_circuits = _build_monotonic_symbolic_circuits(
+        sym_circuits = _build_monotonic_sym_circuits(
             rgs,
             num_input_units,
             num_sum_units,
@@ -150,14 +152,14 @@ class MPC(PC):
 
         with self._pipeline:
             # Merge the symbolic circuits into a single one having multiple outputs
-            symbolic_circuit = SF.merge(symbolic_circuits)
+            sym_circuit = SF.merge(sym_circuits)
 
             # Integrate the circuits (by integrating the merged symbolic representation)
-            symbolic_int_circuit = SF.integrate(symbolic_circuit)
+            sym_int_circuit = SF.integrate(sym_circuit)
 
             # Compile the symbolic circuits
-            circuit = cast(TorchCircuit, compile(symbolic_circuit))
-            int_circuit = cast(TorchConstantCircuit, compile(symbolic_int_circuit))
+            circuit = cast(TorchCircuit, compile(sym_circuit))
+            int_circuit = cast(TorchConstantCircuit, compile(sym_int_circuit))
 
         return circuit, int_circuit
 
@@ -238,7 +240,7 @@ class SOS(PC):
         )
 
         # Build one symbolic circuit for each region graph
-        symbolic_circuits = _build_non_monotonic_symbolic_circuits(
+        sym_circuits = _build_non_monotonic_sym_circuits(
             rgs,
             num_input_units,
             num_sum_units,
@@ -249,25 +251,138 @@ class SOS(PC):
 
         with self._pipeline:
             # Merge the symbolic circuits into a single one having multiple outputs
-            symbolic_circuit = SF.merge(symbolic_circuits)
+            sym_circuit = SF.merge(sym_circuits)
 
             # Square each symbolic circuit and merge them into a single one having multiple outputs
-            symbolic_sq_circuits = [
+            sym_sq_circuits = [
                 (SF.multiply(SF.conjugate(sc), sc) if complex else SF.multiply(sc, sc))
-                for sc in symbolic_circuits
+                for sc in sym_circuits
             ]
-            symbolic_sq_circuit = SF.merge(symbolic_sq_circuits)
+            sym_sq_circuit = SF.merge(sym_sq_circuits)
 
             # Integrate the squared circuits (by integrating the merged symbolic representation)
-            symbolic_int_sq_circuit = SF.integrate(symbolic_sq_circuit)
+            sym_int_sq_circuit = SF.integrate(sym_sq_circuit)
 
             # Compile the symbolic circuits
-            circuit = cast(TorchCircuit, compile(symbolic_circuit))
-            int_sq_circuit = cast(
-                TorchConstantCircuit, compile(symbolic_int_sq_circuit)
-            )
+            circuit = cast(TorchCircuit, compile(sym_circuit))
+            int_sq_circuit = cast(TorchConstantCircuit, compile(sym_int_sq_circuit))
 
         return circuit, int_sq_circuit
+
+
+class ExpSOS(PC):
+    def __init__(
+        self,
+        num_variables: int,
+        *,
+        num_input_units: int,
+        num_sum_units: int,
+        mono_num_input_units: int = 2,
+        mono_num_sum_units: int = 2,
+        input_layer: str,
+        input_layer_kwargs: Optional[Dict[str, Any]] = None,
+        region_graph: str = "rnd-bt",
+        structured_decomposable: bool = False,
+        complex: bool = False,
+        seed: int = 42,
+    ) -> None:
+        super().__init__(num_variables)
+        self._pipeline = PipelineContext(
+            backend="torch", semiring="complex-lse-sum", fold=True, optimize=True
+        )
+        # Introduce optimization rules
+        self._circuit, self._mono_circuit, self._int_circuit = self._build_circuits(
+            num_input_units,
+            num_sum_units,
+            mono_num_input_units,
+            mono_num_sum_units,
+            input_layer=input_layer,
+            input_layer_kwargs=input_layer_kwargs,
+            region_graph=region_graph,
+            structured_decomposable=structured_decomposable,
+            complex=complex,
+            seed=seed,
+        )
+
+    def layers(self) -> Iterator[TorchLayer]:
+        return iter(self._circuit.layers)
+
+    def sum_layers(self) -> Iterator[TorchSumLayer]:
+        return filter(lambda l: isinstance(l, TorchSumLayer), self._circuit.layers)
+
+    def log_partition(self) -> Tensor:
+        return self._int_circuit().real
+
+    def log_score(self, x: Tensor) -> Tensor:
+        sq_log_score = 2.0 * self._circuit(x).real
+        mono_log_score = self._mono_circuit(x).real
+        return sq_log_score + mono_log_score
+
+    def _build_circuits(
+        self,
+        num_input_units: int,
+        num_sum_units: int,
+        mono_num_input_units: int = 2,
+        mono_num_sum_units: int = 2,
+        *,
+        input_layer: str,
+        input_layer_kwargs: Optional[Dict[str, Any]] = None,
+        region_graph: str = "rnd-bt",
+        structured_decomposable: bool = False,
+        complex: bool = False,
+        seed: int = 42,
+    ) -> Tuple[TorchCircuit, TorchCircuit, TorchConstantCircuit]:
+        # Build the region graphs
+        rgs = _build_region_graphs(
+            region_graph,
+            1,
+            self.num_variables,
+            structured_decomposable=structured_decomposable,
+            seed=seed,
+        )
+        assert len(rgs) == 1
+
+        # Build one symbolic circuit for each region graph
+        sym_circuits = _build_non_monotonic_sym_circuits(
+            rgs,
+            num_input_units,
+            num_sum_units,
+            input_layer=input_layer,
+            input_layer_kwargs=input_layer_kwargs,
+            complex=complex,
+        )
+        sym_mono_circuits = _build_monotonic_sym_circuits(
+            rgs,
+            mono_num_input_units,
+            mono_num_sum_units,
+            input_layer=input_layer,
+            input_layer_kwargs=input_layer_kwargs,
+        )
+        assert len(sym_circuits) == 1
+        assert len(sym_mono_circuits) == 1
+        (sym_circuit,) = sym_circuits
+        (sym_mono_circuit,) = sym_mono_circuits
+
+        with self._pipeline:
+            # Square the symbolic circuit
+            if complex:
+                # Apply the conjugate operator if the circuit is complex
+                sym_sq_circuit = SF.multiply(SF.conjugate(sym_circuit), sym_circuit)
+            else:
+                sym_sq_circuit = SF.multiply(sym_circuit, sym_circuit)
+
+            # Make the product with the monotonic circuit
+            sym_prod_circuit = SF.multiply(sym_mono_circuit, sym_sq_circuit)
+
+            # Integrate the overall circuit
+            sym_int_circuit = SF.integrate(sym_prod_circuit)
+
+            # Compile the symbolic circuits
+            circuit = cast(TorchCircuit, compile(sym_circuit))
+            mono_circuit = cast(TorchCircuit, compile(sym_mono_circuit))
+            int_circuit = cast(TorchConstantCircuit, compile(sym_int_circuit))
+
+        return circuit, mono_circuit, int_circuit
 
 
 def _build_region_graphs(
@@ -310,7 +425,7 @@ def _build_lt_region_graph(
     return LinearRegionGraph(num_variables, random=random, seed=seed)
 
 
-def _build_monotonic_symbolic_circuits(
+def _build_monotonic_sym_circuits(
     region_graphs: Sequence[RegionGraph],
     num_input_units: int,
     num_sum_units: int,
@@ -369,7 +484,7 @@ def _build_monotonic_symbolic_circuits(
             ),
         )
 
-    def build_symbolic_circuit(rg: RegionGraph) -> Circuit:
+    def build_sym_circuit(rg: RegionGraph) -> Circuit:
         assert input_layer in ["categorical", "gaussian"]
         if input_layer == "categorical":
             input_factory = categorical_layer_factory
@@ -386,10 +501,10 @@ def _build_monotonic_symbolic_circuits(
             prod_factory=hadamard_layer_factory,
         )
 
-    return list(map(lambda rg: build_symbolic_circuit(rg), region_graphs))
+    return list(map(lambda rg: build_sym_circuit(rg), region_graphs))
 
 
-def _build_non_monotonic_symbolic_circuits(
+def _build_non_monotonic_sym_circuits(
     region_graphs: Sequence[RegionGraph],
     num_input_units: int,
     num_sum_units: int,
@@ -427,7 +542,7 @@ def _build_non_monotonic_symbolic_circuits(
             ),
             stddev_factory=lambda shape: Parameter.from_sequence(
                 TensorParameter(*shape, initializer=NormalInitializer(0.0, 1e-1)),
-                ScaledSigmoidParameter(shape, vmin=1e-5, vmax=1.0)
+                ScaledSigmoidParameter(shape, vmin=1e-5, vmax=1.0),
             ),
         )
 
@@ -451,7 +566,7 @@ def _build_non_monotonic_symbolic_circuits(
             ),
         )
 
-    def build_symbolic_circuit(rg: RegionGraph) -> Circuit:
+    def build_sym_circuit(rg: RegionGraph) -> Circuit:
         assert input_layer in ["categorical", "gaussian"]
         if input_layer == "categorical":
             input_factory = categorical_layer_factory
@@ -468,4 +583,4 @@ def _build_non_monotonic_symbolic_circuits(
             prod_factory=hadamard_layer_factory,
         )
 
-    return list(map(lambda rg: build_symbolic_circuit(rg), region_graphs))
+    return list(map(lambda rg: build_sym_circuit(rg), region_graphs))

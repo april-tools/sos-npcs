@@ -6,7 +6,7 @@ import pytest
 import torch
 from scipy import integrate
 
-from models import PC, MPC, SOS
+from models import MPC, PC, SOS, ExpSOS
 from tests.test_utils import generate_all_binary_samples
 
 
@@ -140,6 +140,25 @@ def test_continuous_sos_pc(num_squares, num_units, region_graph):
         num_sum_units=num_units,
         input_layer="gaussian",
         num_squares=num_squares,
+        region_graph=region_graph,
+    )
+    check_pdf(model)
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "num_squares,num_units,region_graph",
+    list(itertools.product([1], [2], ["rnd-bt"])),
+)
+def test_continuous_exp_sos_pc(num_squares, num_units, region_graph):
+    num_variables = 2
+    model = ExpSOS(
+        num_variables,
+        num_input_units=num_units,
+        num_sum_units=num_units,
+        mono_num_input_units=2,
+        mono_num_sum_units=2,
+        input_layer="gaussian",
         region_graph=region_graph,
     )
     check_pdf(model)

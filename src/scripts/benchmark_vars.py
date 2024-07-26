@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from matplotlib import rcParams
+from pcs.models import PC
 from torch import optim
 from torch.utils.data import DataLoader, TensorDataset
 
 from graphics.utils import setup_tueplots
-from pcs.models import PC
 from scripts.utils import (
     num_parameters,
     set_global_seed,

@@ -9,7 +9,7 @@ import wandb
 from PIL import Image as pillow
 from torch.utils.tensorboard import SummaryWriter
 
-from graphics.distributions import bivariate_pmf_heatmap, bivariate_pdf_heatmap
+from graphics.distributions import bivariate_pdf_heatmap, bivariate_pmf_heatmap
 from models import PC
 
 
@@ -22,7 +22,7 @@ class Logger:
         checkpoint_path: Optional[str] = None,
         tboard_path: Optional[str] = None,
         wandb_path: Optional[str] = None,
-        wandb_kwargs: Optional[Dict[str, Any]] = None
+        wandb_kwargs: Optional[Dict[str, Any]] = None,
     ):
         self.trial_id = trail_id
         self.verbose = verbose
@@ -154,10 +154,13 @@ class Logger:
         if self._logged_distributions:
             self.save_array(self._best_distribution, f"distbest-{self.trial_id}.npy")
             self.save_array(
-                np.stack(self._logged_distributions, axis=0), f"diststeps-{self.trial_id}.npy"
+                np.stack(self._logged_distributions, axis=0),
+                f"diststeps-{self.trial_id}.npy",
             )
         if self._logged_wcoords:
-            self.save_array(np.stack(self._logged_wcoords, axis=0), f"wcoords-{self.trial_id}.npy")
+            self.save_array(
+                np.stack(self._logged_wcoords, axis=0), f"wcoords-{self.trial_id}.npy"
+            )
         if self._tboard_writer is not None:
             self._tboard_writer.close()
         if wandb.run:

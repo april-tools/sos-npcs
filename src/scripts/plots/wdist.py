@@ -4,12 +4,12 @@ import os
 import numpy as np
 import torch
 from matplotlib import pyplot as plt
-
-from graphics.utils import setup_tueplots
 from pcs.initializers import INIT_METHODS
 from pcs.layers import COMPUTE_LAYERS
-from optimization.optimizers import OPTIMIZERS_NAMES
 from region_graph import REGION_GRAPHS
+
+from graphics.utils import setup_tueplots
+from optimization.optimizers import OPTIMIZERS_NAMES
 from scripts.utils import build_run_id, format_model, setup_experiment_path
 
 parser = argparse.ArgumentParser(

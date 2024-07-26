@@ -12,8 +12,8 @@ from zuko.flows import Flow
 
 from datasets.loaders import ALL_DATASETS
 from models import PC
-from optimization.schedulers import ReduceLROnPlateau
 from optimization.optimizers import OPTIMIZERS_NAMES, setup_optimizer
+from optimization.schedulers import ReduceLROnPlateau
 from scripts.logger import Logger
 from scripts.utils import (
     bits_per_dimension,

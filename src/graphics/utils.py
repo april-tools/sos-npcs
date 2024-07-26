@@ -29,9 +29,7 @@ def setup_tueplots(
         **size,
         **fontsize_config,
     }
-    rc_params.update({
-        'text.latex.preamble': r'\usepackage{amsfonts}'
-    })
+    rc_params.update({"text.latex.preamble": r"\usepackage{amsfonts}"})
     plt.rcParams.update(rc_params)
     # plt.rcParams.update({
     #    "axes.prop_cycle": plt.cycler(

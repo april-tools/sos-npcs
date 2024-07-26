@@ -32,14 +32,14 @@ from graphics.distributions import (
     kde_samples_hmap,
     plot_bivariate_discrete_samples_hmap,
 )
-from models import PC, MPC, SOS
+from models import MPC, PC, SOS
 from scripts.logger import Logger
 from utilities import (
-    retrieve_default_dtype,
-    REGION_GRAPHS,
-    MODELS,
     FLOW_MODELS,
+    MODELS,
     PCS_MODELS,
+    REGION_GRAPHS,
+    retrieve_default_dtype,
 )
 
 WANDB_KEY_FILE = "wandb_api.key"  # Put your wandb api key in this file, first line

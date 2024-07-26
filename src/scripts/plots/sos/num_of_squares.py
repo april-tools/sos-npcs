@@ -9,7 +9,6 @@ from matplotlib import pyplot as plt
 from graphics.utils import setup_tueplots
 from scripts.utils import retrieve_tboard_runs
 
-
 parser = argparse.ArgumentParser(
     description="Plot metrics as a swarm plot based on number of squares",
 )

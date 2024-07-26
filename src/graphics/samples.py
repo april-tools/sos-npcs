@@ -2,10 +2,9 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
-from torchvision.utils import make_grid
-
 from pcs.models import PC
 from pcs.sampling import inverse_transform_sample
+from torchvision.utils import make_grid
 
 
 def sample_model_images(
