@@ -32,7 +32,7 @@ from graphics.distributions import (
     kde_samples_hmap,
     plot_bivariate_discrete_samples_hmap,
 )
-from models import MPC, PC, SOS
+from models import MPC, PC, SOS, ExpSOS
 from scripts.logger import Logger
 from utilities import (
     FLOW_MODELS,
@@ -452,8 +452,8 @@ def setup_model(
 ) -> Union[PC, Flow]:
     logger.info(f"Building model '{model_name}' ...")
 
-    if complex and model_name != "SOS":
-        raise ValueError("--complex can only be used with SOS circuits")
+    if complex and model_name not in ["SOS", "ExpSOS"]:
+        raise ValueError("--complex can only be used with (Exp)SOS circuits")
     assert model_name in MODELS
     if splines:
         raise NotImplementedError()
@@ -486,7 +486,8 @@ def setup_model(
             seed=seed,
         )
         return model
-    elif model_name == "SOS":
+
+    if model_name == "SOS":
         model = SOS(
             num_variables,
             num_input_units=num_input_units,
@@ -500,8 +501,24 @@ def setup_model(
             seed=seed,
         )
         return model
-    else:
-        raise ValueError(f"Unknown model called {model_name}")
+
+    if model_name == "ExpSOS":
+        model = ExpSOS(
+            num_variables,
+            num_input_units=num_input_units,
+            num_sum_units=num_units,
+            mono_num_input_units=2,
+            mono_num_sum_units=2,
+            input_layer=input_layer,
+            input_layer_kwargs=input_layer_kwargs,
+            region_graph=region_graph,
+            structured_decomposable=structured_decomposable,
+            complex=complex,
+            seed=seed,
+        )
+        return model
+
+    raise ValueError(f"Unknown model called {model_name}")
 
 
 def setup_flow_model(

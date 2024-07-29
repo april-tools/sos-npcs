@@ -3,7 +3,7 @@ from typing import Optional, Tuple, Union
 import numpy as np
 import torch
 
-PCS_MODELS = ["MPC", "SOS"]
+PCS_MODELS = ["MPC", "SOS", "ExpSOS"]
 
 FLOW_MODELS = ["NICE", "MAF", "NSF"]
 

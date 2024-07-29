@@ -1,3 +1,4 @@
+import itertools
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, cast
 
@@ -305,10 +306,13 @@ class ExpSOS(PC):
         )
 
     def layers(self) -> Iterator[TorchLayer]:
-        return iter(self._circuit.layers)
+        return itertools.chain(self._circuit.layers, self._mono_circuit.layers)
 
     def sum_layers(self) -> Iterator[TorchSumLayer]:
-        return filter(lambda l: isinstance(l, TorchSumLayer), self._circuit.layers)
+        return itertools.chain(
+            filter(lambda l: isinstance(l, TorchSumLayer), self._circuit.layers),
+            filter(lambda l: isinstance(l, TorchSumLayer), self._mono_circuit.layers)
+        )
 
     def log_partition(self) -> Tensor:
         return self._int_circuit().real
