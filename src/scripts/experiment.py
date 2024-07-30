@@ -112,6 +112,14 @@ parser.add_argument(
     help="Number of input units. If negative, then is the same as --num-units",
 )
 parser.add_argument(
+    "--mono-num-units", type=int, default=2,
+    help="The number of units for the monotonic circuit, in the case of the ExpSOS model"
+)
+parser.add_argument(
+    "--mono-num-input-units", type=int, default=-1,
+    help="The number of input units for the monotonic circuit, in the case of the ExpSOS model"
+)
+parser.add_argument(
     "--num-components", default=1, type=int, help="Number of squares/components"
 )
 parser.add_argument(

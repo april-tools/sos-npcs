@@ -235,6 +235,10 @@ def build_run_id(args):
     rs.append(f"K{args.num_units}")
     if args.num_input_units > 0:
         rs.append(f"KI{args.num_input_units}")
+    if args.model == 'ExpSOS':
+        rs.append(f"MK{args.mono_num_units}")
+        if args.mono_num_input_units > 0:
+            rs.append(f"MKI{args.mono_num_input_units}")
     rs.append(f"O{args.optimizer}")
     rs.append(f"LR{args.learning_rate}")
     rs.append(f"BS{args.batch_size}")
@@ -445,6 +449,8 @@ def setup_model(
     num_components: int = 1,
     num_units: int = 2,
     num_input_units: int = -1,
+    mono_num_units: int = 2,
+    mono_num_input_units: int = -1,
     complex: bool = False,
     splines: bool = False,
     spline_order: int = 2,
@@ -507,8 +513,8 @@ def setup_model(
             num_variables,
             num_input_units=num_input_units,
             num_sum_units=num_units,
-            mono_num_input_units=2,
-            mono_num_sum_units=2,
+            mono_num_input_units=mono_num_input_units,
+            mono_num_sum_units=mono_num_units,
             input_layer=input_layer,
             input_layer_kwargs=input_layer_kwargs,
             region_graph=region_graph,
