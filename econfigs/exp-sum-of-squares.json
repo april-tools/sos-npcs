@@ -23,13 +23,17 @@
       "hepmass|miniboone": {
         "ExpSOS": {
           "real": {
-            "num-units": 192,
+            "num-units": 208,
             "num-input-units": 128,
+            "mono-num-units": 8,
+            "mono-num-input-units": 8,
             "complex": false
           },
           "complex": {
             "num-units": 128,
             "num-input-units": 128,
+            "mono-num-units": 8,
+            "mono-num-input-units": 8,
             "complex": true
           }
         }
