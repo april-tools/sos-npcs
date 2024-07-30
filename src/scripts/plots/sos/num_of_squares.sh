@@ -1,7 +1,7 @@
 #!/bin/bash
 
-PYSCRIPT="scripts.plots.sos.complex_squared_npcs"
-TBOARD_PATH="${TBOARD_PATH:-tboard-runs/complex-squared-npcs}"
+PYSCRIPT="scripts.plots.sos.num_of_squares"
+TBOARD_PATH="${TBOARD_PATH:-tboard-runs/num-of-squares-1-to-n}"
 
 for dataset in power gas hepmass miniboone
 do
