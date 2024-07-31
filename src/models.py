@@ -7,8 +7,7 @@ import numpy as np
 import torch
 from cirkit.backend.torch.circuits import TorchCircuit, TorchConstantCircuit
 from cirkit.backend.torch.layers import TorchLayer, TorchSumLayer
-from cirkit.backend.torch.optimization.layers import DenseKroneckerPattern
-from cirkit.pipeline import PipelineContext, compile
+from cirkit.pipeline import compile
 from cirkit.symbolic.circuit import Circuit
 from cirkit.symbolic.dtypes import DataType
 from cirkit.symbolic.initializers import NormalInitializer, UniformInitializer
@@ -21,7 +20,6 @@ from cirkit.symbolic.layers import (
 from cirkit.symbolic.parameters import (
     ExpParameter,
     Parameter,
-    ScaledSigmoidParameter,
     TensorParameter,
 )
 from cirkit.templates.region_graph import (
@@ -32,9 +30,9 @@ from cirkit.templates.region_graph import (
 from cirkit.utils.scope import Scope
 from torch import Tensor, nn
 
-from layers import (
-    apply_dense_product,
-)
+from initializers import ExpUniformInitializer
+from parameters import ScaledSigmoidParameter
+from pipeline import setup_pipeline_context
 
 
 class PC(nn.Module, ABC):
@@ -91,9 +89,7 @@ class MPC(PC):
     ) -> None:
         assert num_components > 0
         super().__init__(num_variables)
-        self._pipeline = PipelineContext(
-            backend="torch", semiring="lse-sum", fold=True, optimize=True
-        )
+        self._pipeline = setup_pipeline_context(semiring='lse-sum')
         self._circuit, self._int_circuit = self._build_circuits(
             num_input_units,
             num_sum_units,
@@ -182,13 +178,7 @@ class SOS(PC):
     ) -> None:
         assert num_squares > 0
         super().__init__(num_variables)
-        self._pipeline = PipelineContext(
-            backend="torch", semiring="complex-lse-sum", fold=True, optimize=True
-        )
-        # Use a different optimization rule for the dense-kronecker pattern
-        self._pipeline._compiler._optimization_registry["layer_shatter"].add_rule(
-            apply_dense_product, signature=DenseKroneckerPattern
-        )
+        self._pipeline = setup_pipeline_context(semiring='complex-lse-sum')
         self._circuit, self._int_sq_circuit = self._build_circuits(
             num_input_units,
             num_sum_units,
@@ -288,9 +278,7 @@ class ExpSOS(PC):
         seed: int = 42,
     ) -> None:
         super().__init__(num_variables)
-        self._pipeline = PipelineContext(
-            backend="torch", semiring="complex-lse-sum", fold=True, optimize=True
-        )
+        self._pipeline = setup_pipeline_context(semiring='complex-lse-sum')
         # Introduce optimization rules
         self._circuit, self._mono_circuit, self._int_circuit = self._build_circuits(
             num_input_units,
@@ -465,8 +453,8 @@ def _build_monotonic_sym_circuits(
                 TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0))
             ),
             stddev_factory=lambda shape: Parameter.from_sequence(
-                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1e-1)),
-                ScaledSigmoidParameter(shape, vmin=1e-5, vmax=1.0),
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0)),
+                ScaledSigmoidParameter(shape, vmin=1e-5, vmax=2.0, scale=2.0),
             ),
         )
 
@@ -484,7 +472,7 @@ def _build_monotonic_sym_circuits(
             num_output_units,
             weight_factory=lambda shape: Parameter.from_unary(
                 ExpParameter(shape),
-                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1e-1)),
+                TensorParameter(*shape, initializer=ExpUniformInitializer(0.0, 1.0)),
             ),
         )
 
@@ -545,8 +533,8 @@ def _build_non_monotonic_sym_circuits(
                 TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0))
             ),
             stddev_factory=lambda shape: Parameter.from_sequence(
-                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1e-1)),
-                ScaledSigmoidParameter(shape, vmin=1e-5, vmax=1.0),
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0)),
+                ScaledSigmoidParameter(shape, vmin=1e-5, vmax=2.0, scale=2.0),
             ),
         )
 
