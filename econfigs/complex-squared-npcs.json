@@ -7,7 +7,7 @@
     "device": "cuda",
     "num-workers": 2,
     "patience-threshold": 1e-3,
-    "early-stop-patience": 30
+    "early-stop-patience": 25
   },
   "datasets": ["miniboone", "hepmass", "gas", "power"],
   "grid": {
