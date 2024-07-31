@@ -1,7 +1,6 @@
 from cirkit.pipeline import PipelineContext
 
 from initializers import compile_exp_uniform_initializer
-from parameters import compile_scaled_sigmoid_parameter
 
 
 def setup_pipeline_context(
@@ -14,6 +13,5 @@ def setup_pipeline_context(
     ctx = PipelineContext(
         backend=backend, semiring=semiring, fold=fold, optimize=optimize
     )
-    ctx.add_parameter_compilation_rule(compile_scaled_sigmoid_parameter)
     ctx.add_initializer_compilation_rule(compile_exp_uniform_initializer)
     return ctx

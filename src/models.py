@@ -31,7 +31,6 @@ from cirkit.utils.scope import Scope
 from torch import Tensor, nn
 
 from initializers import ExpUniformInitializer
-from parameters import ScaledSigmoidParameter
 from pipeline import setup_pipeline_context
 
 
@@ -438,7 +437,7 @@ def _build_monotonic_sym_circuits(
             num_channels,
             num_categories=input_layer_kwargs["num_categories"],
             logits_factory=lambda shape: Parameter.from_leaf(
-                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1e-1))
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0))
             ),
         )
 
@@ -454,7 +453,7 @@ def _build_monotonic_sym_circuits(
             ),
             stddev_factory=lambda shape: Parameter.from_sequence(
                 TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0)),
-                ScaledSigmoidParameter(shape, vmin=1e-5, vmax=1.0, scale=1.0),
+                ScaledSigmoidParameter(shape, vmin=1e-5, vmax=1.0),
             ),
         )
 
@@ -518,7 +517,7 @@ def _build_non_monotonic_sym_circuits(
             num_channels,
             num_categories=input_layer_kwargs["num_categories"],
             logits_factory=lambda shape: Parameter.from_leaf(
-                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1e-1))
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0))
             ),
         )
 
@@ -534,7 +533,7 @@ def _build_non_monotonic_sym_circuits(
             ),
             stddev_factory=lambda shape: Parameter.from_sequence(
                 TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0)),
-                ScaledSigmoidParameter(shape, vmin=1e-5, vmax=1.0, scale=1.0),
+                ScaledSigmoidParameter(shape, vmin=1e-5, vmax=1.0),
             ),
         )
 
