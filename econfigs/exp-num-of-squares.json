@@ -21,7 +21,7 @@
     },
     "models": {
       "hepmass": {
-        "ExpSOS": {
+        "SOS": {
           "real": {
             "num-units": 128,
             "num-input-units": 128,
@@ -37,7 +37,7 @@
         }
       },
       "miniboone": {
-        "ExpSOS": {
+        "SOS": {
           "real": {
             "num-units": 128,
             "num-input-units": 64,
