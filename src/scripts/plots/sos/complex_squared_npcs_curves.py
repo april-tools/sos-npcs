@@ -48,9 +48,9 @@ def format_model(m: str, exp_alias: str) -> str:
     if m == "MPC":
         return r"$+_{\mathsf{sd}}$"
     elif m == "SOS":
-        if exp_alias == "real":
+        if "real" in exp_alias:
             return r"$\pm^2 (\mathbb{R})$"
-        elif exp_alias == "complex":
+        elif "complex" in exp_alias:
             return r"$\pm^2 (\mathbb{C})$"
     assert False
 
