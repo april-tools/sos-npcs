@@ -1,0 +1,116 @@
+{
+  "common": {
+    "tboard-path": "tboard-runs/uci-data-exp-sos",
+    "checkpoint-path": "checkpoints/uci-data-exp-sos",
+    "save-checkpoint": false,
+    "num-epochs": 1000,
+    "device": "cuda",
+    "num-workers": 2,
+    "patience-threshold": 1e-3,
+    "early-stop-patience": 25
+  },
+  "datasets": ["miniboone", "hepmass"],
+  "grid": {
+    "common": {
+      "region-graph": "rnd-bt",
+      "region-graph-sd": true,
+      "batch-size": 512,
+      "optimizer": "Adam",
+      "verbose": true
+    },
+    "models": {
+      "hepmass": {
+        "SOS": {
+          "r2-real": {
+            "num-units": 128,
+            "num-input-units": 128,
+            "num-components": 2,
+            "complex": false,
+            "learning-rate": 0.001
+          },
+          "r8-real": {
+            "num-units": 128,
+            "num-input-units": 128,
+            "num-components": 8,
+            "complex": false,
+            "learning-rate": 0.001
+          },
+          "r16-real": {
+            "num-units": 128,
+            "num-input-units": 128,
+            "num-components": 16,
+            "complex": false,
+            "learning-rate": 0.001
+          },
+          "r2-complex": {
+            "num-units": 64,
+            "num-input-units": 128,
+            "num-components": 2,
+            "complex": true,
+            "learning-rate": 0.001
+          },
+          "r8-complex": {
+            "num-units": 64,
+            "num-input-units": 128,
+            "num-components": 8,
+            "complex": true,
+            "learning-rate": 0.001
+          },
+          "r16-complex": {
+            "num-units": 64,
+            "num-input-units": 128,
+            "num-components": 16,
+            "complex": true,
+            "learning-rate": 0.001
+          }
+        }
+      },
+      "miniboone": {
+        "SOS": {
+          "r2-real": {
+            "num-units": 32,
+            "num-input-units": 32,
+            "num-components": 2,
+            "complex": false,
+            "learning-rate": 0.001
+          },
+          "r8-real": {
+            "num-units": 32,
+            "num-input-units": 32,
+            "num-components": 8,
+            "complex": false,
+            "learning-rate": 0.001
+          },
+          "r16-real": {
+            "num-units": 32,
+            "num-input-units": 32,
+            "num-components": 16,
+            "complex": false,
+            "learning-rate": 0.001
+          },
+          "r2-complex": {
+            "num-units": 16,
+            "num-input-units": 32,
+            "num-components": 2,
+            "complex": true,
+            "learning-rate": 0.001
+          },
+          "r8-complex": {
+            "num-units": 16,
+            "num-input-units": 32,
+            "num-components": 8,
+            "complex": true,
+            "learning-rate": 0.001
+          },
+          "r16-complex": {
+            "num-units": 16,
+            "num-input-units": 32,
+            "num-components": 16,
+            "complex": true,
+            "learning-rate": 0.001
+          }
+        }
+      }
+    }
+  }
+}

@@ -17,61 +17,90 @@
       "batch-size": 512,
       "optimizer": "Adam",
       "verbose": true,
-      "learning-rate": [1e-4, 5e-4, 1e-3, 5e-3, 1e-2],
       "num-components": 1
     },
     "models": {
-      "power|gas": {
+      "power": {
         "MPC": {
           "num-units": 256,
-          "num-input-units": 256
+          "num-input-units": 256,
+          "learning-rate": 0.001
         },
         "SOS": {
           "real": {
             "num-units": 256,
             "num-input-units": 256,
-            "complex": false
+            "complex": false,
+            "learning-rate": 0.001
           },
           "complex": {
             "num-units": 128,
             "num-input-units": 256,
-            "complex": true
+            "complex": true,
+            "learning-rate": 0.001
+          }
+        }
+      },
+      "gas": {
+        "MPC": {
+          "num-units": 256,
+          "num-input-units": 256,
+          "learning-rate": 0.001
+        },
+        "SOS": {
+          "real": {
+            "num-units": 256,
+            "num-input-units": 256,
+            "complex": false,
+            "learning-rate": 0.001
+          },
+          "complex": {
+            "num-units": 128,
+            "num-input-units": 256,
+            "complex": true,
+            "learning-rate": 0.001
           }
         }
       },
       "hepmass": {
         "MPC": {
           "num-units": 128,
-          "num-input-units": 128
+          "num-input-units": 128,
+          "learning-rate": 0.001
         },
         "SOS": {
           "real": {
             "num-units": 128,
             "num-input-units": 128,
-            "complex": false
+            "complex": false,
+            "learning-rate": 0.001
           },
           "complex": {
             "num-units": 64,
             "num-input-units": 128,
-            "complex": true
+            "complex": true,
+            "learning-rate": 0.001
           }
         }
       },
       "miniboone": {
         "MPC": {
           "num-units": 128,
-          "num-input-units": 64
+          "num-input-units": 64,
+          "learning-rate": 0.001
         },
         "SOS": {
           "real": {
             "num-units": 128,
             "num-input-units": 64,
-            "complex": false
+            "complex": false,
+            "learning-rate": 0.001
           },
           "complex": {
             "num-units": 64,
             "num-input-units": 64,
-            "complex": true
+            "complex": true,
+            "learning-rate": 0.001
           }
         }
       }
