@@ -6,7 +6,7 @@ import cirkit.symbolic.functional as SF
 import numpy as np
 import torch
 from cirkit.backend.torch.circuits import TorchCircuit, TorchConstantCircuit
-from cirkit.backend.torch.layers import TorchLayer, TorchSumLayer, TorchInnerLayer
+from cirkit.backend.torch.layers import TorchLayer, TorchInnerLayer, TorchInputLayer
 from cirkit.pipeline import compile
 from cirkit.symbolic.circuit import Circuit
 from cirkit.symbolic.dtypes import DataType
@@ -59,8 +59,20 @@ class PC(nn.Module, ABC):
         log_score = self.log_score(x)
         return log_score - log_z
 
+    def num_params(self, requires_grad: bool = True) -> int:
+        return self.num_input_params(requires_grad) + self.num_sum_params(requires_grad)
+
+    @abstractmethod
+    def num_input_params(self, requires_grad: bool = True) -> int: ...
+
+    @abstractmethod
+    def num_sum_params(self, requires_grad: bool = True) -> int: ...
+
     @abstractmethod
     def layers(self) -> Iterator[TorchLayer]: ...
+
+    @abstractmethod
+    def input_layers(self) -> Iterator[TorchInputLayer]: ...
 
     @abstractmethod
     def inner_layers(self) -> Iterator[TorchInnerLayer]: ...
@@ -103,8 +115,29 @@ class MPC(PC):
             "_mixing_log_weight", -torch.log(torch.tensor(num_components))
         )
 
+    def num_input_params(self, requires_grad: bool = True) -> int:
+        params = itertools.chain(
+            *[l.parameters() for l in self.input_layers()]
+        )
+        if requires_grad:
+            params = filter(lambda p: p.requires_grad, params)
+        num_sum_params = sum(p.numel() for p in params)
+        return num_sum_params
+
+    def num_sum_params(self, requires_grad: bool = True) -> int:
+        params = itertools.chain(
+            *[l.parameters() for l in self.inner_layers()]
+        )
+        if requires_grad:
+            params = filter(lambda p: p.requires_grad, params)
+        num_sum_params = sum(p.numel() for p in params)
+        return num_sum_params
+
     def layers(self) -> Iterator[TorchLayer]:
         return iter(self._circuit.layers)
+
+    def input_layers(self) -> Iterator[TorchInnerLayer]:
+        return filter(lambda l: isinstance(l, TorchInputLayer), self._circuit.layers)
 
     def inner_layers(self) -> Iterator[TorchInnerLayer]:
         return filter(lambda l: isinstance(l, TorchInnerLayer), self._circuit.layers)
@@ -177,6 +210,7 @@ class SOS(PC):
     ) -> None:
         assert num_squares > 0
         super().__init__(num_variables)
+        self._complex = complex
         self._pipeline = setup_pipeline_context(semiring='complex-lse-sum')
         self._circuit, self._int_sq_circuit = self._build_circuits(
             num_input_units,
@@ -193,8 +227,35 @@ class SOS(PC):
             "_mixing_log_weight", -torch.log(torch.tensor(num_squares))
         )
 
+    @property
+    def is_complex(self) -> bool:
+        return self._complex
+
+    def num_input_params(self, requires_grad: bool = True) -> int:
+        params = itertools.chain(
+            *[l.parameters() for l in self.input_layers()]
+        )
+        if requires_grad:
+            params = filter(lambda p: p.requires_grad, params)
+        num_sum_params = sum(p.numel() for p in params)
+        return num_sum_params
+
+    def num_sum_params(self, requires_grad: bool = True) -> int:
+        params = itertools.chain(
+            *[l.parameters() for l in self.inner_layers()]
+        )
+        if requires_grad:
+            params = filter(lambda p: p.requires_grad, params)
+        num_sum_params = sum(p.numel() for p in params)
+        if self.is_complex:
+            return 2 * num_sum_params
+        return num_sum_params
+
     def layers(self) -> Iterator[TorchLayer]:
         return iter(self._circuit.layers)
+
+    def input_layers(self) -> Iterator[TorchInnerLayer]:
+        return filter(lambda l: isinstance(l, TorchInputLayer), self._circuit.layers)
 
     def inner_layers(self) -> Iterator[TorchInnerLayer]:
         return filter(lambda l: isinstance(l, TorchInnerLayer), self._circuit.layers)
@@ -277,6 +338,7 @@ class ExpSOS(PC):
         seed: int = 42,
     ) -> None:
         super().__init__(num_variables)
+        self._complex = complex
         self._pipeline = setup_pipeline_context(semiring='complex-lse-sum')
         # Introduce optimization rules
         self._circuit, self._mono_circuit, self._int_circuit = self._build_circuits(
@@ -292,8 +354,38 @@ class ExpSOS(PC):
             seed=seed,
         )
 
+    @property
+    def is_complex(self) -> bool:
+        return self._complex
+
+    def num_input_params(self, requires_grad: bool = True) -> int:
+        params = itertools.chain(
+            *[l.parameters() for l in self.input_layers()]
+        )
+        if requires_grad:
+            params = filter(lambda p: p.requires_grad, params)
+        num_sum_params = sum(p.numel() for p in params)
+        return num_sum_params
+
+    def num_sum_params(self, requires_grad: bool = True) -> int:
+        params = itertools.chain(
+            *[l.parameters() for l in self.inner_layers()]
+        )
+        if requires_grad:
+            params = filter(lambda p: p.requires_grad, params)
+        num_sum_params = sum(p.numel() for p in params)
+        if self.is_complex:
+            return 2 * num_sum_params
+        return num_sum_params
+
     def layers(self) -> Iterator[TorchLayer]:
         return itertools.chain(self._circuit.layers, self._mono_circuit.layers)
+
+    def input_layers(self) -> Iterator[TorchInnerLayer]:
+        return itertools.chain(
+            filter(lambda l: isinstance(l, TorchInputLayer), self._circuit.layers),
+            filter(lambda l: isinstance(l, TorchInputLayer), self._mono_circuit.layers)
+        )
 
     def inner_layers(self) -> Iterator[TorchInnerLayer]:
         return itertools.chain(

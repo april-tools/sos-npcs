@@ -568,17 +568,12 @@ def setup_flow_model(
 def num_parameters(
     model: Union[PC, nn.Module], requires_grad: bool = True, sum_only: bool = False
 ) -> int:
-    if sum_only:
-        assert isinstance(model, PC)
-        params = itertools.chain(
-            *tuple(
-                l.parameters()
-                for l in model.layers()
-                if not isinstance(l, TorchInputLayer)
-            )
-        )
-    else:
-        params = model.parameters()
+    if isinstance(model, PC):
+        if sum_only:
+            return model.num_sum_params(requires_grad)
+        return model.num_params(requires_grad)
+    assert not sum_only
+    params = model.parameters()
     if requires_grad:
         params = filter(lambda p: p.requires_grad, params)
     return sum(p.numel() for p in params)
