@@ -17,7 +17,7 @@
       "batch-size": 512,
       "optimizer": "Adam",
       "verbose": true,
-      "learning-rate": [5e-4, 1e-3, 5e-3],
+      "learning-rate": [5e-4, 1e-3, 5e-3, 1e-2],
       "num-components": 1
     },
     "models": {
