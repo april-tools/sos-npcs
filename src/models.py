@@ -6,7 +6,7 @@ import cirkit.symbolic.functional as SF
 import numpy as np
 import torch
 from cirkit.backend.torch.circuits import TorchCircuit, TorchConstantCircuit
-from cirkit.backend.torch.layers import TorchLayer, TorchSumLayer
+from cirkit.backend.torch.layers import TorchLayer, TorchSumLayer, TorchInnerLayer
 from cirkit.pipeline import compile
 from cirkit.symbolic.circuit import Circuit
 from cirkit.symbolic.dtypes import DataType
@@ -63,7 +63,7 @@ class PC(nn.Module, ABC):
     def layers(self) -> Iterator[TorchLayer]: ...
 
     @abstractmethod
-    def sum_layers(self) -> Iterator[TorchSumLayer]: ...
+    def inner_layers(self) -> Iterator[TorchInnerLayer]: ...
 
     @abstractmethod
     def log_partition(self) -> Tensor: ...
@@ -106,8 +106,8 @@ class MPC(PC):
     def layers(self) -> Iterator[TorchLayer]:
         return iter(self._circuit.layers)
 
-    def sum_layers(self) -> Iterator[TorchSumLayer]:
-        return filter(lambda l: isinstance(l, TorchSumLayer), self._circuit.layers)
+    def inner_layers(self) -> Iterator[TorchInnerLayer]:
+        return filter(lambda l: isinstance(l, TorchInnerLayer), self._circuit.layers)
 
     def log_partition(self) -> Tensor:
         log_z = self._int_circuit()
@@ -196,8 +196,8 @@ class SOS(PC):
     def layers(self) -> Iterator[TorchLayer]:
         return iter(self._circuit.layers)
 
-    def sum_layers(self) -> Iterator[TorchSumLayer]:
-        return filter(lambda l: isinstance(l, TorchSumLayer), self._circuit.layers)
+    def inner_layers(self) -> Iterator[TorchInnerLayer]:
+        return filter(lambda l: isinstance(l, TorchInnerLayer), self._circuit.layers)
 
     def log_partition(self) -> Tensor:
         log_z = self._int_sq_circuit().real
@@ -295,10 +295,10 @@ class ExpSOS(PC):
     def layers(self) -> Iterator[TorchLayer]:
         return itertools.chain(self._circuit.layers, self._mono_circuit.layers)
 
-    def sum_layers(self) -> Iterator[TorchSumLayer]:
+    def inner_layers(self) -> Iterator[TorchInnerLayer]:
         return itertools.chain(
-            filter(lambda l: isinstance(l, TorchSumLayer), self._circuit.layers),
-            filter(lambda l: isinstance(l, TorchSumLayer), self._mono_circuit.layers)
+            filter(lambda l: isinstance(l, TorchInnerLayer), self._circuit.layers),
+            filter(lambda l: isinstance(l, TorchInnerLayer), self._mono_circuit.layers)
         )
 
     def log_partition(self) -> Tensor:

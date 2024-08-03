@@ -20,9 +20,9 @@ if __name__ == '__main__':
     metrics = [train_metric, valid_metric, test_metric]
     df = retrieve_tboard_runs(args.tboard_path, metrics)
     #df = df[df['seed'] == 123]
-    group_by_cols = ['dataset', 'model', 'exp_alias', 'num_components']
-    cols_to_keep = group_by_cols + metrics + ['learning_rate']
+    group_by_cols = ['dataset', 'model', 'exp_alias', 'num_components', 'mono_num_units', 'mono_num_input_units']
+    cols_to_keep = group_by_cols + metrics + ['learning_rate', 'num_sum_params', 'num_params']
     df = df.drop(df.columns.difference(cols_to_keep), axis=1)
     df = df.sort_values(valid_metric, ascending=False)
     df: pd.DataFrame = df.groupby(group_by_cols).first()
-    df.to_csv(f'{args.filename}-diffsed.csv')
+    df.to_csv(f'{args.filename}.csv')
