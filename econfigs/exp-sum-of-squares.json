@@ -17,7 +17,7 @@
       "batch-size": 512,
       "optimizer": "Adam",
       "verbose": true,
-      "learning-rate": [5e-4, 1e-3, 5e-3]
+      "learning-rate": [1e-3, 5e-3, 1e-2]
     },
     "models": {
       "hepmass": {
@@ -39,14 +39,14 @@
       "miniboone": {
         "ExpSOS": {
           "real": {
-            "num-units": 128,
-            "num-input-units": 64,
+            "num-units": 32,
+            "num-input-units": 32,
             "mono-num-units,mono-num-input-units": [[2, 2], [16, 16]],
             "complex": false
           },
           "complex": {
-            "num-units": 64,
-            "num-input-units": 64,
+            "num-units": 16,
+            "num-input-units": 32,
             "mono-num-units,mono-num-input-units": [[2, 2], [16, 16]],
             "complex": true
           }
