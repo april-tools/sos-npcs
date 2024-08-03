@@ -30,7 +30,7 @@
             "complex": false
           },
           "complex": {
-            "num-components,num-units,num-input-units": [[4, 80, 64], [8, 60, 32], [16, 45, 16]],
+            "num-components,num-units,num-input-units": [[4, 88, 64], [8, 70, 32], [16, 53, 16]],
             "complex": true
           }
         }
@@ -45,7 +45,7 @@
             "complex": false
           },
           "complex": {
-            "num-components,num-units,num-input-units": [[4, 79, 64], [8, 59, 32], [16, 44, 16]],
+            "num-components,num-units,num-input-units": [[4, 88, 64], [8, 68, 32], [16, 52, 16]],
             "complex": true
           }
         }
@@ -60,7 +60,7 @@
             "complex": false
           },
           "complex": {
-            "num-components,num-units,num-input-units": [[4, 38, 32], [8, 29, 16], [16, 21, 8]],
+            "num-components,num-units,num-input-units": [[4, 42, 32], [8, 32, 16], [16, 24, 8]],
             "complex": true
           }
         }
@@ -75,7 +75,7 @@
             "complex": false
           },
           "complex": {
-            "num-components,num-units,num-input-units": [[4, 36, 16], [8, 26, 8], [16, 19, 4]],
+            "num-components,num-units,num-input-units": [[4, 38, 16], [8, 28, 8], [16, 21, 4]],
             "complex": true
           }
         }

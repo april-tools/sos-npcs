@@ -64,21 +64,21 @@
           },
           "r4-complex": {
             "num-components": 4,
-            "num-units": 80,
+            "num-units": 88,
             "num-input-units": 64,
             "learning-rate": 0.001,
             "complex": true
           },
           "r8-complex": {
             "num-components": 8,
-            "num-units": 60,
+            "num-units": 70,
             "num-input-units": 32,
             "learning-rate": 0.001,
             "complex": true
           },
           "r16-complex": {
             "num-components": 16,
-            "num-units": 45,
+            "num-units": 53,
             "num-input-units": 16,
             "learning-rate": 0.001,
             "complex": true
@@ -130,21 +130,21 @@
           },
           "r4-complex": {
             "num-components": 4,
-            "num-units": 79,
+            "num-units": 88,
             "num-input-units": 64,
             "learning-rate": 0.001,
             "complex": true
           },
           "r8-complex": {
             "num-components": 8,
-            "num-units": 59,
+            "num-units": 68,
             "num-input-units": 32,
             "learning-rate": 0.001,
             "complex": true
           },
           "r16-complex": {
             "num-components": 16,
-            "num-units": 44,
+            "num-units": 52,
             "num-input-units": 16,
             "learning-rate": 0.001,
             "complex": true
@@ -196,21 +196,21 @@
           },
           "r4-complex": {
             "num-components": 4,
-            "num-units": 38,
+            "num-units": 42,
             "num-input-units": 32,
             "learning-rate": 0.001,
             "complex": true
           },
           "r8-complex": {
             "num-components": 8,
-            "num-units": 29,
+            "num-units": 32,
             "num-input-units": 16,
             "learning-rate": 0.001,
             "complex": true
           },
           "r16-complex": {
             "num-components": 16,
-            "num-units": 21,
+            "num-units": 24,
             "num-input-units": 8,
             "learning-rate": 0.001,
             "complex": true
@@ -262,21 +262,21 @@
           },
           "r4-complex": {
             "num-components": 4,
-            "num-units": 36,
+            "num-units": 38,
             "num-input-units": 16,
             "learning-rate": 0.001,
             "complex": true
           },
           "r8-complex": {
             "num-components": 8,
-            "num-units": 26,
+            "num-units": 28,
             "num-input-units": 8,
             "learning-rate": 0.001,
             "complex": true
           },
           "r16-complex": {
             "num-components": 16,
-            "num-units": 19,
+            "num-units": 21,
             "num-input-units": 4,
             "learning-rate": 0.001,
             "complex": true
