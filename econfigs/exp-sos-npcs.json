@@ -34,6 +34,20 @@
             "num-components": [2, 8, 16],
             "complex": true
           }
+        },
+        "ExpSOS": {
+          "real": {
+            "num-units": 128,
+            "num-input-units": 128,
+            "mono-num-units,mono-num-input-units": [[2, 2], [16, 16], [32, 32]],
+            "complex": false
+          },
+          "complex": {
+            "num-units": 64,
+            "num-input-units": 128,
+            "mono-num-units,mono-num-input-units": [[2, 2], [16, 16], [32, 32]],
+            "complex": true
+          }
         }
       },
       "miniboone": {
@@ -48,6 +62,20 @@
             "num-units": 16,
             "num-input-units": 32,
             "num-components": [2, 8, 16],
+            "complex": true
+          }
+        },
+        "ExpSOS": {
+          "real": {
+            "num-units": 32,
+            "num-input-units": 32,
+            "mono-num-units,mono-num-input-units": [[2, 2], [16, 16], [32, 32]],
+            "complex": false
+          },
+          "complex": {
+            "num-units": 16,
+            "num-input-units": 32,
+            "mono-num-units,mono-num-input-units": [[2, 2], [16, 16], [32, 32]],
             "complex": true
           }
         }
