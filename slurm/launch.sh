@@ -13,16 +13,18 @@ export VENV_PATH=${VENV_PATH:-venv}
 # The Slurm partition to use, e.g.,
 #PARTITION=PGR-Standard
 PARTITION=${PARTITION:-PGR-Standard}
+#PARTITION=${PARTITION:-Teach-Standard}
 # An optional list of Slurm node to exclude, e.g.,
 #EXCL_NODES=${EXCL_NODES:-busynode[01-07]}
 EXCL_NODES=${EXCL_NODES:-crannog[01-07],damnii[05-08]}
 # The maximum number of parallel jobs to dispatch
-MAX_PARALLEL_JOBS=16
+MAX_PARALLEL_JOBS=${MAX_PARALLEL_JOBS:-20}
 
 # Resources and maximum execution time
 NUM_CPUS=2
 NUM_GPUS=1
 TIME=167:59:00
+#TIME=79:59:00
 
 JOB_NAME="$PROJECT_NAME-$EXPS_ID"
 LOG_DIRECTORY="slurm/logs/$PROJECT_NAME/$EXPS_ID"
