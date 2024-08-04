@@ -191,7 +191,9 @@ class Engine:
             else:
                 self.scheduler.step(cur_loss)
         best_valid_found = (best_loss == np.inf) or (
-            cur_loss < best_loss - self.args.patience_threshold * np.maximum(5.0, np.abs(best_loss))
+            cur_loss
+            < best_loss
+            - self.args.patience_threshold * np.maximum(5.0, np.abs(best_loss))
         )
         if best_valid_found:
             test_avg_ll, test_std_ll = evaluate_model_log_likelihood(

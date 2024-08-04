@@ -6,7 +6,7 @@ import cirkit.symbolic.functional as SF
 import numpy as np
 import torch
 from cirkit.backend.torch.circuits import TorchCircuit, TorchConstantCircuit
-from cirkit.backend.torch.layers import TorchLayer, TorchInnerLayer, TorchInputLayer
+from cirkit.backend.torch.layers import TorchInnerLayer, TorchInputLayer, TorchLayer
 from cirkit.pipeline import compile
 from cirkit.symbolic.circuit import Circuit
 from cirkit.symbolic.dtypes import DataType
@@ -20,7 +20,8 @@ from cirkit.symbolic.layers import (
 from cirkit.symbolic.parameters import (
     ExpParameter,
     Parameter,
-    TensorParameter, ScaledSigmoidParameter,
+    ScaledSigmoidParameter,
+    TensorParameter,
 )
 from cirkit.templates.region_graph import (
     LinearRegionGraph,
@@ -100,7 +101,7 @@ class MPC(PC):
     ) -> None:
         assert num_components > 0
         super().__init__(num_variables)
-        self._pipeline = setup_pipeline_context(semiring='lse-sum')
+        self._pipeline = setup_pipeline_context(semiring="lse-sum")
         self._circuit, self._int_circuit = self._build_circuits(
             num_input_units,
             num_sum_units,
@@ -116,18 +117,14 @@ class MPC(PC):
         )
 
     def num_input_params(self, requires_grad: bool = True) -> int:
-        params = itertools.chain(
-            *[l.parameters() for l in self.input_layers()]
-        )
+        params = itertools.chain(*[l.parameters() for l in self.input_layers()])
         if requires_grad:
             params = filter(lambda p: p.requires_grad, params)
         num_sum_params = sum(p.numel() for p in params)
         return num_sum_params
 
     def num_sum_params(self, requires_grad: bool = True) -> int:
-        params = itertools.chain(
-            *[l.parameters() for l in self.inner_layers()]
-        )
+        params = itertools.chain(*[l.parameters() for l in self.inner_layers()])
         if requires_grad:
             params = filter(lambda p: p.requires_grad, params)
         num_sum_params = sum(p.numel() for p in params)
@@ -211,7 +208,7 @@ class SOS(PC):
         assert num_squares > 0
         super().__init__(num_variables)
         self._complex = complex
-        self._pipeline = setup_pipeline_context(semiring='complex-lse-sum')
+        self._pipeline = setup_pipeline_context(semiring="complex-lse-sum")
         self._circuit, self._int_sq_circuit = self._build_circuits(
             num_input_units,
             num_sum_units,
@@ -232,18 +229,14 @@ class SOS(PC):
         return self._complex
 
     def num_input_params(self, requires_grad: bool = True) -> int:
-        params = itertools.chain(
-            *[l.parameters() for l in self.input_layers()]
-        )
+        params = itertools.chain(*[l.parameters() for l in self.input_layers()])
         if requires_grad:
             params = filter(lambda p: p.requires_grad, params)
         num_sum_params = sum(p.numel() for p in params)
         return num_sum_params
 
     def num_sum_params(self, requires_grad: bool = True) -> int:
-        params = itertools.chain(
-            *[l.parameters() for l in self.inner_layers()]
-        )
+        params = itertools.chain(*[l.parameters() for l in self.inner_layers()])
         if requires_grad:
             params = filter(lambda p: p.requires_grad, params)
         num_sum_params = sum(p.numel() for p in params)
@@ -339,7 +332,7 @@ class ExpSOS(PC):
     ) -> None:
         super().__init__(num_variables)
         self._complex = complex
-        self._pipeline = setup_pipeline_context(semiring='complex-lse-sum')
+        self._pipeline = setup_pipeline_context(semiring="complex-lse-sum")
         # Introduce optimization rules
         self._circuit, self._mono_circuit, self._int_circuit = self._build_circuits(
             num_input_units,
@@ -359,18 +352,14 @@ class ExpSOS(PC):
         return self._complex
 
     def num_input_params(self, requires_grad: bool = True) -> int:
-        params = itertools.chain(
-            *[l.parameters() for l in self.input_layers()]
-        )
+        params = itertools.chain(*[l.parameters() for l in self.input_layers()])
         if requires_grad:
             params = filter(lambda p: p.requires_grad, params)
         num_sum_params = sum(p.numel() for p in params)
         return num_sum_params
 
     def num_sum_params(self, requires_grad: bool = True) -> int:
-        params = itertools.chain(
-            *[l.parameters() for l in self.inner_layers()]
-        )
+        params = itertools.chain(*[l.parameters() for l in self.inner_layers()])
         if requires_grad:
             params = filter(lambda p: p.requires_grad, params)
         num_sum_params = sum(p.numel() for p in params)
@@ -384,13 +373,13 @@ class ExpSOS(PC):
     def input_layers(self) -> Iterator[TorchInnerLayer]:
         return itertools.chain(
             filter(lambda l: isinstance(l, TorchInputLayer), self._circuit.layers),
-            filter(lambda l: isinstance(l, TorchInputLayer), self._mono_circuit.layers)
+            filter(lambda l: isinstance(l, TorchInputLayer), self._mono_circuit.layers),
         )
 
     def inner_layers(self) -> Iterator[TorchInnerLayer]:
         return itertools.chain(
             filter(lambda l: isinstance(l, TorchInnerLayer), self._circuit.layers),
-            filter(lambda l: isinstance(l, TorchInnerLayer), self._mono_circuit.layers)
+            filter(lambda l: isinstance(l, TorchInnerLayer), self._mono_circuit.layers),
         )
 
     def log_partition(self) -> Tensor:

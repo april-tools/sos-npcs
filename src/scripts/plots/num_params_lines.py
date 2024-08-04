@@ -28,7 +28,7 @@ parser.add_argument(
     help="Whether to show the y-axis label",
 )
 parser.add_argument(
-    "--legend", action='store_true', default=False, help="Whether to show the legend"
+    "--legend", action="store_true", default=False, help="Whether to show the legend"
 )
 
 
@@ -83,7 +83,7 @@ def format_dataset(d: str) -> str:
     }[d]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parser.parse_args()
     train_metric = "Best/Train/" + args.metric
     valid_metric = "Best/Valid/" + args.metric
@@ -94,8 +94,17 @@ if __name__ == '__main__':
     df = retrieve_tboard_runs(os.path.join(args.tboard_path, args.dataset), metrics)
     df = df[df["dataset"] == args.dataset]
     df = df[df["model"].isin(models)]
-    group_by_cols = ['dataset', 'model', 'exp_alias', 'num_components', 'mono_num_units', 'mono_num_input_units']
-    cols_to_keep = group_by_cols + metrics + ['learning_rate', 'num_sum_params', 'num_params']
+    group_by_cols = [
+        "dataset",
+        "model",
+        "exp_alias",
+        "num_components",
+        "mono_num_units",
+        "mono_num_input_units",
+    ]
+    cols_to_keep = (
+        group_by_cols + metrics + ["learning_rate", "num_sum_params", "num_params"]
+    )
     df = df.drop(df.columns.difference(cols_to_keep), axis=1)
     df = df.sort_values(by=valid_metric, ascending=False)
     df: pd.DataFrame = df.groupby(group_by_cols).first()
@@ -104,13 +113,17 @@ if __name__ == '__main__':
     df["model_id"] = df.apply(
         lambda row: format_model(row.model, row.exp_alias), axis=1
     )
-    df = df.sort_values('model_id', ascending=False)
+    df = df.sort_values("model_id", ascending=False)
     num_rows = 1
     num_cols = 1
 
-    setup_tueplots(num_rows, num_cols,
-        rel_width=0.5675 if args.legend else 0.4,
-        hw_ratio=0.57 if args.legend else 0.8
+    setup_tueplots(
+        num_rows,
+        num_cols,
+        rel_width=0.4,
+        hw_ratio=0.8,
+        tight_layout=False,
+        constrained_layout=False,
     )
     fig, ax = plt.subplots(num_rows, num_cols, squeeze=True, sharey=True)
     g = sb.lineplot(
@@ -123,10 +136,10 @@ if __name__ == '__main__':
         markers=True,
         legend=args.legend,
         alpha=0.75,
-        ax=ax
+        ax=ax,
     )
     ax.margins(0.1)
-    ax.set_xscale('log')
+    ax.set_xscale("log")
     ax.set_xlabel("Num of sum param")
     if args.ylabel:
         ax.set_ylabel(format_metric(args.metric, train=args.train))

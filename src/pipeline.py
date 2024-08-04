@@ -5,8 +5,8 @@ from initializers import compile_exp_uniform_initializer
 
 def setup_pipeline_context(
     *,
-    backend: str = 'torch',
-    semiring: str = 'lse-sum',
+    backend: str = "torch",
+    semiring: str = "lse-sum",
     fold: bool = True,
     optimize: bool = True,
 ) -> PipelineContext:

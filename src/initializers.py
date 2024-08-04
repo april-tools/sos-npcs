@@ -1,11 +1,10 @@
 import functools
-from typing import Dict, Any
+from typing import Any, Dict
 
 from cirkit.backend.torch.compiler import TorchCompiler
 from cirkit.backend.torch.initializers import InitializerFunc
 from cirkit.symbolic.initializers import Initializer
-from torch import nn
-from torch import Tensor
+from torch import Tensor, nn
 
 
 class ExpUniformInitializer(Initializer):

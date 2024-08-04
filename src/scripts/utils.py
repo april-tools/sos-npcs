@@ -235,7 +235,7 @@ def build_run_id(args):
     rs.append(f"K{args.num_units}")
     if args.num_input_units > 0:
         rs.append(f"KI{args.num_input_units}")
-    if args.model == 'ExpSOS':
+    if args.model == "ExpSOS":
         rs.append(f"MK{args.mono_num_units}")
         if args.mono_num_input_units > 0:
             rs.append(f"MKI{args.mono_num_input_units}")

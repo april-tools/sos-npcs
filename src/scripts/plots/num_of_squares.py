@@ -85,7 +85,7 @@ if __name__ == "__main__":
     df = retrieve_tboard_runs(os.path.join(args.tboard_path, args.dataset), metric)
     df = df[df["dataset"] == args.dataset]
     df = df[df["model"].isin(models)]
-    df = df[df["exp_alias"].isin(['', 'real'])]
+    df = df[df["exp_alias"].isin(["", "real"])]
     df = df.sort_values("model", ascending=True)
     df["model_id"] = df.apply(
         lambda row: format_model(row.model, row.exp_alias), axis=1
@@ -109,9 +109,9 @@ if __name__ == "__main__":
         width=0.5,
         fliersize=2.0,
         ax=ax,
-        legend=False
+        legend=False,
     )
-    #sb.move_legend(ax, handlelength=1.0, handletextpad=0.5, loc="best")
+    # sb.move_legend(ax, handlelength=1.0, handletextpad=0.5, loc="best")
     ax.set_xlabel(r"Num. of components")
     if args.ylabel:
         ax.set_ylabel(format_metric(args.metric, train=args.train))

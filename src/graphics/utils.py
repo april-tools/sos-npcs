@@ -14,6 +14,8 @@ def setup_tueplots(
     hw_ratio: Optional[float] = None,
     default_smaller: int = -1,
     use_tex: bool = True,
+    tight_layout=False,
+    constrained_layout=False,
     **kwargs
 ):
     if use_tex:
@@ -22,7 +24,14 @@ def setup_tueplots(
         font_config = fonts.neurips2024(family="serif")
     if hw_ratio is not None:
         kwargs["height_to_width_ratio"] = hw_ratio
-    size = figsizes.neurips2024(rel_width=rel_width, nrows=nrows, ncols=ncols, **kwargs)
+    size = figsizes.neurips2024(
+        rel_width=rel_width,
+        nrows=nrows,
+        ncols=ncols,
+        tight_layout=tight_layout,
+        constrained_layout=constrained_layout,
+        **kwargs
+    )
     fontsize_config = fontsizes.neurips2024(default_smaller=default_smaller)
     rc_params = {
         **font_config,
