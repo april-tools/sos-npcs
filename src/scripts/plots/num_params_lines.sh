@@ -1,14 +1,17 @@
 #!/bin/bash
 
-PYSCRIPT="scripts.plots.complex_squared_npcs"
-TBOARD_PATH="${TBOARD_PATH:-tboard-runs/complex-squared-npcs}"
+PYSCRIPT="scripts.plots.num_params_lines"
+TBOARD_PATH="${TBOARD_PATH:-tboard-runs/uci-data-exp-sos}"
 
-for dataset in power gas hepmass miniboone
+for dataset in hepmass miniboone
 do
   echo "Processing results relative to data set $dataset"
-  if [ "$dataset" == "power" ]
+  if [ "$dataset" == "hepmass" ]
   then
     OTHER_FLAGS="--ylabel"
+  elif [ "$dataset" == "miniboone" ]
+  then
+    OTHER_FLAGS="--legend"
   else
     OTHER_FLAGS=""
   fi

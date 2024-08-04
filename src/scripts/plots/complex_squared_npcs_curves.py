@@ -116,8 +116,8 @@ if __name__ == "__main__":
     num_cols = 1
     setup_tueplots(
         num_rows, num_cols,
-        rel_width=0.5675 if args.legend else 0.4,
-        hw_ratio=0.57 if args.legend else 0.8
+        rel_width=0.4,
+        hw_ratio=0.8
     )
     fig, ax = plt.subplots(num_rows, num_cols, squeeze=True, sharey=True)
     for x, y, c, hue in zip(xs_data, ys_data, cs_data, hues_data):
@@ -141,6 +141,7 @@ if __name__ == "__main__":
         handles, labels = ax.get_legend_handles_labels()
         temp = {k: v for k, v in zip(labels, handles)}
         ax.legend(temp.values(), temp.keys(), loc='center left', bbox_to_anchor=(1, 0.5))
+
     path = os.path.join("figures", "complex-squared-npcs")
     os.makedirs(path, exist_ok=True)
     filename = f"{args.dataset}-lr{args.learning_rate}-curves.pdf"

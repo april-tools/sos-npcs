@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PYSCRIPT="scripts.plots.sos.complex_squared_npcs_curves"
+PYSCRIPT="scripts.plots.complex_squared_npcs_curves"
 CHECKP_PATH="${CHECKP_PATH:-checkpoints/complex-squared-npcs}"
 MAX_EPOCHS=200
 
