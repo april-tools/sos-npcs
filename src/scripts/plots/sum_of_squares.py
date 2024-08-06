@@ -1,7 +1,6 @@
 import argparse
 import os
 
-import numpy as np
 import pandas as pd
 import seaborn as sb
 from matplotlib import pyplot as plt
@@ -23,10 +22,19 @@ parser.add_argument(
     help="Whether to show the metric on the training data",
 )
 parser.add_argument(
+    "--xlabel",
+    action="store_true",
+    default=False,
+    help="Whether to show the x-axis label",
+)
+parser.add_argument(
     "--ylabel",
     action="store_true",
     default=False,
     help="Whether to show the y-axis label",
+)
+parser.add_argument(
+    "--legend", action="store_true", default=False, help="Whether to show the legend"
 )
 
 
@@ -39,10 +47,10 @@ def format_metric(m: str, train: bool = False) -> str:
         m = "Perplexity"
     else:
         assert False
-    if train:
-        m = f"{m} [train]"
-    else:
-        m = f"{m} [test]"
+    # if train:
+    #     m = f"{m} [train]"
+    # else:
+    #     m = f"{m} [test]"
     return m
 
 
@@ -59,10 +67,10 @@ def format_model(m: str, exp_alias: str) -> str:
     if m == "MPC":
         return r"$+_{\mathsf{sd}}$"
     elif m == "SOS":
-        if exp_alias == "real":
-            return r"$\pm^2 (\mathbb{R})$"
-        elif exp_alias == "complex":
-            return r"$\pm^2 (\mathbb{C})$"
+        if "real" in exp_alias:
+            return r"$\Sigma_{\mathsf{cmp}}^2 (\mathbb{R})$"
+        elif "complex" in exp_alias:
+            return r"$\Sigma_{\mathsf{cmp}}^2 (\mathbb{C})$"
     assert False
 
 
@@ -85,34 +93,39 @@ if __name__ == "__main__":
     df = retrieve_tboard_runs(os.path.join(args.tboard_path, args.dataset), metric)
     df = df[df["dataset"] == args.dataset]
     df = df[df["model"].isin(models)]
-    df = df[df["exp_alias"].isin(["", "real"])]
     df = df.sort_values("model", ascending=True)
     df["model_id"] = df.apply(
         lambda row: format_model(row.model, row.exp_alias), axis=1
     )
     df["num_components"] = df["num_components"].astype(int)
-    num_sum_parameters = df["num_sum_params"].tolist()
-    rel_num_sum_parameters = (
-        np.max(num_sum_parameters) - np.min(num_sum_parameters)
-    ) / np.min(num_sum_parameters)
-    print(f"Relative diff. num. of parameters: {rel_num_sum_parameters * 100:.1f}")
+    # num_sum_parameters = df["num_sum_params"].tolist()
+    # rel_num_sum_parameters = (
+    #     np.max(num_sum_parameters) - np.min(num_sum_parameters)
+    # ) / np.min(num_sum_parameters)
+    # print(f"Relative diff. num. of parameters: {rel_num_sum_parameters * 100:.1f}")
     num_rows = 1
     num_cols = 1
 
-    setup_tueplots(num_rows, num_cols, rel_width=0.4, hw_ratio=0.8)
+    setup_tueplots(num_rows, num_cols, rel_width=0.45, hw_ratio=0.7)
     fig, ax = plt.subplots(num_rows, num_cols, squeeze=True, sharey=True)
     g = sb.boxplot(
         df,
         x="num_components",
         y=metric,
         hue="model_id",
-        width=0.5,
-        fliersize=2.0,
+        width=0.75,
+        fliersize=2.5,
         ax=ax,
-        legend=False,
+        legend=args.legend,
     )
     # sb.move_legend(ax, handlelength=1.0, handletextpad=0.5, loc="best")
-    ax.set_xlabel(r"Num. of components")
+    if args.legend:
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles=handles, labels=labels)
+    if args.xlabel:
+        ax.set_xlabel(r"Num. of components")
+    else:
+        ax.set_xlabel("")
     if args.ylabel:
         ax.set_ylabel(format_metric(args.metric, train=args.train))
     else:
@@ -120,7 +133,7 @@ if __name__ == "__main__":
     ax.tick_params(axis="both", which="major", labelsize=10)
     ax.set_title(format_dataset(args.dataset))
 
-    path = os.path.join("figures", "num-of-squares")
+    path = os.path.join("figures", "sum-of-squares")
     os.makedirs(path, exist_ok=True)
     filename = f"{args.dataset}-train.pdf" if args.train else f"{args.dataset}-test.pdf"
     plt.savefig(os.path.join(path, filename))
