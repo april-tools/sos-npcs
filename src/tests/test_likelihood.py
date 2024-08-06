@@ -65,18 +65,30 @@ def test_discrete_monotonic_pc(
 
 
 @pytest.mark.parametrize(
-    "num_variables,num_squares,num_units,region_graph,sd",
+    "num_variables,num_squares,num_units,region_graph,sd,input_layer",
     list(
-        itertools.product([8, 13], [1, 4], [1, 3], ["rnd-bt", "rnd-lt"], [False, True])
+        itertools.product(
+            [8, 13],
+            [1, 4],
+            [1, 3],
+            ["rnd-bt", "rnd-lt"],
+            [False, True],
+            ["categorical", "embedding"],
+        )
     ),
 )
-def test_discrete_sos_pc(num_variables, num_squares, num_units, region_graph, sd):
+def test_discrete_sos_pc(
+    num_variables, num_squares, num_units, region_graph, sd, input_layer
+):
+    input_layer_kwargs = (
+        {"num_categories": 2} if input_layer == "categorical" else {"num_states": 2}
+    )
     model = SOS(
         num_variables,
         num_input_units=num_units,
         num_sum_units=num_units,
-        input_layer="categorical",
-        input_layer_kwargs={"num_categories": 2},
+        input_layer=input_layer,
+        input_layer_kwargs=input_layer_kwargs,
         num_squares=num_squares,
         region_graph=region_graph,
         structured_decomposable=sd,
@@ -86,20 +98,30 @@ def test_discrete_sos_pc(num_variables, num_squares, num_units, region_graph, sd
 
 
 @pytest.mark.parametrize(
-    "num_variables,num_squares,num_units,region_graph,sd",
+    "num_variables,num_squares,num_units,region_graph,sd,input_layer",
     list(
-        itertools.product([8, 13], [1, 4], [1, 3], ["rnd-bt", "rnd-lt"], [False, True])
+        itertools.product(
+            [8, 13],
+            [1, 4],
+            [1, 3],
+            ["rnd-bt", "rnd-lt"],
+            [False, True],
+            ["categorical", "embedding"],
+        )
     ),
 )
 def test_discrete_complex_sos_pc(
-    num_variables, num_squares, num_units, region_graph, sd
+    num_variables, num_squares, num_units, region_graph, sd, input_layer
 ):
+    input_layer_kwargs = (
+        {"num_categories": 2} if input_layer == "categorical" else {"num_states": 2}
+    )
     model = SOS(
         num_variables,
         num_input_units=num_units,
         num_sum_units=num_units,
-        input_layer="categorical",
-        input_layer_kwargs={"num_categories": 2},
+        input_layer=input_layer,
+        input_layer_kwargs=input_layer_kwargs,
         num_squares=num_squares,
         region_graph=region_graph,
         structured_decomposable=sd,

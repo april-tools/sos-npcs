@@ -2,9 +2,11 @@ import itertools
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, cast
 
-import cirkit.symbolic.functional as SF
 import numpy as np
 import torch
+from torch import Tensor, nn
+
+import cirkit.symbolic.functional as SF
 from cirkit.backend.torch.circuits import TorchCircuit, TorchConstantCircuit
 from cirkit.backend.torch.layers import TorchInnerLayer, TorchInputLayer, TorchLayer
 from cirkit.pipeline import compile
@@ -29,9 +31,8 @@ from cirkit.templates.region_graph import (
     RegionGraph,
 )
 from cirkit.utils.scope import Scope
-from torch import Tensor, nn
-
 from initializers import ExpUniformInitializer
+from layers import EmbeddingLayer
 from pipeline import setup_pipeline_context
 
 
@@ -602,6 +603,23 @@ def _build_non_monotonic_sym_circuits(
             ),
         )
 
+    def embedding_layer_factory(
+        scope: Scope, num_units: int, num_channels: int
+    ) -> EmbeddingLayer:
+        assert "num_states" in input_layer_kwargs
+        weight_dtype = DataType.COMPLEX if complex else DataType.REAL
+        return EmbeddingLayer(
+            scope,
+            num_units,
+            num_channels,
+            num_states=input_layer_kwargs["num_states"],
+            weight_factory=lambda shape: Parameter.from_leaf(
+                TensorParameter(
+                    *shape, initializer=NormalInitializer(0.0, 1.0), dtype=weight_dtype
+                )
+            ),
+        )
+
     def gaussian_layer_factory(
         scope: Scope, num_units: int, num_channels: int
     ) -> GaussianLayer:
@@ -639,9 +657,11 @@ def _build_non_monotonic_sym_circuits(
         )
 
     def build_sym_circuit(rg: RegionGraph) -> Circuit:
-        assert input_layer in ["categorical", "gaussian"]
+        assert input_layer in ["categorical", "embedding", "gaussian"]
         if input_layer == "categorical":
             input_factory = categorical_layer_factory
+        elif input_layer == "embedding":
+            input_factory = embedding_layer_factory
         elif input_layer == "gaussian":
             input_factory = gaussian_layer_factory
         else:

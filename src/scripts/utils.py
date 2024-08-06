@@ -8,13 +8,13 @@ import numpy as np
 import pandas as pd
 import torch
 import wandb
-from cirkit.backend.torch.layers import TorchInputLayer
 from sklearn.preprocessing import StandardScaler
 from tbparse import SummaryReader
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from zuko.flows import MAF, NICE, NSF, Flow
 
+from cirkit.backend.torch.layers import TorchInputLayer
 from datasets.loaders import (
     BINARY_DATASETS,
     CONTINUOUS_DATASETS,
