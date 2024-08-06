@@ -5,62 +5,10 @@ import numpy as np
 import torch
 from torch import Tensor
 
-from cirkit.backend.torch.compiler import TorchCompiler
 from cirkit.backend.torch.parameters.nodes import (
     TorchParameterOp,
     TorchUnaryParameterOp,
 )
-from cirkit.symbolic.parameters import ParameterOp, UnaryParameterOp
-
-# class FlattenParameter(UnaryParameterOp):
-#     def __init__(self, in_shape: Tuple[int, ...], *, start_axis: int = 0, end_axis: int = -1):
-#         start_axis = start_axis if start_axis >= 0 else start_axis + len(in_shape)
-#         assert 0 <= start_axis < len(in_shape)
-#         end_axis = end_axis if end_axis >= 0 else end_axis + len(in_shape)
-#         assert 0 <= end_axis < len(in_shape)
-#         assert start_axis < end_axis
-#         super().__init__(in_shape)
-#         self.start_axis = start_axis
-#         self.end_axis = end_axis
-#
-#     @cached_property
-#     def shape(self) -> Tuple[int, ...]:
-#         flattened_dim = np.prod([self.in_shapes[0][i] for i in range(self.start_axis, self.end_axis + 1)])
-#         return *self.in_shapes[0][:self.start_axis], flattened_dim, *self.in_shapes[0][self.end_axis + 1:]
-#
-#     @property
-#     def config(self) -> Dict[str, Any]:
-#         return dict(start_axis=self.start_axis, end_axis=self.end_axis)
-
-
-# class EinsumParameter(ParameterOp):
-#     def __init__(self, *in_shapes: Tuple[int, ...], einsum: str):
-#         super().__init__(*in_shapes)
-#         self.einsum = einsum
-#         self._output_shape = EinsumParameter._compute_output_shape(*in_shapes, einsum=einsum)
-#
-#     @staticmethod
-#     def _compute_output_shape(*in_shapes: Tuple[int, ...], einsum: str) -> Tuple[int, ...]:
-#         idx_to_dim: Dict[str, int] = {}
-#         in_idx, out_idx = einsum.split('->')
-#         for in_shape, multi_in_idx in zip(in_shapes, in_idx.split(',')):
-#             for idx, einsum_idx in enumerate(multi_in_idx):
-#                 if einsum_idx in idx_to_dim:
-#                     if in_shape[idx] != idx_to_dim[einsum_idx]:
-#                         raise ValueError(
-#                             f"Einsum string shape mismatch, found {in_idx[idx]} but expected {idx_to_dim[einsum_idx]}"
-#                         )
-#                     continue
-#                 idx_to_dim[einsum_idx] = in_shape[idx]
-#         return tuple(idx_to_dim[einsum_idx] for einsum_idx in out_idx)
-#
-#     @property
-#     def shape(self) -> Tuple[int, ...]:
-#         return self._output_shape
-#
-#     @property
-#     def config(self) -> Dict[str, Any]:
-#         return {'einsum': self.einsum}
 
 
 class TorchFlattenParameter(TorchUnaryParameterOp):

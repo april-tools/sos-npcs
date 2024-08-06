@@ -36,9 +36,9 @@ def apply_prod_sum_einsum(
     outer_dim = outer_prod.dim
     reduce_dim = reduce_sum.dim
 
+    # TODO: just use indices instead of letters
     cross_indices = ["j", "k"]
     indices = ["a", "b", "c", "d", "r", "s", "t", "u"]
-    print(in_shape1, in_shape2, outer_dim)
     lhs_dim = len(in_shape1[:outer_dim])
     rhs_dim = len(in_shape1) - lhs_dim
     lhs_in_idx = "".join(indices[i] for i in range(lhs_dim))
