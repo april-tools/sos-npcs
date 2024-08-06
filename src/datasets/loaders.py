@@ -156,6 +156,10 @@ def load_image_dataset(name: str, path: str = "datasets") -> Tuple[
         test_data = CIFAR10(path, train=False, download=True).data
     else:
         raise ValueError(f"Unknown datasets called {name}")
+    if isinstance(train_data, np.ndarray):
+        train_data = torch.from_numpy(train_data)
+    if isinstance(test_data, np.ndarray):
+        test_data = torch.from_numpy(test_data)
     image_shape = (train_data.shape[3], train_data.shape[1], train_data.shape[2])
     train_idx, valid_idx = train_test_split(
         np.arange(train_data.shape[0]), test_size=0.05
