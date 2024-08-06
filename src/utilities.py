@@ -7,7 +7,7 @@ PCS_MODELS = ["MPC", "SOS", "ExpSOS"]
 
 FLOW_MODELS = ["NICE", "MAF", "NSF"]
 
-REGION_GRAPHS = ["rnd-bt", "rnd-lt", "lt"]
+REGION_GRAPHS = ["rnd-bt", "rnd-lt", "lt", "qt"]
 
 MODELS = PCS_MODELS + FLOW_MODELS
 

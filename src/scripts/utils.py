@@ -14,7 +14,6 @@ from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from zuko.flows import MAF, NICE, NSF, Flow
 
-from cirkit.backend.torch.layers import TorchInputLayer
 from datasets.loaders import (
     BINARY_DATASETS,
     CONTINUOUS_DATASETS,
@@ -289,7 +288,6 @@ def setup_data_loaders(
     num_workers: int = 0,
     num_samples: int = 1000,
     standardize: bool = False,
-    dequantize: bool = False,
     discretize: bool = False,
     discretize_unique: bool = False,
     discretize_bins: int = 32,
@@ -320,26 +318,16 @@ def setup_data_loaders(
         (
             image_shape,
             (train_data, valid_data, test_data),
-            (train_label, valid_label, test_label),
-        ) = load_image_dataset(
-            dataset, path=path, dequantize=dequantize, dtype=numpy_dtype
-        )
+        ) = load_image_dataset(dataset, path=path)
         metadata["image_shape"] = image_shape
         metadata["num_variables"] = np.prod(image_shape).item()
         metadata["hmap"] = None
         metadata["type"] = "image"
-        if dequantize:
-            logit_eps = 1e-6
-            limits = np.array([0.0, 1.0], dtype=numpy_dtype)
-            limits = logit_eps + (1.0 - 2.0 * logit_eps) * limits
-            limits = np.log(limits) - np.log(1.0 - limits)
-            metadata["interval"] = (limits[0], limits[1])
-        else:
-            metadata["interval"] = (0, 255)
+        metadata["interval"] = (0, 255)
         metadata["domains"] = None
-        train_data = TensorDataset(torch.tensor(train_data), torch.tensor(train_label))
-        valid_data = TensorDataset(torch.tensor(valid_data), torch.tensor(valid_label))
-        test_data = TensorDataset(torch.tensor(test_data), torch.tensor(test_label))
+        train_data = TensorDataset(train_data)
+        valid_data = TensorDataset(valid_data)
+        test_data = TensorDataset(test_data)
     elif binary_dataset:
         sep = ","
         if dataset == "binarized_mnist":
@@ -459,7 +447,7 @@ def setup_model(
     logger.info(f"Building model '{model_name}' ...")
 
     if complex and model_name not in ["SOS", "ExpSOS"]:
-        raise ValueError("--complex can only be used with (Exp)SOS circuits")
+        raise ValueError("--complex can only be used with SOS or ExpSOS circuits")
     assert model_name in MODELS
     if splines:
         raise NotImplementedError()
@@ -473,15 +461,21 @@ def setup_model(
 
     interval = dataset_metadata["interval"]
     if dataset_type == ["image", "categorical", "language", "binary"]:
-        input_layer = "categorical"
-        input_layer_kwargs = dict(num_categories=interval[1] + 1)
+        if model_name == "MPC":
+            input_layer = "categorical"
+            input_layer_kwargs = dict(num_categories=interval[1] + 1)
+        else:
+            input_layer = "embedding"
+            input_layer_kwargs = dict(num_states=interval[1] + 1)
     else:
         input_layer = "gaussian"
         input_layer_kwargs = dict()
+    image_shape = dataset_metadata["image_shape"] if dataset_type == "image" else None
 
     if model_name == "MPC":
         model = MPC(
             num_variables,
+            image_shape=image_shape,
             num_input_units=num_input_units,
             num_sum_units=num_units,
             input_layer=input_layer,
@@ -496,6 +490,7 @@ def setup_model(
     if model_name == "SOS":
         model = SOS(
             num_variables,
+            image_shape=image_shape,
             num_input_units=num_input_units,
             num_sum_units=num_units,
             input_layer=input_layer,
@@ -511,6 +506,7 @@ def setup_model(
     if model_name == "ExpSOS":
         model = ExpSOS(
             num_variables,
+            image_shape=image_shape,
             num_input_units=num_input_units,
             num_sum_units=num_units,
             mono_num_input_units=mono_num_input_units,

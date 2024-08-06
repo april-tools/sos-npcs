@@ -425,11 +425,10 @@ class Engine:
             running_average_loss = 0.0
             running_training_samples = 0
             for batch_idx, batch in enumerate(train_dataloader):
-                if isinstance(batch, (tuple, list)):
-                    batch = batch[0]
-                batch = batch.to(self._device)
+                batch = batch[0].to(self._device)
                 if isinstance(self.model, PC):
-                    batch = batch.unsqueeze(dim=1)
+                    if len(batch.shape) < 3:
+                        batch = batch.unsqueeze(dim=1)
                     lls = self.model.log_likelihood(batch)
                 else:
                     lls = self.model().log_prob(batch)

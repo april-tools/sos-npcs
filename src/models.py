@@ -27,6 +27,7 @@ from cirkit.symbolic.parameters import (
 )
 from cirkit.templates.region_graph import (
     LinearRegionGraph,
+    QuadTree,
     RandomBinaryTree,
     RegionGraph,
 )
@@ -37,10 +38,15 @@ from pipeline import setup_pipeline_context
 
 
 class PC(nn.Module, ABC):
-    def __init__(self, num_variables: int) -> None:
+    def __init__(
+        self, num_variables: int, image_shape: Optional[Tuple[int, int, int]] = None
+    ) -> None:
         assert num_variables > 1
+        if image_shape is not None:
+            assert np.prod(image_shape) == num_variables
         super().__init__()
         self.num_variables = num_variables
+        self.image_shape = image_shape
         self.__cache_log_z: Optional[Tensor] = None
 
     def train(self, mode: bool = True):
@@ -90,6 +96,7 @@ class MPC(PC):
     def __init__(
         self,
         num_variables: int,
+        image_shape: Optional[Tuple[int, int, int]] = None,
         *,
         num_input_units: int,
         num_sum_units: int,
@@ -101,7 +108,7 @@ class MPC(PC):
         seed: int = 42,
     ) -> None:
         assert num_components > 0
-        super().__init__(num_variables)
+        super().__init__(num_variables, image_shape)
         self._pipeline = setup_pipeline_context(semiring="lse-sum")
         self._circuit, self._int_circuit = self._build_circuits(
             num_input_units,
@@ -163,14 +170,17 @@ class MPC(PC):
         rgs = _build_region_graphs(
             region_graph,
             num_components,
-            self.num_variables,
+            num_variables=self.num_variables,
+            image_shape=self.image_shape,
             structured_decomposable=structured_decomposable,
             seed=seed,
         )
 
         # Build one symbolic circuit for each region graph
+        num_channels = 1 if self.image_shape is None else self.image_shape[0]
         sym_circuits = _build_monotonic_sym_circuits(
             rgs,
+            num_channels,
             num_input_units,
             num_sum_units,
             input_layer=input_layer,
@@ -195,6 +205,7 @@ class SOS(PC):
     def __init__(
         self,
         num_variables: int,
+        image_shape: Optional[Tuple[int, int, int]] = None,
         *,
         num_input_units: int,
         num_sum_units: int,
@@ -207,7 +218,7 @@ class SOS(PC):
         seed: int = 42,
     ) -> None:
         assert num_squares > 0
-        super().__init__(num_variables)
+        super().__init__(num_variables, image_shape)
         self._complex = complex
         self._pipeline = setup_pipeline_context(semiring="complex-lse-sum")
         self._circuit, self._int_sq_circuit = self._build_circuits(
@@ -285,8 +296,10 @@ class SOS(PC):
         )
 
         # Build one symbolic circuit for each region graph
+        num_channels = 1 if self.image_shape is None else self.image_shape[0]
         sym_circuits = _build_non_monotonic_sym_circuits(
             rgs,
+            num_channels,
             num_input_units,
             num_sum_units,
             input_layer=input_layer,
@@ -319,6 +332,7 @@ class ExpSOS(PC):
     def __init__(
         self,
         num_variables: int,
+        image_shape: Optional[Tuple[int, int, int]] = None,
         *,
         num_input_units: int,
         num_sum_units: int,
@@ -331,7 +345,7 @@ class ExpSOS(PC):
         complex: bool = False,
         seed: int = 42,
     ) -> None:
-        super().__init__(num_variables)
+        super().__init__(num_variables, image_shape)
         self._complex = complex
         self._pipeline = setup_pipeline_context(semiring="complex-lse-sum")
         # Introduce optimization rules
@@ -416,8 +430,10 @@ class ExpSOS(PC):
         assert len(rgs) == 1
 
         # Build one symbolic circuit for each region graph
+        num_channels = 1 if self.image_shape is None else self.image_shape[0]
         sym_circuits = _build_non_monotonic_sym_circuits(
             rgs,
+            num_channels,
             num_input_units,
             num_sum_units,
             input_layer=input_layer,
@@ -426,6 +442,7 @@ class ExpSOS(PC):
         )
         sym_mono_circuits = _build_monotonic_sym_circuits(
             rgs,
+            num_channels,
             mono_num_input_units,
             mono_num_sum_units,
             input_layer=input_layer,
@@ -461,11 +478,13 @@ class ExpSOS(PC):
 def _build_region_graphs(
     name: str,
     k: int,
-    num_variables: int,
+    num_variables: Optional[int] = None,
+    image_shape: Optional[Tuple[int, int, int]] = None,
     structured_decomposable: bool = False,
     seed: int = 42,
 ) -> Sequence[RegionGraph]:
     if name == "rnd-bt":
+        assert num_variables is not None
         return [
             _build_rnd_bt_region_graph(
                 num_variables,
@@ -474,6 +493,7 @@ def _build_region_graphs(
             for i in range(k)
         ]
     elif name == "rnd-lt":
+        assert num_variables is not None
         return [
             _build_lt_region_graph(
                 num_variables,
@@ -483,7 +503,11 @@ def _build_region_graphs(
             for i in range(k)
         ]
     elif name == "lt":
+        assert num_variables is not None
         return [_build_lt_region_graph(num_variables, random=False) for _ in range(k)]
+    elif name == "qt":
+        assert image_shape is not None
+        return [_build_qt_region_graph(image_shape) for _ in range(k)]
     raise NotImplementedError()
 
 
@@ -498,8 +522,14 @@ def _build_lt_region_graph(
     return LinearRegionGraph(num_variables, random=random, seed=seed)
 
 
+def _build_qt_region_graph(image_shape: Tuple[int, int, int]) -> RegionGraph:
+    num_channels, height, width = image_shape
+    return QuadTree((height, width), struct_decomp=True)
+
+
 def _build_monotonic_sym_circuits(
     region_graphs: Sequence[RegionGraph],
+    num_channels: int,
     num_input_units: int,
     num_sum_units: int,
     *,
@@ -567,6 +597,7 @@ def _build_monotonic_sym_circuits(
             raise NotImplementedError()
         return Circuit.from_region_graph(
             rg,
+            num_channels=num_channels,
             num_input_units=num_input_units,
             num_sum_units=num_sum_units,
             input_factory=input_factory,
@@ -579,6 +610,7 @@ def _build_monotonic_sym_circuits(
 
 def _build_non_monotonic_sym_circuits(
     region_graphs: Sequence[RegionGraph],
+    num_channels: int,
     num_input_units: int,
     num_sum_units: int,
     *,
@@ -668,6 +700,7 @@ def _build_non_monotonic_sym_circuits(
             raise NotImplementedError()
         return Circuit.from_region_graph(
             rg,
+            num_channels=num_channels,
             num_input_units=num_input_units,
             num_sum_units=num_sum_units,
             input_factory=input_factory,

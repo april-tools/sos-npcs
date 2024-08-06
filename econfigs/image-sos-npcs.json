@@ -1,0 +1,40 @@
+{
+  "common": {
+    "tboard-path": "tboard-runs/image-data-sos",
+    "checkpoint-path": "checkpoints/image-data-sos",
+    "save-checkpoint": false,
+    "num-epochs": 1000,
+    "device": "cuda",
+    "num-workers": 2,
+    "patience-threshold": 1e-3,
+    "early-stop-patience": 25
+  },
+  "datasets": ["MNIST", "CIFAR10"],
+  "grid": {
+    "common": {
+      "region-graph": "rnd-bt",
+      "region-graph-sd": true,
+      "batch-size": 256,
+      "optimizer": "Adam",
+      "verbose": true,
+      "learning-rate": [1e-3, 5e-3, 1e-2]
+    },
+    "models": {
+      "miniboone": {
+        "MPC": {
+          "num-units,num-input-units": [[64, 64], [128, 128]]
+        },
+        "SOS": {
+          "real": {
+            "num-units,num-input-units": [[64, 64], [128, 128]],
+            "complex": false
+          },
+          "complex": {
+            "num-units,num-input-units": [[32, 32], [64, 64]],
+            "complex": true
+          }
+        }
+      }
+    }
+  }
+}

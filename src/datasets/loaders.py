@@ -7,8 +7,10 @@ from typing import List, Optional, Tuple
 import numpy as np
 import torch
 from sklearn.model_selection import train_test_split
+from torch import Tensor
+from torchvision.datasets import CIFAR10, MNIST, FashionMNIST
 
-from datasets.wrappers import *
+from datasets.wrappers import BSDS300, GAS, HEPMASS, MINIBOONE, POWER
 from datasets.wrappers.artificial import (
     banana_sample,
     cosine_sample,
@@ -48,7 +50,7 @@ BINARY_DATASETS = [
     "tretail",
 ]
 
-IMAGE_DATASETS = ["MNIST", "FashionMNIST", "EMNIST", "CIFAR10"]
+IMAGE_DATASETS = ["MNIST", "FashionMNIST", "CIFAR10"]
 
 CONTINUOUS_DATASETS = ["power", "gas", "hepmass", "miniboone", "bsds300"]
 
@@ -135,34 +137,38 @@ def load_binary_dataset(
     return dataset_splits
 
 
-def load_image_dataset(
-    name: str,
-    path: str = "datasets",
-    dequantize: bool = False,
-    flip: bool = False,
-    dtype: np.dtype = torch.float32,
-) -> Tuple[
+def load_image_dataset(name: str, path: str = "datasets") -> Tuple[
     Tuple[int, int, int],
-    Tuple[np.ndarray, np.ndarray, np.ndarray],
-    Tuple[np.ndarray, np.ndarray, np.ndarray],
+    Tuple[Tensor, Tensor, Tensor],
 ]:
     if name == "MNIST":
-        data = MNIST(path, dequantize=dequantize)
+        train_data = MNIST(path, train=True, download=True).data.unsqueeze(dim=-1)
+        test_data = MNIST(path, train=False, download=True).data.unsqueeze(dim=-1)
+    elif name == "FashionMNIST":
+        train_data = FashionMNIST(path, train=True, download=True).data.unsqueeze(
+            dim=-1
+        )
+        test_data = FashionMNIST(path, train=False, download=True).data.unsqueeze(
+            dim=-1
+        )
     elif name == "CIFAR10":
-        data = CIFAR10(path, flip=flip, dequantize=dequantize)
+        train_data = CIFAR10(path, train=True, download=True).data
+        test_data = CIFAR10(path, train=False, download=True).data
     else:
         raise ValueError(f"Unknown datasets called {name}")
-    image_train, image_valid, image_test = data.trn.x, data.val.x, data.tst.x
-    label_train, label_valid, label_test = data.trn.y, data.val.y, data.tst.y
-    image_shape = data.image_shape
-    if dequantize:
-        image_train = image_train.astype(dtype, copy=False)
-        image_valid = image_valid.astype(dtype, copy=False)
-        image_test = image_test.astype(dtype, copy=False)
+    image_shape = (train_data.shape[3], train_data.shape[1], train_data.shape[2])
+    train_idx, valid_idx = train_test_split(
+        np.arange(train_data.shape[0]), test_size=0.05
+    )
+    valid_data = train_data[valid_idx]
+    train_data = train_data[train_idx]
+    train_data = train_data.permute(0, 3, 1, 2).contiguous()
+    valid_data = valid_data.permute(0, 3, 1, 2).contiguous()
+    test_data = test_data.permute(0, 3, 1, 2).contiguous()
+
     return (
         image_shape,
-        (image_train, image_valid, image_test),
-        (label_train, label_valid, label_test),
+        (train_data, valid_data, test_data),
     )
 
 
