@@ -241,13 +241,6 @@ def build_run_id(args):
     rs.append(f"O{args.optimizer}")
     rs.append(f"LR{args.learning_rate}")
     rs.append(f"BS{args.batch_size}")
-    if args.model in PCS_MODELS:
-        if args.splines:
-            num_input_units = (
-                args.num_input_units if args.num_input_units > 0 else args.num_units
-            )
-            num_knots = num_input_units - args.spline_order - 1
-            rs.append(f"SO{args.spline_order}_SK{num_knots}")
     if args.weight_decay > 0.0:
         rs.append(f"WD{args.weight_decay}")
     return "_".join(rs)
