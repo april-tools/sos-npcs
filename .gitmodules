@@ -1,3 +1,4 @@
 [submodule "cirkit"]
 	path = cirkit
 	url = git@github.com:april-tools/cirkit.git
+    branch = main
