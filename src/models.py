@@ -22,6 +22,7 @@ from cirkit.symbolic.layers import (
 from cirkit.symbolic.parameters import (
     ClampParameter,
     ExpParameter,
+    LogSoftmaxParameter,
     Parameter,
     ScaledSigmoidParameter,
     TensorParameter,
@@ -527,8 +528,9 @@ def _build_monotonic_sym_circuits(
             num_units,
             num_channels,
             num_categories=input_layer_kwargs["num_categories"],
-            logits_factory=lambda shape: Parameter.from_leaf(
-                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0))
+            logits_factory=lambda shape: Parameter.from_unary(
+                LogSoftmaxParameter(shape),
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0)),
             ),
         )
 
