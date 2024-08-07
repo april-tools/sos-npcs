@@ -7,7 +7,8 @@ from torch import Tensor
 from cirkit.backend.torch.compiler import TorchCompiler
 from cirkit.backend.torch.layers import TorchInputLayer
 from cirkit.backend.torch.parameters.parameter import TorchParameter
-from cirkit.backend.torch.semiring import Semiring, SumProductSemiring
+from cirkit.backend.torch.semiring import Semiring, SumProductSemiring, ComplexLSESumSemiring
+from cirkit.backend.torch.utils import csafelog
 from cirkit.symbolic.initializers import NormalInitializer
 from cirkit.symbolic.layers import InputLayer
 from cirkit.symbolic.parameters import Parameter, ParameterFactory, TensorParameter
@@ -95,6 +96,8 @@ class TorchEmbeddingLayer(TorchInputLayer):
     ) -> None:
         if num_states <= 0:
             raise ValueError("The number of states for Embedding must be positive")
+        if semiring != ComplexLSESumSemiring:
+            raise NotImplementedError("The Embedding layer is implemented to work with the complex-lse-sum semiring")
         super().__init__(
             scope,
             num_output_units,
@@ -133,10 +136,12 @@ class TorchEmbeddingLayer(TorchInputLayer):
     def forward(self, x: Tensor) -> Tensor:
         if x.is_floating_point():
             x = x.long()  # The input to Embedding should be discrete
-        x = F.one_hot(x, self.num_states).float()  # (F, C, B, D, num_states)
-        x = self.semiring.cast(x.to(torch.get_default_dtype()))
-        weight = torch.log(self.semiring.cast(self.weight()))
-        return torch.einsum("fcbdi,fdkci->fbk", x, weight)
+        x = F.one_hot(x, self.num_states)  # (F, C, B, D, num_states)
+        weight = self.weight()
+        x = x.to(weight.dtype)
+        x = torch.einsum("fcbdi,fdkci->fbkc", x, weight)
+        x = torch.prod(x, dim=-1)  # (F, B, K)
+        return csafelog(self.semiring.cast(x))
 
 
 class TorchConstantLayer(TorchInputLayer):

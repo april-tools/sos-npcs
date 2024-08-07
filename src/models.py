@@ -657,7 +657,7 @@ def _build_non_monotonic_sym_circuits(
             num_states=input_layer_kwargs["num_states"],
             weight_factory=lambda shape: Parameter.from_leaf(
                 TensorParameter(
-                    *shape, initializer=NormalInitializer(0.0, 1.0), dtype=weight_dtype
+                    *shape, initializer=UniformInitializer(0.0, 1.0), dtype=weight_dtype
                 )
             ),
         )
