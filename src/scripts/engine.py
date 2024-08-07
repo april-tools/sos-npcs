@@ -437,8 +437,6 @@ class Engine:
                 self.optimizer.step()
                 self.optimizer.zero_grad()
                 loss = loss.item()
-                print(loss)
-                assert False
                 running_average_loss += loss * len(batch)
                 running_training_samples += len(batch)
                 if not np.isfinite(loss):
