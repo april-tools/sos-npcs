@@ -260,11 +260,10 @@ def evaluate_model_log_likelihood(
     model.eval()
     lls = list()
     for batch in dataloader:
-        if isinstance(batch, (tuple, list)):
-            batch = batch[0]
-        batch = batch.to(device)
+        batch = batch[0].to(device)
         if isinstance(model, PC):
-            batch = batch.unsqueeze(dim=1)
+            if len(batch.shape) < 3:
+                batch = batch.unsqueeze(dim=1)
             log_probs = model.log_likelihood(batch)
         else:
             log_probs = model().log_prob(batch)
