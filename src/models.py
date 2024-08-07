@@ -268,7 +268,7 @@ class SOS(PC):
             clamped_x = eps * (1.0 - 2.0 * torch.signbit(x))
             torch.where(close_zero_mask, clamped_x, x, out=x)
 
-        for l in self.model.input_layers():
+        for l in self.input_layers():
             if not isinstance(l, TorchEmbeddingLayer):
                 continue
             for p in l.weight.inputs:
