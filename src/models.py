@@ -20,6 +20,7 @@ from cirkit.symbolic.layers import (
     HadamardLayer,
 )
 from cirkit.symbolic.parameters import (
+    ClampParameter,
     ExpParameter,
     Parameter,
     ScaledSigmoidParameter,
@@ -70,11 +71,23 @@ class PC(nn.Module, ABC):
     def num_params(self, requires_grad: bool = True) -> int:
         return self.num_input_params(requires_grad) + self.num_sum_params(requires_grad)
 
-    @abstractmethod
-    def num_input_params(self, requires_grad: bool = True) -> int: ...
+    def num_input_params(self, requires_grad: bool = True) -> int:
+        params = itertools.chain(*[l.parameters() for l in self.input_layers()])
+        if requires_grad:
+            params = filter(lambda p: p.requires_grad, params)
+        num_params = sum(
+            (2 * p.numel()) if p.is_complex() else p.numel() for p in params
+        )
+        return num_params
 
-    @abstractmethod
-    def num_sum_params(self, requires_grad: bool = True) -> int: ...
+    def num_sum_params(self, requires_grad: bool = True) -> int:
+        params = itertools.chain(*[l.parameters() for l in self.inner_layers()])
+        if requires_grad:
+            params = filter(lambda p: p.requires_grad, params)
+        num_params = sum(
+            (2 * p.numel()) if p.is_complex() else p.numel() for p in params
+        )
+        return num_params
 
     @abstractmethod
     def layers(self) -> Iterator[TorchLayer]: ...
@@ -105,6 +118,7 @@ class MPC(PC):
         num_components: int = 1,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
+        mono_clamp: bool = False,
         seed: int = 42,
     ) -> None:
         assert num_components > 0
@@ -118,25 +132,12 @@ class MPC(PC):
             num_components=num_components,
             region_graph=region_graph,
             structured_decomposable=structured_decomposable,
+            mono_clamp=mono_clamp,
             seed=seed,
         )
         self.register_buffer(
             "_mixing_log_weight", -torch.log(torch.tensor(num_components))
         )
-
-    def num_input_params(self, requires_grad: bool = True) -> int:
-        params = itertools.chain(*[l.parameters() for l in self.input_layers()])
-        if requires_grad:
-            params = filter(lambda p: p.requires_grad, params)
-        num_sum_params = sum(p.numel() for p in params)
-        return num_sum_params
-
-    def num_sum_params(self, requires_grad: bool = True) -> int:
-        params = itertools.chain(*[l.parameters() for l in self.inner_layers()])
-        if requires_grad:
-            params = filter(lambda p: p.requires_grad, params)
-        num_sum_params = sum(p.numel() for p in params)
-        return num_sum_params
 
     def layers(self) -> Iterator[TorchLayer]:
         return iter(self._circuit.layers)
@@ -164,6 +165,7 @@ class MPC(PC):
         num_components: int = 1,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
+        mono_clamp: bool = False,
         seed: int = 42,
     ) -> Tuple[TorchCircuit, TorchConstantCircuit]:
         # Build the region graphs
@@ -185,6 +187,7 @@ class MPC(PC):
             num_sum_units,
             input_layer=input_layer,
             input_layer_kwargs=input_layer_kwargs,
+            mono_clamp=mono_clamp,
         )
 
         with self._pipeline:
@@ -219,7 +222,6 @@ class SOS(PC):
     ) -> None:
         assert num_squares > 0
         super().__init__(num_variables, image_shape)
-        self._complex = complex
         self._pipeline = setup_pipeline_context(semiring="complex-lse-sum")
         self._circuit, self._int_sq_circuit = self._build_circuits(
             num_input_units,
@@ -235,26 +237,6 @@ class SOS(PC):
         self.register_buffer(
             "_mixing_log_weight", -torch.log(torch.tensor(num_squares))
         )
-
-    @property
-    def is_complex(self) -> bool:
-        return self._complex
-
-    def num_input_params(self, requires_grad: bool = True) -> int:
-        params = itertools.chain(*[l.parameters() for l in self.input_layers()])
-        if requires_grad:
-            params = filter(lambda p: p.requires_grad, params)
-        num_sum_params = sum(p.numel() for p in params)
-        return num_sum_params
-
-    def num_sum_params(self, requires_grad: bool = True) -> int:
-        params = itertools.chain(*[l.parameters() for l in self.inner_layers()])
-        if requires_grad:
-            params = filter(lambda p: p.requires_grad, params)
-        num_sum_params = sum(p.numel() for p in params)
-        if self.is_complex:
-            return 2 * num_sum_params
-        return num_sum_params
 
     def layers(self) -> Iterator[TorchLayer]:
         return iter(self._circuit.layers)
@@ -343,11 +325,11 @@ class ExpSOS(PC):
         input_layer_kwargs: Optional[Dict[str, Any]] = None,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
+        mono_clamp: bool = False,
         complex: bool = False,
         seed: int = 42,
     ) -> None:
         super().__init__(num_variables, image_shape)
-        self._complex = complex
         self._pipeline = setup_pipeline_context(semiring="complex-lse-sum")
         # Introduce optimization rules
         self._circuit, self._mono_circuit, self._int_circuit = self._build_circuits(
@@ -359,29 +341,10 @@ class ExpSOS(PC):
             input_layer_kwargs=input_layer_kwargs,
             region_graph=region_graph,
             structured_decomposable=structured_decomposable,
+            mono_clamp=mono_clamp,
             complex=complex,
             seed=seed,
         )
-
-    @property
-    def is_complex(self) -> bool:
-        return self._complex
-
-    def num_input_params(self, requires_grad: bool = True) -> int:
-        params = itertools.chain(*[l.parameters() for l in self.input_layers()])
-        if requires_grad:
-            params = filter(lambda p: p.requires_grad, params)
-        num_sum_params = sum(p.numel() for p in params)
-        return num_sum_params
-
-    def num_sum_params(self, requires_grad: bool = True) -> int:
-        params = itertools.chain(*[l.parameters() for l in self.inner_layers()])
-        if requires_grad:
-            params = filter(lambda p: p.requires_grad, params)
-        num_sum_params = sum(p.numel() for p in params)
-        if self.is_complex:
-            return 2 * num_sum_params
-        return num_sum_params
 
     def layers(self) -> Iterator[TorchLayer]:
         return itertools.chain(self._circuit.layers, self._mono_circuit.layers)
@@ -417,6 +380,7 @@ class ExpSOS(PC):
         input_layer_kwargs: Optional[Dict[str, Any]] = None,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
+        mono_clamp: bool = False,
         complex: bool = False,
         seed: int = 42,
     ) -> Tuple[TorchCircuit, TorchCircuit, TorchConstantCircuit]:
@@ -448,6 +412,7 @@ class ExpSOS(PC):
             mono_num_sum_units,
             input_layer=input_layer,
             input_layer_kwargs=input_layer_kwargs,
+            mono_clamp=mono_clamp,
         )
         assert len(sym_circuits) == 1
         assert len(sym_mono_circuits) == 1
@@ -536,9 +501,22 @@ def _build_monotonic_sym_circuits(
     *,
     input_layer: str,
     input_layer_kwargs: Optional[Dict[str, Any]] = None,
+    mono_clamp: bool = False,
 ) -> List[Circuit]:
     if input_layer_kwargs is None:
         input_layer_kwargs = {}
+
+    def weight_factory_clamp(shape: Tuple[int, ...]) -> Parameter:
+        return Parameter.from_unary(
+            ClampParameter(shape, vmin=1e-18),
+            TensorParameter(*shape, initializer=UniformInitializer(0.01, 0.99)),
+        )
+
+    def weight_factory_exp(shape: Tuple[int, ...]) -> Parameter:
+        return Parameter.from_unary(
+            ExpParameter(shape),
+            TensorParameter(*shape, initializer=ExpUniformInitializer(0.0, 1.0)),
+        )
 
     def categorical_layer_factory(
         scope: Scope, num_units: int, num_channels: int
@@ -578,18 +556,14 @@ def _build_monotonic_sym_circuits(
     def dense_layer_factory(
         scope: Scope, num_input_units: int, num_output_units: int
     ) -> DenseLayer:
+        weight_factory = weight_factory_clamp if mono_clamp else weight_factory_exp
         return DenseLayer(
-            scope,
-            num_input_units,
-            num_output_units,
-            weight_factory=lambda shape: Parameter.from_unary(
-                ExpParameter(shape),
-                TensorParameter(*shape, initializer=ExpUniformInitializer(0.0, 1.0)),
-            ),
+            scope, num_input_units, num_output_units, weight_factory=weight_factory
         )
 
     def build_sym_circuit(rg: RegionGraph) -> Circuit:
         assert input_layer in ["categorical", "gaussian"]
+        weight_factory = weight_factory_clamp if mono_clamp else weight_factory_exp
         if input_layer == "categorical":
             return Circuit.from_region_graph(
                 rg,
@@ -598,12 +572,7 @@ def _build_monotonic_sym_circuits(
                 num_sum_units=num_sum_units,
                 input_factory=categorical_layer_factory,
                 sum_product="cp-t",
-                dense_weight_factory=lambda shape: Parameter.from_unary(
-                    ExpParameter(shape),
-                    TensorParameter(
-                        *shape, initializer=ExpUniformInitializer(0.0, 1.0)
-                    ),
-                ),
+                dense_weight_factory=weight_factory,
             )
         return Circuit.from_region_graph(
             rg,

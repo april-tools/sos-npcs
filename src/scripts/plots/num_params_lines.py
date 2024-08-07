@@ -14,7 +14,13 @@ parser = argparse.ArgumentParser(
 parser.add_argument("tboard_path", type=str, help="The Tensorboard runs path")
 parser.add_argument("dataset", type=str, help="Dataset name")
 parser.add_argument("--metric", default="avg_ll", help="The metric considered")
-parser.add_argument("--models", default="SOS;ExpSOS", help="The models")
+parser.add_argument("--models", default="MPC;SOS", help="The models")
+parser.add_argument(
+    "--sum-params-only",
+    action="store_true",
+    default=False,
+    help="Whether to show the number of parameters of sum units only",
+)
 parser.add_argument(
     "--train",
     action="store_true",
@@ -36,9 +42,9 @@ def format_metric(m: str, train: bool = False) -> str:
     if m == "avg_ll":
         m = "Average LL"
     elif m == "bpd":
-        m = "Bits per dimension"
+        m = "BPD"
     elif m == "ppl":
-        m = "Perplexity"
+        m = "PPL"
     else:
         assert False
     if train:
@@ -57,19 +63,39 @@ def filter_dataframe(df: pd.DataFrame, filter_dict: dict) -> pd.DataFrame:
     return df
 
 
-def format_model(m: str, exp_alias: str) -> str:
+def format_model(m: str, exp_alias: str, num_components: int) -> str:
     if m == "MPC":
         return r"$+_{\mathsf{sd}}$"
     elif m == "SOS":
         if "real" in exp_alias:
-            return r"$\Sigma_{\mathsf{cmp}}^2 (\mathbb{R})$"
+            if num_components > 1:
+                return r"$\Sigma_{\mathsf{cmp}}^2 (\mathbb{R})$"
+            return r"$\pm^2 (\mathbb{R})$"
         elif "complex" in exp_alias:
-            return r"$\Sigma_{\mathsf{cmp}}^2 (\mathbb{C})$"
+            if num_components > 1:
+                return r"$\Sigma_{\mathsf{cmp}}^2 (\mathbb{C})$"
+            return r"$\pm^2 (\mathbb{C})$"
     elif m == "ExpSOS":
         if "real" in exp_alias:
             return r"$+_{\mathsf{sd}}\!\cdot\!\pm^2 (\mathbb{R})$"
         elif "complex" in exp_alias:
             return r"$+_{\mathsf{sd}}\!\cdot\!\pm^2 (\mathbb{C})$"
+    assert False
+
+
+def format_model_order(m: str, exp_alias: str, num_components: int) -> (int, int):
+    if m == "MPC":
+        return 0, 0
+    elif m == "SOS":
+        if "real" in exp_alias:
+            return 1, num_components
+        elif "complex" in exp_alias:
+            return 2, num_components
+    elif m == "ExpSOS":
+        if "real" in exp_alias:
+            return 3, 0
+        elif "complex" in exp_alias:
+            return 4, 0
     assert False
 
 
@@ -80,6 +106,9 @@ def format_dataset(d: str) -> str:
         "hepmass": "Hepmass",
         "miniboone": "MiniBoonE",
         "bsds300": "BSDS300",
+        "MNIST": "MNIST",
+        "FashionMNIST": "Fashion-MNIST",
+        "CIFAR10": "CIFAR-10",
     }[d]
 
 
@@ -99,24 +128,29 @@ if __name__ == "__main__":
         "model",
         "exp_alias",
         "num_components",
+        "num_units",
+        "num_input_units",
         "mono_num_units",
         "mono_num_input_units",
+        "learning_rate",
     ]
-    cols_to_keep = (
-        group_by_cols + metrics + ["learning_rate", "num_sum_params", "num_params"]
-    )
+    cols_to_keep = group_by_cols + metrics + ["num_sum_params", "num_params"]
     df = df.drop(df.columns.difference(cols_to_keep), axis=1)
-    df = df.sort_values(by=valid_metric, ascending=False)
+    df = df.sort_values(valid_metric, ascending=False)
     df: pd.DataFrame = df.groupby(group_by_cols).first()
     df.reset_index(inplace=True)
 
     df["model_id"] = df.apply(
-        lambda row: format_model(row.model, row.exp_alias), axis=1
+        lambda row: format_model(row.model, row.exp_alias, row.num_components), axis=1
     )
-    df = df.sort_values("model_id", ascending=False)
+    df["model_order"] = df.apply(
+        lambda row: format_model_order(row.model, row.exp_alias, row.num_components),
+        axis=1,
+    )
+    df = df.sort_values(by="model_order", ascending=True)
+
     num_rows = 1
     num_cols = 1
-
     setup_tueplots(
         num_rows,
         num_cols,
@@ -126,21 +160,25 @@ if __name__ == "__main__":
         constrained_layout=False,
     )
     fig, ax = plt.subplots(num_rows, num_cols, squeeze=True, sharey=True)
+    num_params = "num_sum_params" if args.sum_params_only else "num_params"
     g = sb.lineplot(
         df,
-        x="num_sum_params",
+        x=num_params,
         y=metric,
         hue="model_id",
         style="model_id",
         linewidth=1.2,
         markers=True,
+        dashes=False,
         legend=args.legend,
         alpha=0.75,
         ax=ax,
     )
     ax.margins(0.1)
     ax.set_xscale("log")
-    ax.set_xlabel("Num of sum param")
+    ax.set_xlabel(
+        "Num. of sum parameters" if args.sum_params_only else "Num. of parameters"
+    )
     if args.ylabel:
         ax.set_ylabel(format_metric(args.metric, train=args.train))
     else:
@@ -148,6 +186,7 @@ if __name__ == "__main__":
     ax.set_title(format_dataset(args.dataset))
     if args.legend:
         sb.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), title="")
+    ax.grid(linestyle="--", alpha=0.3, linewidth=0.5)
 
     path = os.path.join("figures", "num-params")
     os.makedirs(path, exist_ok=True)

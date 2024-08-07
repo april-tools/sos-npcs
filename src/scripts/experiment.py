@@ -140,14 +140,16 @@ parser.add_argument(
     help="Whether to enfore structured-decomposability in region graphs built with repetitions",
 )
 parser.add_argument(
-    "--splines", action="store_true", default=False, help="Whether to enable splines"
-)
-parser.add_argument("--spline-order", type=int, default=2, help="The B-spline order")
-parser.add_argument(
     "--optimizer",
     choices=OPTIMIZERS_NAMES,
     default=OPTIMIZERS_NAMES[0],
     help="Optimiser to use",
+)
+parser.add_argument(
+    "--mono-clamp",
+    default=False,
+    action="store_true",
+    help="Whether to parameterize sum units in monotonic circuits via clamping",
 )
 parser.add_argument(
     "--reduce-lr-plateau",

@@ -98,9 +98,8 @@ class Engine:
             "mono_num_units": self.args.mono_num_units,
             "mono_num_input_units": self.args.mono_num_input_units,
             "num_components": self.args.num_components,
-            "splines": self.args.splines,
-            "spline_order": self.args.spline_order,
             "optimizer": self.args.optimizer,
+            "mono_clamp": self.args.mono_clamp,
             "learning_rate": self.args.learning_rate,
             "batch_size": self.args.batch_size,
             "weight_decay": self.args.weight_decay,
@@ -310,9 +309,8 @@ class Engine:
             num_input_units=self.args.num_input_units,
             mono_num_units=self.args.mono_num_units,
             mono_num_input_units=self.args.mono_num_input_units,
+            mono_clamp=self.args.mono_clamp,
             complex=self.args.complex,
-            splines=self.args.splines,
-            spline_order=self.args.spline_order,
             seed=self.args.seed,
         )
 
@@ -513,6 +511,7 @@ class Engine:
                 "optimizer": OPTIMIZERS_NAMES,
                 "region_graph": REGION_GRAPHS,
                 "region_graph_sd": [False, True],
+                "mono_clamp": [False, True],
                 "complex": [False, True],
             },
         )

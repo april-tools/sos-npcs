@@ -36,50 +36,47 @@ def apply_prod_sum_einsum(
     outer_dim = outer_prod.dim
     reduce_dim = reduce_sum.dim
 
-    # TODO: just use indices instead of letters
-    cross_indices = ["j", "k"]
-    indices = ["a", "b", "c", "d", "r", "s", "t", "u"]
-    lhs_dim = len(in_shape1[:outer_dim])
-    rhs_dim = len(in_shape1) - lhs_dim
-    lhs_in_idx = "".join(indices[i] for i in range(lhs_dim))
-    rhs_in_idx = "".join(indices[i] for i in range(lhs_dim, rhs_dim))
-    in_idx = ",".join(
-        [
-            lhs_in_idx + cross_indices[0] + rhs_in_idx,
-            lhs_in_idx + cross_indices[1] + rhs_in_idx,
-        ]
-    )
+    in_idx1 = list(range(len(in_shape1)))  # [0, 1, 2, ..., N - 1]
+    in_idx2 = in_idx1.copy()  # [0, 1, 2, ..., K, ..., N - 1]
+    in_idx2[outer_dim] = len(in_shape1)  # [0, 1, 2, ..., N, ..., N - 1]
     if outer_dim == reduce_dim:
-        out_idx = lhs_in_idx + rhs_in_idx
-        einsum = TorchEinsumParameter(
-            *outer_prod.in_shapes, einsum=in_idx + "->" + out_idx
-        )
-        return (einsum,)
-
-    out_idx = lhs_in_idx + cross_indices[0] + cross_indices[1] + rhs_in_idx
-    if reduce_dim < outer_dim:
-        out_shape = (
-            *in_shape1[:reduce_dim],
-            *in_shape1[reduce_dim + 1 : outer_dim],
-            in_shape1[outer_dim],
-            in_shape2[outer_dim],
-            *in_shape1[outer_dim + 1 :],
-        )
-        out_idx = out_idx[:reduce_dim] + out_idx[reduce_dim + 1 :]
-        flatten = TorchFlattenParameter(
-            out_shape, start_dim=len(lhs_in_idx) - 1, end_dim=len(lhs_in_idx)
-        )
+        out_idx2 = list(range(len(in_shape1)))  # [0, 1, 2, ..., K, ..., N - 1]
+        del out_idx2[reduce_dim]  # [0, 1, 2, ..., K - 1, K + 1, ..., N - 1]
+        flatten_start_dim = None
+        flatten_end_dim = None
     else:
-        out_shape = (
-            *in_shape1[:outer_dim],
-            in_shape1[outer_dim],
-            in_shape2[outer_dim],
-            *in_shape1[outer_dim + 1 : reduce_dim],
-            *in_shape1[reduce_dim + 1 :],
+        # out_idx2: [0, 1, 2, ..., K, N, K + 1, ..., N - 1]
+        out_idx2 = (
+            list(range(outer_dim + 1))
+            + [len(in_shape1)]
+            + list(range(outer_dim + 1, len(in_shape1)))
         )
-        out_idx = out_idx[: reduce_dim + 1] + out_idx[reduce_dim + 2 :]
-        flatten = TorchFlattenParameter(
-            out_shape, start_dim=len(lhs_in_idx), end_dim=len(lhs_in_idx) + 1
-        )
-    einsum = TorchEinsumParameter(*outer_prod.in_shapes, einsum=in_idx + "->" + out_idx)
+        if reduce_dim < outer_dim:
+            del out_idx2[
+                reduce_dim
+            ]  # [0, 1, 2, ..., J - 1, J + 1, ..., K, N, K + 1, ..., N - 1]
+            flatten_start_dim = outer_dim - 1
+            flatten_end_dim = outer_dim
+        else:
+            del out_idx2[
+                reduce_dim + 1
+            ]  # [0, 1, 2, ..., K, N, K + 1, ..., J - 1, J + 1, ..., N - 1]
+            flatten_start_dim = outer_dim
+            flatten_end_dim = outer_dim + 1
+
+    # TODO: refactor TorchEinsumParameter to not accept only strings
+    indices = ["r", "s", "t", "u", "v", "w", "x", "y", "z"]
+    in_idx1 = "".join([indices[i] for i in in_idx1])
+    in_idx2 = "".join([indices[i] for i in in_idx2])
+    out_idx = "".join([indices[i] for i in out_idx2])
+    einsum = TorchEinsumParameter(
+        *outer_prod.in_shapes, einsum=f"{in_idx1},{in_idx2}->{out_idx}"
+    )
+    if flatten_start_dim is None:
+        assert flatten_end_dim is None
+        return (einsum,)
+    assert flatten_end_dim is not None
+    flatten = TorchFlattenParameter(
+        einsum.shape, start_dim=flatten_start_dim, end_dim=flatten_end_dim
+    )
     return einsum, flatten

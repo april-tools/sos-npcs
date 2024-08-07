@@ -438,18 +438,17 @@ def setup_model(
     num_input_units: int = -1,
     mono_num_units: int = 2,
     mono_num_input_units: int = -1,
+    mono_clamp: bool = False,
     complex: bool = False,
-    splines: bool = False,
-    spline_order: int = 2,
     seed: int = 123,
 ) -> Union[PC, Flow]:
     logger.info(f"Building model '{model_name}' ...")
 
+    if mono_clamp and model_name not in ["MPC", "ExpSOS"]:
+        raise ValueError("--mono-clamp can only be used with MPC and ExpSOS circuits")
     if complex and model_name not in ["SOS", "ExpSOS"]:
         raise ValueError("--complex can only be used with SOS or ExpSOS circuits")
     assert model_name in MODELS
-    if splines:
-        raise NotImplementedError()
     dataset_type = dataset_metadata["type"]
     num_variables = dataset_metadata["num_variables"]
 
@@ -482,6 +481,7 @@ def setup_model(
             num_components=num_components,
             region_graph=region_graph,
             structured_decomposable=structured_decomposable,
+            mono_clamp=mono_clamp,
             seed=seed,
         )
         return model
@@ -514,6 +514,7 @@ def setup_model(
             input_layer_kwargs=input_layer_kwargs,
             region_graph=region_graph,
             structured_decomposable=structured_decomposable,
+            mono_clamp=mono_clamp,
             complex=complex,
             seed=seed,
         )

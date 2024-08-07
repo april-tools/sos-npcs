@@ -7,7 +7,11 @@ from torch import Tensor
 from cirkit.backend.torch.compiler import TorchCompiler
 from cirkit.backend.torch.layers import TorchInputLayer
 from cirkit.backend.torch.parameters.parameter import TorchParameter
-from cirkit.backend.torch.semiring import Semiring, SumProductSemiring, ComplexLSESumSemiring
+from cirkit.backend.torch.semiring import (
+    ComplexLSESumSemiring,
+    Semiring,
+    SumProductSemiring,
+)
 from cirkit.backend.torch.utils import csafelog
 from cirkit.symbolic.initializers import NormalInitializer
 from cirkit.symbolic.layers import InputLayer
@@ -97,7 +101,9 @@ class TorchEmbeddingLayer(TorchInputLayer):
         if num_states <= 0:
             raise ValueError("The number of states for Embedding must be positive")
         if semiring != ComplexLSESumSemiring:
-            raise NotImplementedError("The Embedding layer is implemented to work with the complex-lse-sum semiring")
+            raise NotImplementedError(
+                "The Embedding layer is implemented to work with the complex-lse-sum semiring"
+            )
         super().__init__(
             scope,
             num_output_units,
