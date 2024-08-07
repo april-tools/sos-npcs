@@ -9,7 +9,7 @@
     "patience-threshold": 1e-3,
     "early-stop-patience": 10
   },
-  "datasets": ["MNIST", "CIFAR10"],
+  "datasets": ["MNIST", "FashionMNIST", "CIFAR10"],
   "grid": {
     "common": {
       "region-graph": "qt",
@@ -19,7 +19,7 @@
       "learning-rate": 1e-2
     },
     "models": {
-      "MNIST|CIFAR10": {
+      "MNIST|FashionMNIST|CIFAR10": {
         "MPC": {
           "num-units,num-input-units": [[16, 16], [32, 32], [64, 64], [128, 128], [256, 256]],
           "mono-clamp": true
