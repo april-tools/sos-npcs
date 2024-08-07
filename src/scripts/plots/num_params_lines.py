@@ -42,9 +42,9 @@ def format_metric(m: str, train: bool = False) -> str:
     if m == "avg_ll":
         m = "Average LL"
     elif m == "bpd":
-        m = "BPD"
+        m = "bpd"
     elif m == "ppl":
-        m = "PPL"
+        m = "ppl"
     else:
         assert False
     if train:

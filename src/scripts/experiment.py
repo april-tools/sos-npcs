@@ -152,6 +152,12 @@ parser.add_argument(
     help="Whether to parameterize sum units in monotonic circuits via clamping",
 )
 parser.add_argument(
+    "--embedding-double-clamp",
+    default=False,
+    action="store_true",
+    help="Clamp parameters of Embedding layers in SOS PCs to be away from 0 by a tiny value. This might be required for better numerical stability",
+)
+parser.add_argument(
     "--reduce-lr-plateau",
     action="store_true",
     default=False,

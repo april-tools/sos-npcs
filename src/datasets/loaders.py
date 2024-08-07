@@ -164,8 +164,7 @@ def load_image_dataset(name: str, path: str = "datasets") -> Tuple[
     test_data = test_data.to(torch.int64)
     image_shape = (train_data.shape[3], train_data.shape[1], train_data.shape[2])
     train_idx, valid_idx = train_test_split(
-        np.arange(train_data.shape[0]), test_size=0.05,
-        random_state=42, shuffle=True
+        np.arange(train_data.shape[0]), test_size=0.05, random_state=42, shuffle=True
     )
     valid_data = train_data[valid_idx]
     train_data = train_data[train_idx]

@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from zuko.flows import Flow
 
 from datasets.loaders import ALL_DATASETS
-from models import PC
+from models import PC, SOS
 from optimization.optimizers import OPTIMIZERS_NAMES, setup_optimizer
 from optimization.schedulers import ReduceLROnPlateau
 from scripts.logger import Logger
@@ -434,6 +434,14 @@ class Engine:
                 loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
+
+                if self.args.embedding_double_clamp:
+                    if not isinstance(self.model, SOS):
+                        raise ValueError(
+                            "--embedding-double-clamp can only be used for SOS PCs"
+                        )
+                    self.model.double_clamp_embedding_layers()
+
                 loss = loss.item()
                 running_average_loss += loss * len(batch)
                 running_training_samples += len(batch)

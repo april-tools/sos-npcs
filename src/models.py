@@ -9,6 +9,7 @@ from torch import Tensor, nn
 import cirkit.symbolic.functional as SF
 from cirkit.backend.torch.circuits import TorchCircuit, TorchConstantCircuit
 from cirkit.backend.torch.layers import TorchInnerLayer, TorchInputLayer, TorchLayer
+from cirkit.backend.torch.parameters.nodes import TorchTensorParameter
 from cirkit.pipeline import compile
 from cirkit.symbolic.circuit import Circuit
 from cirkit.symbolic.dtypes import DataType
@@ -35,7 +36,7 @@ from cirkit.templates.region_graph import (
 )
 from cirkit.utils.scope import Scope
 from initializers import ExpUniformInitializer
-from layers import EmbeddingLayer
+from layers import EmbeddingLayer, TorchEmbeddingLayer
 from pipeline import setup_pipeline_context
 
 
@@ -223,6 +224,7 @@ class SOS(PC):
     ) -> None:
         assert num_squares > 0
         super().__init__(num_variables, image_shape)
+        self.complex = complex
         self._pipeline = setup_pipeline_context(semiring="complex-lse-sum")
         self._circuit, self._int_sq_circuit = self._build_circuits(
             num_input_units,
@@ -255,6 +257,24 @@ class SOS(PC):
     def log_score(self, x: Tensor) -> Tensor:
         log_score = 2.0 * self._circuit(x).real
         return torch.logsumexp(self._mixing_log_weight + log_score, dim=1)
+
+    @torch.no_grad()
+    def double_clamp_embedding_layers(self):
+        @torch.no_grad()
+        @torch.compile()
+        def _double_clamp_(x: torch.Tensor):
+            eps = torch.finfo(torch.get_default_dtype()).tiny
+            close_zero_mask = (x > -eps) & (x < eps)
+            clamped_x = eps * (1.0 - 2.0 * torch.signbit(x))
+            torch.where(close_zero_mask, clamped_x, x, out=x)
+
+        for l in self.model.input_layers():
+            if not isinstance(l, TorchEmbeddingLayer):
+                continue
+            for p in l.weight.inputs:
+                if not isinstance(p, TorchTensorParameter):
+                    assert p._ptensor is not None
+                    _double_clamp_(p._ptensor.data.real)
 
     def _build_circuits(
         self,
@@ -331,6 +351,7 @@ class ExpSOS(PC):
         seed: int = 42,
     ) -> None:
         super().__init__(num_variables, image_shape)
+        self.complex = complex
         self._pipeline = setup_pipeline_context(semiring="complex-lse-sum")
         # Introduce optimization rules
         self._circuit, self._mono_circuit, self._int_circuit = self._build_circuits(
