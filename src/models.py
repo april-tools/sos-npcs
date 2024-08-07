@@ -273,8 +273,9 @@ class SOS(PC):
                 continue
             for p in l.weight.inputs:
                 if not isinstance(p, TorchTensorParameter):
-                    assert p._ptensor is not None
-                    _double_clamp_(p._ptensor.data.real)
+                    continue
+                assert p._ptensor is not None
+                _double_clamp_(p._ptensor.data.real)
 
     def _build_circuits(
         self,
