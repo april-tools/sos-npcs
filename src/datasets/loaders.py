@@ -158,17 +158,19 @@ def load_image_dataset(name: str, path: str = "datasets") -> Tuple[
         raise ValueError(f"Unknown datasets called {name}")
     if isinstance(train_data, np.ndarray):
         train_data = torch.from_numpy(train_data)
+    train_data = train_data.to(torch.int64)
     if isinstance(test_data, np.ndarray):
         test_data = torch.from_numpy(test_data)
+    test_data = test_data.to(torch.int64)
     image_shape = (train_data.shape[3], train_data.shape[1], train_data.shape[2])
     train_idx, valid_idx = train_test_split(
         np.arange(train_data.shape[0]), test_size=0.05
     )
     valid_data = train_data[valid_idx]
     train_data = train_data[train_idx]
-    train_data = train_data.permute(0, 3, 1, 2).contiguous()
-    valid_data = valid_data.permute(0, 3, 1, 2).contiguous()
-    test_data = test_data.permute(0, 3, 1, 2).contiguous()
+    train_data = train_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous()
+    valid_data = valid_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous()
+    test_data = test_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous()
 
     return (
         image_shape,

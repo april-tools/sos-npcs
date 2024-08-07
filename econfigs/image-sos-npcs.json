@@ -7,20 +7,19 @@
     "device": "cuda",
     "num-workers": 2,
     "patience-threshold": 1e-3,
-    "early-stop-patience": 25
+    "early-stop-patience": 5
   },
   "datasets": ["MNIST", "CIFAR10"],
   "grid": {
     "common": {
-      "region-graph": "rnd-bt",
-      "region-graph-sd": true,
+      "region-graph": "qt",
       "batch-size": 256,
       "optimizer": "Adam",
       "verbose": true,
       "learning-rate": [1e-3, 5e-3, 1e-2]
     },
     "models": {
-      "miniboone": {
+      "MNIST|CIFAR10": {
         "MPC": {
           "num-units,num-input-units": [[64, 64], [128, 128]]
         },

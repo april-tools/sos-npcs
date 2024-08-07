@@ -290,7 +290,8 @@ class SOS(PC):
         rgs = _build_region_graphs(
             region_graph,
             num_squares,
-            self.num_variables,
+            num_variables=self.num_variables,
+            image_shape=self.image_shape,
             structured_decomposable=structured_decomposable,
             seed=seed,
         )
@@ -590,17 +591,26 @@ def _build_monotonic_sym_circuits(
     def build_sym_circuit(rg: RegionGraph) -> Circuit:
         assert input_layer in ["categorical", "gaussian"]
         if input_layer == "categorical":
-            input_factory = categorical_layer_factory
-        elif input_layer == "gaussian":
-            input_factory = gaussian_layer_factory
-        else:
-            raise NotImplementedError()
+            return Circuit.from_region_graph(
+                rg,
+                num_channels=num_channels,
+                num_input_units=num_input_units,
+                num_sum_units=num_sum_units,
+                input_factory=categorical_layer_factory,
+                sum_product="cp-t",
+                dense_weight_factory=lambda shape: Parameter.from_unary(
+                    ExpParameter(shape),
+                    TensorParameter(
+                        *shape, initializer=ExpUniformInitializer(0.0, 1.0)
+                    ),
+                ),
+            )
         return Circuit.from_region_graph(
             rg,
             num_channels=num_channels,
             num_input_units=num_input_units,
             num_sum_units=num_sum_units,
-            input_factory=input_factory,
+            input_factory=gaussian_layer_factory,
             sum_factory=dense_layer_factory,
             prod_factory=hadamard_layer_factory,
         )
@@ -690,20 +700,32 @@ def _build_non_monotonic_sym_circuits(
 
     def build_sym_circuit(rg: RegionGraph) -> Circuit:
         assert input_layer in ["categorical", "embedding", "gaussian"]
-        if input_layer == "categorical":
-            input_factory = categorical_layer_factory
-        elif input_layer == "embedding":
-            input_factory = embedding_layer_factory
-        elif input_layer == "gaussian":
-            input_factory = gaussian_layer_factory
-        else:
-            raise NotImplementedError()
+        if input_layer in ["categorical", "embedding"]:
+            if input_layer == "categorical":
+                input_factory = categorical_layer_factory
+            else:
+                input_factory = embedding_layer_factory
+            return Circuit.from_region_graph(
+                rg,
+                num_channels=num_channels,
+                num_input_units=num_input_units,
+                num_sum_units=num_sum_units,
+                input_factory=input_factory,
+                sum_product="cp-t",
+                dense_weight_factory=lambda shape: Parameter.from_leaf(
+                    TensorParameter(
+                        *shape,
+                        initializer=UniformInitializer(0.0, 1.0),
+                        dtype=DataType.COMPLEX if complex else DataType.REAL,
+                    )
+                ),
+            )
         return Circuit.from_region_graph(
             rg,
             num_channels=num_channels,
             num_input_units=num_input_units,
             num_sum_units=num_sum_units,
-            input_factory=input_factory,
+            input_factory=gaussian_layer_factory,
             sum_factory=dense_layer_factory,
             prod_factory=hadamard_layer_factory,
         )

@@ -460,7 +460,7 @@ def setup_model(
     assert region_graph in REGION_GRAPHS
 
     interval = dataset_metadata["interval"]
-    if dataset_type == ["image", "categorical", "language", "binary"]:
+    if dataset_type in ["image", "categorical", "language", "binary"]:
         if model_name == "MPC":
             input_layer = "categorical"
             input_layer_kwargs = dict(num_categories=interval[1] + 1)
