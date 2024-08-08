@@ -310,6 +310,7 @@ class Engine:
             mono_num_units=self.args.mono_num_units,
             mono_num_input_units=self.args.mono_num_input_units,
             mono_clamp=self.args.mono_clamp,
+            non_mono_clamp=self.args.non_mono_clamp,
             complex=self.args.complex,
             seed=self.args.seed,
         )
@@ -434,14 +435,6 @@ class Engine:
                 loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
-
-                if self.args.embedding_double_clamp:
-                    if not isinstance(self.model, SOS):
-                        raise ValueError(
-                            "--embedding-double-clamp can only be used for SOS PCs"
-                        )
-                    self.model.double_clamp_embedding_layers()
-
                 loss = loss.item()
                 running_average_loss += loss * len(batch)
                 running_training_samples += len(batch)

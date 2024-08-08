@@ -1,14 +1,56 @@
 from functools import cached_property
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import torch
 from torch import Tensor
 
+from cirkit.backend.torch.compiler import TorchCompiler
 from cirkit.backend.torch.parameters.nodes import (
+    TorchEntrywiseParameterOp,
     TorchParameterOp,
     TorchUnaryParameterOp,
 )
+from cirkit.symbolic.parameters import EntrywiseParameterOp
+
+
+class DoubleClampParameter(EntrywiseParameterOp):
+    def __init__(
+        self,
+        in_shape: Tuple[int, ...],
+        *,
+        eps: Optional[float] = None,
+    ) -> None:
+        super().__init__(in_shape)
+        self.eps = eps
+
+    @property
+    def config(self) -> Dict[str, Any]:
+        config = dict()
+        if self.eps is not None:
+            config.update(eps=self.eps)
+        return config
+
+
+class TorchDoubleClampParameter(TorchEntrywiseParameterOp):
+    def __init__(
+        self, in_shape: Tuple[int, ...], num_folds: int = 1, eps: Optional[float] = None
+    ):
+        super().__init__(in_shape, num_folds=num_folds)
+        if eps is None:
+            eps = torch.finfo(torch.get_default_dtype()).tiny
+        self.eps = eps
+
+    @property
+    def config(self) -> Dict[str, Any]:
+        return {"eps": self.eps}
+
+    @torch.compile()
+    def forward(self, x: Tensor) -> Tensor:
+        close_zero_mask = (x.real > -self.eps) & (x.real < self.eps)
+        clamped_x = self.eps * (1.0 - 2.0 * torch.signbit(x.real))
+        torch.where(close_zero_mask, clamped_x, x.real, out=x.real)
+        return x
 
 
 class TorchFlattenParameter(TorchUnaryParameterOp):
@@ -92,3 +134,10 @@ class TorchEinsumParameter(TorchParameterOp):
 
     def forward(self, *xs: Tensor) -> Tensor:
         return torch.einsum(self._processed_einsum, *xs)
+
+
+def compile_double_clamp_parameter(
+    compiler: TorchCompiler, p: DoubleClampParameter
+) -> TorchDoubleClampParameter:
+    (in_shape,) = p.in_shapes
+    return TorchDoubleClampParameter(in_shape, eps=p.eps)

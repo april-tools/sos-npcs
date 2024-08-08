@@ -9,7 +9,6 @@ from torch import Tensor, nn
 import cirkit.symbolic.functional as SF
 from cirkit.backend.torch.circuits import TorchCircuit, TorchConstantCircuit
 from cirkit.backend.torch.layers import TorchInnerLayer, TorchInputLayer, TorchLayer
-from cirkit.backend.torch.parameters.nodes import TorchTensorParameter
 from cirkit.pipeline import compile
 from cirkit.symbolic.circuit import Circuit
 from cirkit.symbolic.dtypes import DataType
@@ -36,7 +35,8 @@ from cirkit.templates.region_graph import (
 )
 from cirkit.utils.scope import Scope
 from initializers import ExpUniformInitializer
-from layers import EmbeddingLayer, TorchEmbeddingLayer
+from layers import EmbeddingLayer
+from parameters import DoubleClampParameter
 from pipeline import setup_pipeline_context
 
 
@@ -219,12 +219,12 @@ class SOS(PC):
         num_squares: int = 1,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
+        non_mono_clamp: bool = False,
         complex: bool = False,
         seed: int = 42,
     ) -> None:
         assert num_squares > 0
         super().__init__(num_variables, image_shape)
-        self.complex = complex
         self._pipeline = setup_pipeline_context(semiring="complex-lse-sum")
         self._circuit, self._int_sq_circuit = self._build_circuits(
             num_input_units,
@@ -234,6 +234,7 @@ class SOS(PC):
             num_squares=num_squares,
             region_graph=region_graph,
             structured_decomposable=structured_decomposable,
+            non_mono_clamp=non_mono_clamp,
             complex=complex,
             seed=seed,
         )
@@ -258,25 +259,6 @@ class SOS(PC):
         log_score = 2.0 * self._circuit(x).real
         return torch.logsumexp(self._mixing_log_weight + log_score, dim=1)
 
-    @torch.no_grad()
-    def double_clamp_embedding_layers(self):
-        @torch.no_grad()
-        @torch.compile()
-        def _double_clamp_(x: torch.Tensor):
-            eps = torch.finfo(torch.get_default_dtype()).tiny
-            close_zero_mask = (x > -eps) & (x < eps)
-            clamped_x = eps * (1.0 - 2.0 * torch.signbit(x))
-            torch.where(close_zero_mask, clamped_x, x, out=x)
-
-        for l in self.input_layers():
-            if not isinstance(l, TorchEmbeddingLayer):
-                continue
-            for p in l.weight.inputs:
-                if not isinstance(p, TorchTensorParameter):
-                    continue
-                assert p._ptensor is not None
-                _double_clamp_(p._ptensor.data.real)
-
     def _build_circuits(
         self,
         num_input_units: int,
@@ -287,6 +269,7 @@ class SOS(PC):
         num_squares: int = 1,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
+        non_mono_clamp: bool = False,
         complex: bool = False,
         seed: int = 42,
     ) -> Tuple[TorchCircuit, TorchConstantCircuit]:
@@ -309,6 +292,7 @@ class SOS(PC):
             num_sum_units,
             input_layer=input_layer,
             input_layer_kwargs=input_layer_kwargs,
+            non_mono_clamp=non_mono_clamp,
             complex=complex,
         )
 
@@ -348,11 +332,11 @@ class ExpSOS(PC):
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
         mono_clamp: bool = False,
+        non_mono_clamp: bool = False,
         complex: bool = False,
         seed: int = 42,
     ) -> None:
         super().__init__(num_variables, image_shape)
-        self.complex = complex
         self._pipeline = setup_pipeline_context(semiring="complex-lse-sum")
         # Introduce optimization rules
         self._circuit, self._mono_circuit, self._int_circuit = self._build_circuits(
@@ -365,6 +349,7 @@ class ExpSOS(PC):
             region_graph=region_graph,
             structured_decomposable=structured_decomposable,
             mono_clamp=mono_clamp,
+            non_mono_clamp=non_mono_clamp,
             complex=complex,
             seed=seed,
         )
@@ -404,6 +389,7 @@ class ExpSOS(PC):
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
         mono_clamp: bool = False,
+        non_mono_clamp: bool = False,
         complex: bool = False,
         seed: int = 42,
     ) -> Tuple[TorchCircuit, TorchCircuit, TorchConstantCircuit]:
@@ -426,6 +412,7 @@ class ExpSOS(PC):
             num_sum_units,
             input_layer=input_layer,
             input_layer_kwargs=input_layer_kwargs,
+            non_mono_clamp=non_mono_clamp,
             complex=complex,
         )
         sym_mono_circuits = _build_monotonic_sym_circuits(
@@ -531,7 +518,7 @@ def _build_monotonic_sym_circuits(
 
     def weight_factory_clamp(shape: Tuple[int, ...]) -> Parameter:
         return Parameter.from_unary(
-            ClampParameter(shape, vmin=1e-18),
+            ClampParameter(shape, vmin=1e-19),
             TensorParameter(*shape, initializer=UniformInitializer(0.01, 0.99)),
         )
 
@@ -619,10 +606,28 @@ def _build_non_monotonic_sym_circuits(
     *,
     input_layer: str,
     input_layer_kwargs: Optional[Dict[str, Any]] = None,
+    non_mono_clamp: bool = False,
     complex: bool = False,
 ) -> List[Circuit]:
     if input_layer_kwargs is None:
         input_layer_kwargs = {}
+
+    def weight_factory_clamp(shape: Tuple[int, ...]) -> Parameter:
+        weight_dtype = DataType.COMPLEX if complex else DataType.REAL
+        return Parameter.from_unary(
+            DoubleClampParameter(shape, eps=1e-19),
+            TensorParameter(
+                *shape, initializer=UniformInitializer(0.0, 1.0), dtype=weight_dtype
+            ),
+        )
+
+    def weight_factory(shape: Tuple[int, ...]) -> Parameter:
+        weight_dtype = DataType.COMPLEX if complex else DataType.REAL
+        return Parameter.from_leaf(
+            TensorParameter(
+                *shape, initializer=UniformInitializer(0.0, 1.0), dtype=weight_dtype
+            )
+        )
 
     def categorical_layer_factory(
         scope: Scope, num_units: int, num_channels: int
@@ -642,17 +647,12 @@ def _build_non_monotonic_sym_circuits(
         scope: Scope, num_units: int, num_channels: int
     ) -> EmbeddingLayer:
         assert "num_states" in input_layer_kwargs
-        weight_dtype = DataType.COMPLEX if complex else DataType.REAL
         return EmbeddingLayer(
             scope,
             num_units,
             num_channels,
             num_states=input_layer_kwargs["num_states"],
-            weight_factory=lambda shape: Parameter.from_leaf(
-                TensorParameter(
-                    *shape, initializer=UniformInitializer(0.0, 1.0), dtype=weight_dtype
-                )
-            ),
+            weight_factory=weight_factory_clamp if non_mono_clamp else weight_factory,
         )
 
     def gaussian_layer_factory(
@@ -684,11 +684,7 @@ def _build_non_monotonic_sym_circuits(
             scope,
             num_input_units,
             num_output_units,
-            weight_factory=lambda shape: Parameter.from_leaf(
-                TensorParameter(
-                    *shape, initializer=UniformInitializer(0.0, 1.0), dtype=weight_dtype
-                )
-            ),
+            weight_factory=weight_factory_clamp if non_mono_clamp else weight_factory,
         )
 
     def build_sym_circuit(rg: RegionGraph) -> Circuit:
@@ -705,12 +701,8 @@ def _build_non_monotonic_sym_circuits(
                 num_sum_units=num_sum_units,
                 input_factory=input_factory,
                 sum_product="cp-t",
-                dense_weight_factory=lambda shape: Parameter.from_leaf(
-                    TensorParameter(
-                        *shape,
-                        initializer=UniformInitializer(0.0, 1.0),
-                        dtype=DataType.COMPLEX if complex else DataType.REAL,
-                    )
+                dense_weight_factory=(
+                    weight_factory_clamp if non_mono_clamp else weight_factory
                 ),
             )
         return Circuit.from_region_graph(
