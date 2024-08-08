@@ -44,14 +44,22 @@ def check_pdf(model, interval: Optional[Tuple[float, float]] = None):
 @pytest.mark.parametrize(
     "num_variables,num_components,num_units,region_graph,sd",
     list(
-        itertools.product([8, 13], [1, 4], [1, 3], ["rnd-bt", "rnd-lt"], [False, True])
+        itertools.product([9, 12], [1, 4], [1, 3], ["rnd-bt", "rnd-lt"], [False, True])
     ),
 )
 def test_discrete_monotonic_pc(
     num_variables, num_components, num_units, region_graph, sd
 ):
+    if region_graph == "qt":
+        if num_variables == 9:
+            image_shape = (1, 3, 3)
+        else:  # num_variables == 12
+            image_shape = (1, 4, 3)
+    else:
+        image_shape = None
     model = MPC(
         num_variables,
+        image_shape=image_shape,
         num_input_units=num_units,
         num_sum_units=num_units,
         input_layer="categorical",
@@ -68,10 +76,10 @@ def test_discrete_monotonic_pc(
     "num_variables,num_squares,num_units,region_graph,sd,input_layer",
     list(
         itertools.product(
-            [8, 13],
+            [9, 12],
             [1, 4],
             [1, 3],
-            ["rnd-bt", "rnd-lt"],
+            ["rnd-bt", "qt"],
             [False, True],
             ["categorical", "embedding"],
         )
@@ -83,8 +91,16 @@ def test_discrete_sos_pc(
     input_layer_kwargs = (
         {"num_categories": 2} if input_layer == "categorical" else {"num_states": 2}
     )
+    if region_graph == "qt":
+        if num_variables == 9:
+            image_shape = (1, 3, 3)
+        else:  # num_variables == 12
+            image_shape = (1, 4, 3)
+    else:
+        image_shape = None
     model = SOS(
         num_variables,
+        image_shape=image_shape,
         num_input_units=num_units,
         num_sum_units=num_units,
         input_layer=input_layer,
@@ -101,10 +117,10 @@ def test_discrete_sos_pc(
     "num_variables,num_squares,num_units,region_graph,sd,input_layer",
     list(
         itertools.product(
-            [8, 13],
+            [9, 12],
             [1, 4],
             [1, 3],
-            ["rnd-bt", "rnd-lt"],
+            ["rnd-bt", "qt"],
             [False, True],
             ["categorical", "embedding"],
         )
@@ -116,8 +132,16 @@ def test_discrete_complex_sos_pc(
     input_layer_kwargs = (
         {"num_categories": 2} if input_layer == "categorical" else {"num_states": 2}
     )
+    if region_graph == "qt":
+        if num_variables == 9:
+            image_shape = (1, 3, 3)
+        else:  # num_variables == 12
+            image_shape = (1, 4, 3)
+    else:
+        image_shape = None
     model = SOS(
         num_variables,
+        image_shape=image_shape,
         num_input_units=num_units,
         num_sum_units=num_units,
         input_layer=input_layer,

@@ -29,7 +29,7 @@ from cirkit.symbolic.parameters import (
 )
 from cirkit.templates.region_graph import (
     LinearRegionGraph,
-    QuadTree,
+    QuadGraph,
     RandomBinaryTree,
     RegionGraph,
 )
@@ -500,7 +500,7 @@ def _build_lt_region_graph(
 
 def _build_qt_region_graph(image_shape: Tuple[int, int, int]) -> RegionGraph:
     num_channels, height, width = image_shape
-    return QuadTree((height, width), struct_decomp=True)
+    return QuadGraph((height, width), is_tree=True, num_patch_splits=4)
 
 
 def _build_monotonic_sym_circuits(
@@ -582,7 +582,7 @@ def _build_monotonic_sym_circuits(
                 num_input_units=num_input_units,
                 num_sum_units=num_sum_units,
                 input_factory=categorical_layer_factory,
-                sum_product="cp-t",
+                sum_product="cp",
                 dense_weight_factory=weight_factory,
             )
         return Circuit.from_region_graph(
@@ -679,7 +679,6 @@ def _build_non_monotonic_sym_circuits(
     def dense_layer_factory(
         scope: Scope, num_input_units: int, num_output_units: int
     ) -> DenseLayer:
-        weight_dtype = DataType.COMPLEX if complex else DataType.REAL
         return DenseLayer(
             scope,
             num_input_units,
@@ -700,7 +699,7 @@ def _build_non_monotonic_sym_circuits(
                 num_input_units=num_input_units,
                 num_sum_units=num_sum_units,
                 input_factory=input_factory,
-                sum_product="cp-t",
+                sum_product="cp",
                 dense_weight_factory=(
                     weight_factory_clamp if non_mono_clamp else weight_factory
                 ),
