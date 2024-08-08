@@ -3,15 +3,15 @@
 PYSCRIPT="scripts.plots.num_params_lines"
 TBOARD_PATH="${TBOARD_PATH:-tboard-runs/image-data-sos}"
 
-for dataset in MNIST
+for dataset in MNIST FashionMNIST
 do
   echo "Processing results relative to data set $dataset"
   if [ "$dataset" == "MNIST" ]
   then
-    OTHER_FLAGS="--ylabel --legend"
-  elif [ "$dataset" == "MNIST" ]
+    OTHER_FLAGS="--ylabel --ylabel-horizontal"
+  elif [ "$dataset" == "FashionMNIST" ]
   then
-    OTHER_FLAGS=""
+    OTHER_FLAGS="--ylabel --ylabel-horizontal --legend --move-legend-outside"
   else
     OTHER_FLAGS=""
   fi
