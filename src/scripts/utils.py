@@ -424,7 +424,7 @@ def setup_model(
     model_name: str,
     dataset_metadata: dict,
     logger: Logger,
-    region_graph: str = "rnd",
+    region_graph: str = "rnd-bt",
     structured_decomposable: bool = False,
     num_components: int = 1,
     num_units: int = 2,

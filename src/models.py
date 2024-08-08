@@ -582,7 +582,7 @@ def _build_monotonic_sym_circuits(
                 num_input_units=num_input_units,
                 num_sum_units=num_sum_units,
                 input_factory=categorical_layer_factory,
-                sum_product="cp",
+                sum_product="cp-t",
                 dense_weight_factory=weight_factory,
             )
         return Circuit.from_region_graph(
@@ -699,7 +699,7 @@ def _build_non_monotonic_sym_circuits(
                 num_input_units=num_input_units,
                 num_sum_units=num_sum_units,
                 input_factory=input_factory,
-                sum_product="cp",
+                sum_product="cp-t",
                 dense_weight_factory=(
                     weight_factory_clamp if non_mono_clamp else weight_factory
                 ),
