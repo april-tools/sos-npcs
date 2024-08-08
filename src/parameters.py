@@ -45,6 +45,7 @@ class TorchDoubleClampParameter(TorchEntrywiseParameterOp):
     def config(self) -> Dict[str, Any]:
         return {"eps": self.eps}
 
+    @torch.no_grad()
     @torch.compile()
     def forward(self, x: Tensor) -> Tensor:
         close_zero_mask = (x.real > -self.eps) & (x.real < self.eps)
