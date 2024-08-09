@@ -1,9 +1,10 @@
 import argparse
 import os
+from typing import Optional
 
 import pandas as pd
 import seaborn as sb
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, rcParams
 
 from graphics.utils import setup_tueplots
 from scripts.utils import retrieve_tboard_runs
@@ -34,24 +35,42 @@ parser.add_argument(
     help="Whether to show the y-axis label",
 )
 parser.add_argument(
+    "--ylabel-detailed",
+    action="store_true",
+    default=False,
+    help="Whether to show a more detailed y-axis label",
+)
+parser.add_argument(
+    "--ylabel-horizontal",
+    action="store_true",
+    default=False,
+    help="Whether to rotate the y-axis label horizontally",
+)
+parser.add_argument(
     "--legend", action="store_true", default=False, help="Whether to show the legend"
+)
+parser.add_argument(
+    "--move-legend-outside",
+    action="store_true",
+    default=False,
+    help="Whether to move the legend outside",
 )
 
 
-def format_metric(m: str, train: bool = False) -> str:
+def format_metric(m: str, train: Optional[bool] = None) -> str:
     if m == "avg_ll":
-        m = "Average LL"
+        m = "LL"
     elif m == "bpd":
-        m = "Bits per dimension"
+        m = "BPD"
     elif m == "ppl":
-        m = "Perplexity"
+        m = "PPL"
     else:
         assert False
-    # if train:
-    #     m = f"{m} [train]"
-    # else:
-    #     m = f"{m} [test]"
-    return m
+    if train is None:
+        return m
+    if train:
+        return f"{m} [train]"
+    return f"{m} [test]"
 
 
 def filter_dataframe(df: pd.DataFrame, filter_dict: dict) -> pd.DataFrame:
@@ -93,6 +112,7 @@ if __name__ == "__main__":
     df = retrieve_tboard_runs(os.path.join(args.tboard_path, args.dataset), metric)
     df = df[df["dataset"] == args.dataset]
     df = df[df["model"].isin(models)]
+    df = df[df["num_components"] > 1]
     df = df.sort_values("model", ascending=True)
     df["model_id"] = df.apply(
         lambda row: format_model(row.model, row.exp_alias), axis=1
@@ -113,21 +133,40 @@ if __name__ == "__main__":
         x="num_components",
         y=metric,
         hue="model_id",
-        width=0.75,
+        width=0.65,
         fliersize=2.5,
         ax=ax,
         legend=args.legend,
     )
     # sb.move_legend(ax, handlelength=1.0, handletextpad=0.5, loc="best")
     if args.legend:
-        handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles=handles, labels=labels)
+        if args.move_legend_outside:
+            sb.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), title="")
+        else:
+            handles, labels = ax.get_legend_handles_labels()
+            ax.legend(handles, labels)
     if args.xlabel:
         ax.set_xlabel(r"Num. of components")
     else:
         ax.set_xlabel("")
     if args.ylabel:
-        ax.set_ylabel(format_metric(args.metric, train=args.train))
+        formatted_metric = format_metric(
+            args.metric, train=args.train if args.ylabel_detailed else None
+        )
+        if args.ylabel_horizontal:
+            ax.annotate(
+                formatted_metric,
+                fontsize=9,
+                xy=(0, 1.08),
+                xytext=(-0.5 * rcParams["xtick.major.pad"], 1),
+                ha="right",
+                va="top",
+                xycoords="axes fraction",
+                textcoords="offset points",
+            )
+            ax.set_ylabel("")
+        else:
+            ax.set_ylabel(formatted_metric)
     else:
         ax.set_ylabel("")
     ax.tick_params(axis="both", which="major", labelsize=10)

@@ -1,9 +1,10 @@
 import argparse
 import os
+from typing import Optional
 
 import pandas as pd
 import seaborn as sb
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, rcParams
 
 from graphics.utils import setup_tueplots
 from scripts.utils import retrieve_tboard_runs
@@ -27,22 +28,34 @@ parser.add_argument(
     default=False,
     help="Whether to show the y-axis label",
 )
+parser.add_argument(
+    "--ylabel-detailed",
+    action="store_true",
+    default=False,
+    help="Whether to show a more detailed y-axis label",
+)
+parser.add_argument(
+    "--ylabel-horizontal",
+    action="store_true",
+    default=False,
+    help="Whether to rotate the y-axis label horizontally",
+)
 
 
-def format_metric(m: str, train: bool = False) -> str:
+def format_metric(m: str, train: Optional[bool] = None) -> str:
     if m == "avg_ll":
-        m = "Average LL"
+        m = "LL"
     elif m == "bpd":
-        m = "Bits per dimension"
+        m = "BPD"
     elif m == "ppl":
-        m = "Perplexity"
+        m = "PPL"
     else:
         assert False
+    if train is None:
+        return m
     if train:
-        m = f"{m} [train]"
-    else:
-        m = f"{m} [test]"
-    return m
+        return f"{m} [train]"
+    return f"{m} [test]"
 
 
 def filter_dataframe(df: pd.DataFrame, filter_dict: dict) -> pd.DataFrame:
@@ -84,6 +97,7 @@ if __name__ == "__main__":
     df = retrieve_tboard_runs(os.path.join(args.tboard_path, args.dataset), metric)
     df = df[df["dataset"] == args.dataset]
     df = df[df["model"].isin(models)]
+    df = df[df["num_components"] == 1]
     df = df.sort_values("model", ascending=True)
     df["model_id"] = df.apply(
         lambda row: format_model(row.model, row.exp_alias), axis=1
@@ -91,14 +105,30 @@ if __name__ == "__main__":
     num_rows = 1
     num_cols = 1
 
-    setup_tueplots(num_rows, num_cols, rel_width=0.4, hw_ratio=0.8)
+    setup_tueplots(num_rows, num_cols, rel_width=0.35, hw_ratio=0.9)
     fig, ax = plt.subplots(num_rows, num_cols, squeeze=True, sharey=True)
     g = sb.boxplot(
-        df, x="model_id", y=metric, hue="model_id", width=0.7, fliersize=3.0, ax=ax
+        df, x="model_id", y=metric, hue="model_id", width=0.65, fliersize=3.0, ax=ax
     )
     ax.set_xlabel("")
     if args.ylabel:
-        ax.set_ylabel(format_metric(args.metric, train=args.train))
+        formatted_metric = format_metric(
+            args.metric, train=args.train if args.ylabel_detailed else None
+        )
+        if args.ylabel_horizontal:
+            ax.annotate(
+                formatted_metric,
+                fontsize=9,
+                xy=(0, 1.08),
+                xytext=(-0.5 * rcParams["xtick.major.pad"], 1),
+                ha="right",
+                va="top",
+                xycoords="axes fraction",
+                textcoords="offset points",
+            )
+            ax.set_ylabel("")
+        else:
+            ax.set_ylabel(formatted_metric)
     else:
         ax.set_ylabel("")
     ax.set_title(format_dataset(args.dataset))

@@ -6,18 +6,12 @@ TBOARD_PATH="${TBOARD_PATH:-tboard-runs/sos-npcs}"
 for dataset in hepmass miniboone
 do
   echo "Processing results relative to data set $dataset"
-  if [ "$dataset" == "power" ]
+  if [ "$dataset" == "hepmass" ]
   then
-    OTHER_FLAGS="--ylabel"
-  elif [ "$dataset" == "gas" ]
-  then
-    OTHER_FLAGS=""
-  elif [ "$dataset" == "hepmass" ]
-  then
-    OTHER_FLAGS=""
+    OTHER_FLAGS="--ylabel --ylabel-horizontal"
   elif [ "$dataset" == "miniboone" ]
   then
-    OTHER_FLAGS="--legend"
+    OTHER_FLAGS="--ylabel --ylabel-horizontal --legend --move-legend-outside"
   else
     OTHER_FLAGS=""
   fi

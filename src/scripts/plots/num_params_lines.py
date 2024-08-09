@@ -72,7 +72,7 @@ def format_metric(m: str, train: Optional[bool] = None) -> str:
         return m
     if train:
         return f"{m} [train]"
-    m = f"{m} [test]"
+    return f"{m} [test]"
 
 
 def filter_dataframe(df: pd.DataFrame, filter_dict: dict) -> pd.DataFrame:
@@ -226,7 +226,7 @@ if __name__ == "__main__":
             sb.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), title="")
         else:
             handles, labels = ax.get_legend_handles_labels()
-            ax.legend(handles[1:], labels[1:])
+            ax.legend(handles, labels)
     ax.grid(linestyle="--", which="major", alpha=0.3, linewidth=0.5)
     ax.grid(linestyle="--", which="minor", alpha=0.3, linewidth=0.3)
     ax.yaxis.set_minor_locator(tck.AutoMinorLocator())
