@@ -430,17 +430,20 @@ class ExpSOS(PC):
         (sym_mono_circuit,) = sym_mono_circuits
 
         with self._pipeline:
-            # Square the symbolic circuit
+            # Square the symbolic circuit and make the product with the monotonic circuit
             if complex:
                 # Apply the conjugate operator if the circuit is complex
-                sym_sq_circuit = SF.multiply(SF.conjugate(sym_circuit), sym_circuit)
+                sym_prod_circuit = SF.multiply(
+                    SF.multiply(sym_mono_circuit, SF.conjugate(sym_circuit)),
+                    sym_circuit
+                )
             else:
-                sym_sq_circuit = SF.multiply(sym_circuit, sym_circuit)
+                sym_prod_circuit = SF.multiply(
+                    SF.multiply(sym_mono_circuit, sym_circuit),
+                    sym_circuit
+                )
 
-            # Make the product with the monotonic circuit
-            sym_prod_circuit = SF.multiply(sym_mono_circuit, sym_sq_circuit)
-
-            # Integrate the overall circuit
+            # Integrate the overall product circuit
             sym_int_circuit = SF.integrate(sym_prod_circuit)
 
             # Compile the symbolic circuits

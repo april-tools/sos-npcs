@@ -1,12 +1,13 @@
 from typing import Iterable, Optional
 
 from cirkit.symbolic.circuit import CircuitBlock
+from cirkit.symbolic.layers import CategoricalLayer
 from cirkit.symbolic.parameters import (
     ConjugateParameter,
     OuterProductParameter,
     Parameter,
     ReduceProductParameter,
-    ReduceSumParameter,
+    ReduceSumParameter, ExpParameter,
 )
 from cirkit.utils.scope import Scope
 from layers import ConstantLayer, EmbeddingLayer
@@ -44,6 +45,34 @@ def multiply_embedding_layers(sl1: EmbeddingLayer, sl2: EmbeddingLayer) -> Circu
         sl1.num_output_units * sl2.num_output_units,
         num_channels=sl1.num_channels,
         num_states=sl1.num_states,
+        weight=sl_weight,
+    )
+    return CircuitBlock.from_layer(sl)
+
+
+def multiply_categorical_embedding_layers(sl1: CategoricalLayer, sl2: EmbeddingLayer) -> CircuitBlock:
+    assert sl1.num_variables == sl2.num_variables
+    assert sl1.num_channels == sl2.num_channels
+    assert sl1.num_categories == sl2.num_states
+
+    if sl1.logits is None:
+        sl_scores = sl1.probs.ref()
+    else:
+        sl_scores = Parameter.from_unary(
+            ExpParameter(sl1.logits.shape),
+            sl1.logits.ref()
+        )
+
+    sl_weight = Parameter.from_binary(
+        OuterProductParameter(sl_scores.shape, sl2.weight.shape, axis=1),
+        sl_scores,
+        sl2.weight.ref(),
+    )
+    sl = EmbeddingLayer(
+        sl1.scope | sl2.scope,
+        sl1.num_output_units * sl2.num_output_units,
+        num_channels=sl1.num_channels,
+        num_states=sl1.num_categories,
         weight=sl_weight,
     )
     return CircuitBlock.from_layer(sl)
