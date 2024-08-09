@@ -416,12 +416,13 @@ class ExpSOS(PC):
             non_mono_clamp=non_mono_clamp,
             complex=complex,
         )
+        mono_input_layer = input_layer if input_layer != 'embedding' else 'categorical'
         sym_mono_circuits = _build_monotonic_sym_circuits(
             rgs,
             num_channels,
             mono_num_input_units,
             mono_num_sum_units,
-            input_layer=input_layer,
+            input_layer=mono_input_layer,
             input_layer_kwargs=input_layer_kwargs,
             mono_clamp=mono_clamp,
         )
