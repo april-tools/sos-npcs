@@ -157,7 +157,7 @@ if __name__ == "__main__":
             ax.annotate(
                 formatted_metric,
                 fontsize=9,
-                xy=(0, 1.08),
+                xy=(0, 1.1),
                 xytext=(-0.5 * rcParams["xtick.major.pad"], 1),
                 ha="right",
                 va="top",
@@ -170,6 +170,8 @@ if __name__ == "__main__":
     else:
         ax.set_ylabel("")
     ax.tick_params(axis="both", which="major", labelsize=10)
+    ax.grid(linestyle="--", which="major", alpha=0.3, linewidth=0.5)
+    #ax.grid(linestyle="--", which="minor", alpha=0.3, linewidth=0.3)
     ax.set_title(format_dataset(args.dataset))
 
     path = os.path.join("figures", "sum-of-squares")

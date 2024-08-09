@@ -3,13 +3,19 @@
 PYSCRIPT="scripts.plots.sum_of_squares"
 TBOARD_PATH="${TBOARD_PATH:-tboard-runs/sos-npcs}"
 
-for dataset in hepmass miniboone
+for dataset in power gas
 do
   echo "Processing results relative to data set $dataset"
   if [ "$dataset" == "hepmass" ]
   then
     OTHER_FLAGS="--ylabel --ylabel-horizontal"
   elif [ "$dataset" == "miniboone" ]
+  then
+    OTHER_FLAGS="--ylabel --ylabel-horizontal --legend --move-legend-outside"
+  elif [ "$dataset" == "power" ]
+  then
+    OTHER_FLAGS="--ylabel --ylabel-horizontal"
+    elif [ "$dataset" == "gas" ]
   then
     OTHER_FLAGS="--ylabel --ylabel-horizontal --legend --move-legend-outside"
   else

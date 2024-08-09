@@ -6,7 +6,7 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 import seaborn as sb
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, rcParams
 
 from graphics.utils import setup_tueplots
 
@@ -24,6 +24,12 @@ parser.add_argument(
     action="store_true",
     default=False,
     help="Whether to show the y-axis label",
+)
+parser.add_argument(
+    "--ylabel-horizontal",
+    action="store_true",
+    default=False,
+    help="Whether to rotate the y-axis label horizontally",
 )
 parser.add_argument(
     "--max-epochs", type=int, default=1000, help="The maximum number of epochs to show"
@@ -89,7 +95,9 @@ if __name__ == "__main__":
     raw_curves_data = {}
     training_num_epochs = defaultdict(list)
     for model, exp_alias, curve_file in curves_info:
-        if f"LR{args.learning_rate}" not in curve_file:
+        if f"_LR{args.learning_rate}_" not in curve_file:
+            continue
+        if f"_R1_" not in curve_file:
             continue
         trial_id = "-".join(curve_file.split("scalars-")[1].split(".")[:2])
         if model not in raw_curves_data:
@@ -121,7 +129,7 @@ if __name__ == "__main__":
 
     num_rows = 1
     num_cols = 1
-    setup_tueplots(num_rows, num_cols, rel_width=0.4, hw_ratio=0.8)
+    setup_tueplots(num_rows, num_cols, rel_width=0.45, hw_ratio=0.7)
     fig, ax = plt.subplots(num_rows, num_cols, squeeze=True, sharey=True)
     for x, y, c, hue in zip(xs_data, ys_data, cs_data, hues_data):
         x = x[: args.max_epochs]
@@ -130,7 +138,24 @@ if __name__ == "__main__":
             x=x, y=y, ax=ax, linewidth=0.8, legend=False, label=hue, color=c, alpha=0.5
         )
     if args.ylabel:
-        ax.set_ylabel("NLL")
+        if args.ylabel_horizontal:
+            ax.annotate(
+                "NLL",
+                fontsize=9,
+                xy=(0, 1.1),
+                xytext=(-0.5 * rcParams["xtick.major.pad"], 1),
+                ha="right",
+                va="top",
+                xycoords="axes fraction",
+                textcoords="offset points",
+            )
+        else:
+            ax.set_ylabel("NLL")
+    else:
+        ax.set_ylabel("")
+    ax.yaxis.set_major_formatter(lambda y, pos: (f"{y:.0f}" if np.abs(y) >= 1.0 else (f"{y:.1f}"[1:] if y >= 0.0 else "-" + f"{y:.1f}"[2:])))
+    ax.grid(linestyle="--", which="major", alpha=0.3, linewidth=0.5)
+    ax.grid(linestyle="--", which="minor", alpha=0.3, linewidth=0.3)
     if args.title:
         ax.set_title(format_dataset(args.dataset))
     if args.legend:

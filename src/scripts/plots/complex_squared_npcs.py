@@ -105,7 +105,7 @@ if __name__ == "__main__":
     num_rows = 1
     num_cols = 1
 
-    setup_tueplots(num_rows, num_cols, rel_width=0.35, hw_ratio=0.9)
+    setup_tueplots(num_rows, num_cols, rel_width=0.375, hw_ratio=0.84)
     fig, ax = plt.subplots(num_rows, num_cols, squeeze=True, sharey=True)
     g = sb.boxplot(
         df, x="model_id", y=metric, hue="model_id", width=0.65, fliersize=3.0, ax=ax
@@ -119,7 +119,7 @@ if __name__ == "__main__":
             ax.annotate(
                 formatted_metric,
                 fontsize=9,
-                xy=(0, 1.08),
+                xy=(0, 1.1),
                 xytext=(-0.5 * rcParams["xtick.major.pad"], 1),
                 ha="right",
                 va="top",
@@ -131,6 +131,8 @@ if __name__ == "__main__":
             ax.set_ylabel(formatted_metric)
     else:
         ax.set_ylabel("")
+    ax.grid(linestyle="--", which="major", alpha=0.3, linewidth=0.5)
+    #ax.grid(linestyle="--", which="minor", alpha=0.3, linewidth=0.3)
     ax.set_title(format_dataset(args.dataset))
 
     path = os.path.join("figures", "complex-squared-npcs")

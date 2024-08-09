@@ -208,7 +208,7 @@ if __name__ == "__main__":
             ax.annotate(
                 formatted_metric,
                 fontsize=9,
-                xy=(0, 1.08),
+                xy=(0, 1.1),
                 xytext=(-0.5 * rcParams["xtick.major.pad"], 1),
                 ha="right",
                 va="top",
