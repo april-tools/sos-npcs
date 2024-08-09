@@ -397,7 +397,8 @@ class ExpSOS(PC):
         rgs = _build_region_graphs(
             region_graph,
             1,
-            self.num_variables,
+            num_variables=self.num_variables,
+            image_shape=self.image_shape,
             structured_decomposable=structured_decomposable,
             seed=seed,
         )
