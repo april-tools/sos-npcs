@@ -30,7 +30,7 @@
             "complex": false
           },
           "complex": {
-            "num-components,num-units,num-input-units": [[1, 128, 256], [4, 88, 64], [8, 70, 32], [16, 53, 16]],
+            "num-components,num-units,num-input-units": [[1, 152, 256], [4, 102, 64], [8, 80, 32], [16, 60, 16]],
             "complex": true
           }
         }
@@ -45,7 +45,7 @@
             "complex": false
           },
           "complex": {
-            "num-components,num-units,num-input-units": [[1, 128, 256], [4, 88, 64], [8, 68, 32], [16, 52, 16]],
+            "num-components,num-units,num-input-units": [[1, 152, 256], [4, 100, 64], [8, 78, 32], [16, 59, 16]],
             "complex": true
           }
         }
@@ -60,7 +60,7 @@
             "complex": false
           },
           "complex": {
-            "num-components,num-units,num-input-units": [[1, 64, 128], [4, 42, 32], [8, 32, 16], [16, 24, 8]],
+            "num-components,num-units,num-input-units": [[1, 78, 128], [4, 50, 32], [8, 38, 16], [16, 28, 8]],
             "complex": true
           }
         }
@@ -75,7 +75,7 @@
             "complex": false
           },
           "complex": {
-            "num-components,num-units,num-input-units": [[1, 64, 64], [4, 38, 16], [8, 28, 8], [16, 21, 4]],
+            "num-components,num-units,num-input-units": [[1, 84, 64], [4, 48, 16], [8, 36, 8], [16, 26, 4]],
             "complex": true
           }
         }
