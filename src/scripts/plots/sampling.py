@@ -17,6 +17,7 @@ parser.add_argument("dataset", type=str, help="Dataset name")
 parser.add_argument("model", type=str, help="Model name")
 parser.add_argument("checkpoint_id", type=str, help="Checkpoint string id")
 parser.add_argument("trial_id", type=str, help="Trial string id")
+parser.add_argument("--exp-alias", type=str, default="", help="The experiment run alias")
 parser.add_argument(
     "--num-units", type=int, default=16, help="The number of units per layer"
 )
@@ -56,7 +57,11 @@ if __name__ == "__main__":
 
     device = torch.device(args.device)
     model = model.to(device)
-    checkpoint = torch.load("", map_location=device)
+    checkpoint_filepath = os.path.join(
+        args.checkpoint_path, args.dataset, args.model, args.exp_alias,
+        args.checkpoint_id, f"checkpoint-{args.trial_id}.pt"
+    )
+    checkpoint = torch.load(checkpoint_filepath, map_location=device)
     model.load_state_dict(checkpoint["weights"])
 
     grid_height, grid_width = 3, 3
