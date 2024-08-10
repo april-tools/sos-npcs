@@ -37,7 +37,7 @@ if __name__ == "__main__":
     set_global_seed(seed)
     logger = Logger("evaluate-ll", verbose=True)
     metadata, (_, _, test_dataloader) = setup_data_loaders(
-        "miniboone", "datasets", logger
+        args.dataset, "datasets", logger
     )
     (num_channels, image_height, image_width) = metadata["image_shape"]
     if num_channels != 1:
