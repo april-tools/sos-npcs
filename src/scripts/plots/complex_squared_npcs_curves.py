@@ -6,7 +6,8 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 import seaborn as sb
-from matplotlib import pyplot as plt, rcParams
+from matplotlib import pyplot as plt
+from matplotlib import rcParams
 
 from graphics.utils import setup_tueplots
 
@@ -153,7 +154,13 @@ if __name__ == "__main__":
             ax.set_ylabel("NLL")
     else:
         ax.set_ylabel("")
-    ax.yaxis.set_major_formatter(lambda y, pos: (f"{y:.0f}" if np.abs(y) >= 1.0 else (f"{y:.1f}"[1:] if y >= 0.0 else "-" + f"{y:.1f}"[2:])))
+    ax.yaxis.set_major_formatter(
+        lambda y, pos: (
+            f"{y:.0f}"
+            if np.abs(y) >= 1.0
+            else (f"{y:.1f}"[1:] if y >= 0.0 else "-" + f"{y:.1f}"[2:])
+        )
+    )
     ax.grid(linestyle="--", which="major", alpha=0.3, linewidth=0.5)
     ax.grid(linestyle="--", which="minor", alpha=0.3, linewidth=0.3)
     if args.title:

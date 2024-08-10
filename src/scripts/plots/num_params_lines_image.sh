@@ -1,7 +1,8 @@
 #!/bin/bash
 
 PYSCRIPT="scripts.plots.num_params_lines"
-TBOARD_PATH="${TBOARD_PATH:-tboard-runs/image-data-sos}"
+TBOARD_PATH="${TBOARD_PATH:-tboard-runs/image-data-full}"
+MODELS="MPC;SOS;ExpSOS"
 
 for dataset in MNIST FashionMNIST
 do
@@ -15,6 +16,6 @@ do
   else
     OTHER_FLAGS=""
   fi
-  python -m "$PYSCRIPT" "$TBOARD_PATH" "$dataset" $OTHER_FLAGS --metric bpd --train
-  python -m "$PYSCRIPT" "$TBOARD_PATH" "$dataset" $OTHER_FLAGS --metric bpd
+  python -m "$PYSCRIPT" "$TBOARD_PATH" "$dataset" $OTHER_FLAGS --models "$MODELS" --metric bpd --train
+  python -m "$PYSCRIPT" "$TBOARD_PATH" "$dataset" $OTHER_FLAGS --models "$MODELS" --metric bpd
 done
