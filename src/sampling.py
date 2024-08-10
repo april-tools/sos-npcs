@@ -34,10 +34,15 @@ def inverse_transform_sample(
         working_samples[:, :, 0, i] = torch.arange(vdomain, device=device).unsqueeze(
             dim=0
         )
-        log_scores = model.log_integrated_score(
-            working_samples.view(-1, num_channels, num_variables),
-            variables=tuple(j for j in range(num_variables) if j > i),
-        )  # (num_samples * vdomain, 1)
+        if i < num_variables - 1:
+            log_scores = model.log_integrated_score(
+                working_samples.view(-1, num_channels, num_variables),
+                variables=tuple(j for j in range(num_variables) if j > i),
+            )  # (num_samples * vdomain, 1)
+        else:
+            log_scores = model.log_score(
+                working_samples.view(-1, num_channels, num_variables),
+            )
         log_scores = log_scores.squeeze(dim=-1).view(
             num_samples, vdomain
         )  # (num_samples, vdomain)
