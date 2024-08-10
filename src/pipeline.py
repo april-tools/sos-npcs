@@ -9,7 +9,8 @@ from layers import compile_constant_layer, compile_embedding_layer
 from operators import (
     conjugate_embedding_layer,
     integrate_embedding_layer,
-    multiply_embedding_layers, multiply_categorical_embedding_layers,
+    multiply_categorical_embedding_layers,
+    multiply_embedding_layers,
 )
 from optimizations import OuterProductReduceSumPattern, apply_prod_sum_einsum
 from parameters import compile_double_clamp_parameter
@@ -27,7 +28,9 @@ def setup_pipeline_context(
     )
     ctx.add_operator_rule(LayerOperation.INTEGRATION, integrate_embedding_layer)
     ctx.add_operator_rule(LayerOperation.MULTIPLICATION, multiply_embedding_layers)
-    ctx.add_operator_rule(LayerOperation.MULTIPLICATION, multiply_categorical_embedding_layers)
+    ctx.add_operator_rule(
+        LayerOperation.MULTIPLICATION, multiply_categorical_embedding_layers
+    )
     ctx.add_operator_rule(LayerOperation.CONJUGATION, conjugate_embedding_layer)
     ctx.add_parameter_compilation_rule(compile_double_clamp_parameter)
     ctx.add_initializer_compilation_rule(compile_exp_uniform_initializer)

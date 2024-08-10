@@ -42,15 +42,25 @@ from pipeline import setup_pipeline_context
 
 class PC(nn.Module, ABC):
     def __init__(
-        self, num_variables: int, image_shape: Optional[Tuple[int, int, int]] = None
+        self,
+        num_variables: int,
+        image_shape: Optional[Tuple[int, int, int]] = None,
+        num_components: int = 1,
+        **kwargs,
     ) -> None:
         assert num_variables > 1
         if image_shape is not None:
             assert np.prod(image_shape) == num_variables
         super().__init__()
         self.num_variables = num_variables
+        self.num_channels = 1 if image_shape is None else image_shape[0]
         self.image_shape = image_shape
+        self._pipeline = setup_pipeline_context(**kwargs)
         self.__cache_log_z: Optional[Tensor] = None
+        self.__cache_integrals: Dict[Tuple[int, ...], TorchCircuit] = {}
+        self.register_buffer(
+            "_mixing_log_weight", -torch.log(torch.tensor(num_components))
+        )
 
     def train(self, mode: bool = True):
         if mode:
@@ -92,6 +102,9 @@ class PC(nn.Module, ABC):
         return num_params
 
     @abstractmethod
+    def get_unnormalized_circuit(self) -> TorchCircuit: ...
+
+    @abstractmethod
     def layers(self) -> Iterator[TorchLayer]: ...
 
     @abstractmethod
@@ -105,6 +118,20 @@ class PC(nn.Module, ABC):
 
     @abstractmethod
     def log_score(self, x: Tensor) -> Tensor: ...
+
+    def log_integrated_score(self, x: Tensor, variables: Tuple[int, ...]) -> Tensor:
+        assert all(0 <= v < self.num_variables for v in variables)
+        if variables in self.__cache_integrals:
+            circuit = self.__cache_integrals[variables]
+            return torch.logsumexp(self._mixing_log_weight + circuit(x).real, dim=1)
+        unnormalized_circuit = self.get_unnormalized_circuit()
+        integral_circuit = self._pipeline.integrate(
+            unnormalized_circuit, scope=Scope(variables)
+        )
+        self.__cache_integrals[variables] = integral_circuit
+        return torch.logsumexp(
+            self._mixing_log_weight + integral_circuit(x).real, dim=1
+        )
 
 
 class MPC(PC):
@@ -124,8 +151,12 @@ class MPC(PC):
         seed: int = 42,
     ) -> None:
         assert num_components > 0
-        super().__init__(num_variables, image_shape)
-        self._pipeline = setup_pipeline_context(semiring="lse-sum")
+        super().__init__(
+            num_variables,
+            image_shape,
+            num_components=num_components,
+            semiring="lse-sum",
+        )
         self._circuit, self._int_circuit = self._build_circuits(
             num_input_units,
             num_sum_units,
@@ -137,9 +168,9 @@ class MPC(PC):
             mono_clamp=mono_clamp,
             seed=seed,
         )
-        self.register_buffer(
-            "_mixing_log_weight", -torch.log(torch.tensor(num_components))
-        )
+
+    def get_unnormalized_circuit(self) -> TorchCircuit:
+        return self._circuit
 
     def layers(self) -> Iterator[TorchLayer]:
         return iter(self._circuit.layers)
@@ -181,10 +212,9 @@ class MPC(PC):
         )
 
         # Build one symbolic circuit for each region graph
-        num_channels = 1 if self.image_shape is None else self.image_shape[0]
         sym_circuits = _build_monotonic_sym_circuits(
             rgs,
-            num_channels,
+            self.num_channels,
             num_input_units,
             num_sum_units,
             input_layer=input_layer,
@@ -224,9 +254,13 @@ class SOS(PC):
         seed: int = 42,
     ) -> None:
         assert num_squares > 0
-        super().__init__(num_variables, image_shape)
-        self._pipeline = setup_pipeline_context(semiring="complex-lse-sum")
-        self._circuit, self._int_sq_circuit = self._build_circuits(
+        super().__init__(
+            num_variables,
+            image_shape,
+            num_components=num_squares,
+            semiring="complex-lse-sum",
+        )
+        self._circuit, self._int_sq_circuit, self._prod_circuit = self._build_circuits(
             num_input_units,
             num_sum_units,
             input_layer=input_layer,
@@ -238,9 +272,9 @@ class SOS(PC):
             complex=complex,
             seed=seed,
         )
-        self.register_buffer(
-            "_mixing_log_weight", -torch.log(torch.tensor(num_squares))
-        )
+
+    def get_unnormalized_circuit(self) -> TorchCircuit:
+        return self._prod_circuit
 
     def layers(self) -> Iterator[TorchLayer]:
         return iter(self._circuit.layers)
@@ -272,7 +306,7 @@ class SOS(PC):
         non_mono_clamp: bool = False,
         complex: bool = False,
         seed: int = 42,
-    ) -> Tuple[TorchCircuit, TorchConstantCircuit]:
+    ) -> Tuple[TorchCircuit, TorchConstantCircuit, TorchCircuit]:
         # Build the region graphs
         rgs = _build_region_graphs(
             region_graph,
@@ -284,10 +318,9 @@ class SOS(PC):
         )
 
         # Build one symbolic circuit for each region graph
-        num_channels = 1 if self.image_shape is None else self.image_shape[0]
         sym_circuits = _build_non_monotonic_sym_circuits(
             rgs,
-            num_channels,
+            self.num_channels,
             num_input_units,
             num_sum_units,
             input_layer=input_layer,
@@ -312,9 +345,10 @@ class SOS(PC):
 
             # Compile the symbolic circuits
             circuit = cast(TorchCircuit, compile(sym_circuit))
+            prod_circuit = cast(TorchCircuit, compile(sym_sq_circuit))
             int_sq_circuit = cast(TorchConstantCircuit, compile(sym_int_sq_circuit))
 
-        return circuit, int_sq_circuit
+        return circuit, int_sq_circuit, prod_circuit
 
 
 class ExpSOS(PC):
@@ -336,23 +370,29 @@ class ExpSOS(PC):
         complex: bool = False,
         seed: int = 42,
     ) -> None:
-        super().__init__(num_variables, image_shape)
-        self._pipeline = setup_pipeline_context(semiring="complex-lse-sum")
-        # Introduce optimization rules
-        self._circuit, self._mono_circuit, self._int_circuit = self._build_circuits(
-            num_input_units,
-            num_sum_units,
-            mono_num_input_units,
-            mono_num_sum_units,
-            input_layer=input_layer,
-            input_layer_kwargs=input_layer_kwargs,
-            region_graph=region_graph,
-            structured_decomposable=structured_decomposable,
-            mono_clamp=mono_clamp,
-            non_mono_clamp=non_mono_clamp,
-            complex=complex,
-            seed=seed,
+        super().__init__(
+            num_variables, image_shape, num_components=1, semiring="complex-lse-sum"
         )
+        # Introduce optimization rules
+        self._circuit, self._mono_circuit, self._int_circuit, self._prod_circuit = (
+            self._build_circuits(
+                num_input_units,
+                num_sum_units,
+                mono_num_input_units,
+                mono_num_sum_units,
+                input_layer=input_layer,
+                input_layer_kwargs=input_layer_kwargs,
+                region_graph=region_graph,
+                structured_decomposable=structured_decomposable,
+                mono_clamp=mono_clamp,
+                non_mono_clamp=non_mono_clamp,
+                complex=complex,
+                seed=seed,
+            )
+        )
+
+    def get_unnormalized_circuit(self) -> TorchCircuit:
+        return self._prod_circuit
 
     def layers(self) -> Iterator[TorchLayer]:
         return itertools.chain(self._circuit.layers, self._mono_circuit.layers)
@@ -392,7 +432,7 @@ class ExpSOS(PC):
         non_mono_clamp: bool = False,
         complex: bool = False,
         seed: int = 42,
-    ) -> Tuple[TorchCircuit, TorchCircuit, TorchConstantCircuit]:
+    ) -> Tuple[TorchCircuit, TorchCircuit, TorchConstantCircuit, TorchCircuit]:
         # Build the region graphs
         rgs = _build_region_graphs(
             region_graph,
@@ -405,10 +445,9 @@ class ExpSOS(PC):
         assert len(rgs) == 1
 
         # Build one symbolic circuit for each region graph
-        num_channels = 1 if self.image_shape is None else self.image_shape[0]
         sym_circuits = _build_non_monotonic_sym_circuits(
             rgs,
-            num_channels,
+            self.num_channels,
             num_input_units,
             num_sum_units,
             input_layer=input_layer,
@@ -416,17 +455,19 @@ class ExpSOS(PC):
             non_mono_clamp=non_mono_clamp,
             complex=complex,
         )
-        if input_layer == 'embedding':
-            mono_input_layer = 'categorical'
-            assert 'num_states' in input_layer_kwargs
-            mono_input_layer_kwargs = {'num_categories': input_layer_kwargs['num_states']}
+        if input_layer == "embedding":
+            mono_input_layer = "categorical"
+            assert "num_states" in input_layer_kwargs
+            mono_input_layer_kwargs = {
+                "num_categories": input_layer_kwargs["num_states"]
+            }
         else:
             mono_input_layer = input_layer
             mono_input_layer_kwargs = input_layer_kwargs
 
         sym_mono_circuits = _build_monotonic_sym_circuits(
             rgs,
-            num_channels,
+            self.num_channels,
             mono_num_input_units,
             mono_num_sum_units,
             input_layer=mono_input_layer,
@@ -444,12 +485,11 @@ class ExpSOS(PC):
                 # Apply the conjugate operator if the circuit is complex
                 sym_prod_circuit = SF.multiply(
                     SF.multiply(sym_mono_circuit, SF.conjugate(sym_circuit)),
-                    sym_circuit
+                    sym_circuit,
                 )
             else:
                 sym_prod_circuit = SF.multiply(
-                    SF.multiply(sym_mono_circuit, sym_circuit),
-                    sym_circuit
+                    SF.multiply(sym_mono_circuit, sym_circuit), sym_circuit
                 )
 
             # Integrate the overall product circuit
@@ -457,10 +497,11 @@ class ExpSOS(PC):
 
             # Compile the symbolic circuits
             circuit = cast(TorchCircuit, compile(sym_circuit))
+            prod_circuit = cast(TorchCircuit, compile(sym_prod_circuit))
             mono_circuit = cast(TorchCircuit, compile(sym_mono_circuit))
             int_circuit = cast(TorchConstantCircuit, compile(sym_int_circuit))
 
-        return circuit, mono_circuit, int_circuit
+        return circuit, mono_circuit, int_circuit, prod_circuit
 
 
 def _build_region_graphs(

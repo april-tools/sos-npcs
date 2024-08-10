@@ -4,10 +4,11 @@ from cirkit.symbolic.circuit import CircuitBlock
 from cirkit.symbolic.layers import CategoricalLayer
 from cirkit.symbolic.parameters import (
     ConjugateParameter,
+    ExpParameter,
     OuterProductParameter,
     Parameter,
     ReduceProductParameter,
-    ReduceSumParameter, ExpParameter,
+    ReduceSumParameter,
 )
 from cirkit.utils.scope import Scope
 from layers import ConstantLayer, EmbeddingLayer
@@ -17,8 +18,7 @@ def integrate_embedding_layer(
     sl: EmbeddingLayer, scope: Optional[Iterable[int]] = None
 ) -> CircuitBlock:
     scope = Scope(scope) if scope is not None else sl.scope
-    if sl.scope != scope:
-        raise NotImplementedError()
+    assert tuple(sl.scope | scope) == tuple(scope)
     reduce_sum = ReduceSumParameter(sl.weight.shape, axis=3)
     reduce_prod1 = ReduceProductParameter(reduce_sum.shape, axis=2)
     reduce_prod2 = ReduceProductParameter(reduce_prod1.shape, axis=0)
@@ -50,7 +50,9 @@ def multiply_embedding_layers(sl1: EmbeddingLayer, sl2: EmbeddingLayer) -> Circu
     return CircuitBlock.from_layer(sl)
 
 
-def multiply_categorical_embedding_layers(sl1: CategoricalLayer, sl2: EmbeddingLayer) -> CircuitBlock:
+def multiply_categorical_embedding_layers(
+    sl1: CategoricalLayer, sl2: EmbeddingLayer
+) -> CircuitBlock:
     assert sl1.num_variables == sl2.num_variables
     assert sl1.num_channels == sl2.num_channels
     assert sl1.num_categories == sl2.num_states
@@ -59,8 +61,7 @@ def multiply_categorical_embedding_layers(sl1: CategoricalLayer, sl2: EmbeddingL
         sl_scores = sl1.probs.ref()
     else:
         sl_scores = Parameter.from_unary(
-            ExpParameter(sl1.logits.shape),
-            sl1.logits.ref()
+            ExpParameter(sl1.logits.shape), sl1.logits.ref()
         )
 
     sl_weight = Parameter.from_binary(
