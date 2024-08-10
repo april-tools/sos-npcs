@@ -4,7 +4,8 @@ from typing import Optional
 
 import pandas as pd
 import seaborn as sb
-from matplotlib import pyplot as plt, rcParams
+from matplotlib import pyplot as plt
+from matplotlib import rcParams
 
 from graphics.utils import setup_tueplots
 from scripts.utils import retrieve_tboard_runs
@@ -132,7 +133,7 @@ if __name__ == "__main__":
     else:
         ax.set_ylabel("")
     ax.grid(linestyle="--", which="major", alpha=0.3, linewidth=0.5)
-    #ax.grid(linestyle="--", which="minor", alpha=0.3, linewidth=0.3)
+    # ax.grid(linestyle="--", which="minor", alpha=0.3, linewidth=0.3)
     ax.set_title(format_dataset(args.dataset))
 
     path = os.path.join("figures", "complex-squared-npcs")
