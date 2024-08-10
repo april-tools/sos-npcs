@@ -7,7 +7,7 @@ from torchvision.utils import make_grid
 
 from sampling import inverse_transform_sample
 from scripts.logger import Logger
-from scripts.utils import set_global_seed, setup_data_loaders, setup_model
+from scripts.utils import set_global_seed, setup_data_loaders, setup_model, bits_per_dimension
 
 parser = argparse.ArgumentParser(
     description="Plot image samples",
@@ -31,6 +31,7 @@ parser.add_argument("--device", default="cuda", type=str, help="The device to us
 
 
 if __name__ == "__main__":
+    torch.set_grad_enabled(False)
     args = parser.parse_args()
     seed = 42
     set_global_seed(seed)
@@ -62,7 +63,16 @@ if __name__ == "__main__":
         args.checkpoint_id, f"checkpoint-{args.trial_id}.pt"
     )
     checkpoint = torch.load(checkpoint_filepath, map_location=device)
-    model.load_state_dict(checkpoint["weights"])
+    model.load_state_dict(checkpoint["weights"], strict=False)
+
+    log_likelihood = 0.0
+    num_samples = 0
+    for batch in test_dataloader:
+        batch = batch[0].to(device)
+        log_likelihood += torch.sum(model.log_likelihood(batch))
+        num_samples += len(batch)
+    log_likelihood /= num_samples
+    print(f"Test BPD: {bits_per_dimension(log_likelihood, model.num_variables):.3f}")
 
     grid_height, grid_width = 3, 3
     num_samples = grid_height * grid_width

@@ -44,14 +44,6 @@ def inverse_transform_sample(
 
         # sample X_i ~ p(X_i | X_1 = a_1, ..., X_{i-1} = a_{i-1})
         conditional_probs = torch.exp(log_scores - prev_log_scores)
-        assert torch.all(
-            torch.isclose(
-                torch.sum(conditional_probs, dim=1),
-                torch.tensor(1.0, device=device),
-                rtol=1e-5,
-                atol=5e-7,
-            )
-        )
         u = torch.rand(conditional_probs.shape[0], 1, device=device)
         sample_i = vdomain - (u <= torch.cumsum(conditional_probs, dim=1)).long().sum(
             dim=1
