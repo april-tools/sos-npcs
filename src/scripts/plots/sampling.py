@@ -79,13 +79,13 @@ if __name__ == "__main__":
     samples = []
     for i in range(num_samples):
         sample = inverse_transform_sample(
-            model, vdomain=255, num_samples=1, device=device
+            model, vdomain=256, num_samples=1, device=device
         )
         sample = sample[0, 0]
         samples.append(sample)
     samples = (torch.stack(samples) / 255.0).view(
         -1,
-        1,
+        num_channels, image_height, image_width
     )
     grid = make_grid(samples, nrow=grid_width, padding=0)
     ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).to("cpu", torch.uint8).numpy()
