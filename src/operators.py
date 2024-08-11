@@ -18,7 +18,7 @@ def integrate_embedding_layer(
     sl: EmbeddingLayer, scope: Optional[Iterable[int]] = None
 ) -> CircuitBlock:
     scope = Scope(scope) if scope is not None else sl.scope
-    assert tuple(sl.scope & scope) == tuple(scope)
+    assert tuple(sl.scope & scope) == tuple(sl.scope)
     reduce_sum = ReduceSumParameter(sl.weight.shape, axis=3)
     reduce_prod1 = ReduceProductParameter(reduce_sum.shape, axis=2)
     reduce_prod2 = ReduceProductParameter(reduce_prod1.shape, axis=0)

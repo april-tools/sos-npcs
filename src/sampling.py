@@ -48,7 +48,7 @@ def inverse_transform_sample(
         )  # (num_samples, vdomain)
 
         # sample X_i ~ p(X_i | X_1 = a_1, ..., X_{i-1} = a_{i-1})
-        conditional_probs = torch.exp(log_scores - prev_log_scores)
+        conditional_probs = torch.nan_to_num(torch.exp(log_scores - prev_log_scores))
         u = torch.rand(conditional_probs.shape[0], 1, device=device)
         sample_i = vdomain - (u <= torch.cumsum(conditional_probs, dim=1)).long().sum(
             dim=1
