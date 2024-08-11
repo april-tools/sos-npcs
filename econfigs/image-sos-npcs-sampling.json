@@ -1,0 +1,32 @@
+{
+  "common": {
+    "tboard-path": "tboard-runs/image-data-sos-sampling",
+    "checkpoint-path": "checkpoints/image-data-sos-sampling",
+    "save-checkpoint": true,
+    "num-epochs": 1000,
+    "device": "cuda",
+    "num-workers": 2,
+    "patience-threshold": 1e-3,
+    "early-stop-patience": 20
+  },
+  "datasets": ["MNIST"],
+  "grid": {
+    "common": {
+      "region-graph": "qt",
+      "batch-size": 256,
+      "optimizer": "Adam",
+      "verbose": true,
+      "learning-rate": 1e-2
+    },
+    "models": {
+      "MNIST|FashionMNIST|CIFAR10": {
+        "SOS": {
+          "complex": {
+            "num-units,num-input-units": [[128, 128]],
+            "complex": true
+          }
+        }
+      }
+    }
+  }
+}

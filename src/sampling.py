@@ -11,6 +11,7 @@ def inverse_transform_sample(
     *,
     vdomain: int,
     num_samples: int = 1,
+    batch_size: int = 32,
     device: Optional[Union[int, str, torch.device]] = None
 ) -> torch.Tensor:
     model.eval()
@@ -34,15 +35,19 @@ def inverse_transform_sample(
         working_samples[:, :, 0, i] = torch.arange(vdomain, device=device).unsqueeze(
             dim=0
         )
-        if i < num_variables - 1:
-            log_scores = model.log_integrated_score(
-                working_samples.view(-1, num_channels, num_variables),
-                variables=tuple(j for j in range(num_variables) if j > i),
-            )  # (num_samples * vdomain, 1)
-        else:
-            log_scores = model.log_score(
-                working_samples.view(-1, num_channels, num_variables),
-            )
+        log_scores = []
+        flattened_working_samples = working_samples.view(-1, num_channels, num_variables)
+        for batch_idx in range(0, num_samples * vdomain, batch_size):
+            x = flattened_working_samples[batch_idx:batch_idx+batch_size]
+            if i < num_variables - 1:
+                log_y = model.log_integrated_score(
+                    x,
+                    variables=tuple(j for j in range(num_variables) if j > i),
+                )  # (batch_size, 1)
+            else:
+                log_y = model.log_score(x)  # (batch_size, 1)
+            log_scores.append(log_y)
+        log_scores = torch.cat(log_scores, dim=0)  # (num_samples * vdomain, 1)
         log_scores = log_scores.squeeze(dim=-1).view(
             num_samples, vdomain
         )  # (num_samples, vdomain)
