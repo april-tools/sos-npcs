@@ -3,7 +3,7 @@
 PYSCRIPT="scripts.plots.sum_of_squares"
 TBOARD_PATH="${TBOARD_PATH:-tboard-runs/sos-npcs-fixed-size}"
 
-for dataset in power gas
+for dataset in power gas hepmass miniboone
 do
   echo "Processing results relative to data set $dataset"
   if [ "$dataset" == "hepmass" ]

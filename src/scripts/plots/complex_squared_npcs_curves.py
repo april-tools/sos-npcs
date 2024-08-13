@@ -106,7 +106,7 @@ if __name__ == "__main__":
         x = x[: args.max_epochs]
         y = y[: args.max_epochs]
         g = sb.lineplot(
-            x=x, y=y, ax=ax, linewidth=0.8, legend=False, label=hue, color=c, alpha=0.7
+            x=x, y=y, ax=ax, linewidth=0.8, legend=False, label=hue, color=c, alpha=0.6
         )
     if args.ylabel:
         if args.ylabel_horizontal:
