@@ -5,11 +5,11 @@
     "save-checkpoint": false,
     "num-epochs": 1000,
     "device": "cuda",
-    "num-workers": 2,
+    "num-workers": 8,
     "patience-threshold": 1e-3,
-    "early-stop-patience": 20
+    "early-stop-patience": 5
   },
-  "datasets": ["MNIST", "FashionMNIST"],
+  "datasets": ["CelebA"],
   "grid": {
     "common": {
       "region-graph": "qt",
@@ -19,17 +19,17 @@
       "learning-rate": 1e-2
     },
     "models": {
-      "MNIST|FashionMNIST|CIFAR10": {
+      "CelebA": {
         "MPC": {
-          "num-units,num-input-units": [[16, 16], [32, 32], [64, 64], [128, 128], [256, 256], [512, 512]],
+          "num-units,num-input-units": [[32, 32], [64, 64], [128, 128]],
           "mono-clamp": true
         },
         "SOS": {
           "real": {
-            "num-units,num-input-units": [[16, 16], [32, 32], [64, 64], [128, 128], [256, 256], [512, 512]]
+            "num-units,num-input-units": [[32, 32], [64, 64], [128, 128]]
           },
           "complex": {
-            "num-units,num-input-units": [[8, 8], [16, 16], [32, 32], [64, 64], [128, 128], [256, 256]],
+            "num-units,num-input-units": [[16, 16], [32, 32], [64, 64]],
             "complex": true
           }
         }

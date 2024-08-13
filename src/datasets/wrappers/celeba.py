@@ -38,14 +38,21 @@ def ycc2rgb(ycc_image):
 
 class CELEBA(Dataset):
     def __init__(self, root, split="all", ycc: Optional[bool] = False):
-        ts = [
-            transforms.CenterCrop((140, 140)),
-            transforms.Resize((64, 64)),
-            transforms.ToTensor(),
-            lambda x: (x * 255).to(torch.int16),
-        ]
         if ycc:
-            ts.append(rgb2ycc)
+            ts = [
+                transforms.CenterCrop((140, 140)),
+                transforms.Resize((64, 64)),
+                transforms.ToTensor(),
+                transforms.Lambda(lambda x: (x * 255).to(torch.int16)),
+                transforms.Lambda(rgb2ycc)
+            ]
+        else:
+            ts = [
+                transforms.CenterCrop((140, 140)),
+                transforms.Resize((64, 64)),
+                transforms.ToTensor(),
+                transforms.Lambda(lambda x: (x * 255).to(torch.int64)),
+            ]
         transform = transforms.Compose(ts)
 
         self.celeba_dataset = CelebA(

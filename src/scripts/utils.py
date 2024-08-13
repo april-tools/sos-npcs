@@ -1,4 +1,3 @@
-import itertools
 import os
 import random
 import subprocess
@@ -309,9 +308,6 @@ def setup_data_loaders(
         metadata["type"] = "image"
         metadata["interval"] = (0, 255)
         metadata["domains"] = None
-        train_data = TensorDataset(train_data)
-        valid_data = TensorDataset(valid_data)
-        test_data = TensorDataset(test_data)
     elif binary_dataset:
         sep = ","
         if dataset == "binarized_mnist":

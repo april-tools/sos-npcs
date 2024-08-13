@@ -8,7 +8,8 @@ import numpy as np
 import torch
 from sklearn.model_selection import train_test_split
 from torch import Tensor
-from torchvision.datasets import CIFAR10, MNIST, CelebA, FashionMNIST
+from torch.utils.data import Dataset, TensorDataset
+from torchvision.datasets import CIFAR10, MNIST, FashionMNIST
 
 from datasets.wrappers import BSDS300, GAS, HEPMASS, MINIBOONE, POWER
 from datasets.wrappers.artificial import (
@@ -51,7 +52,7 @@ BINARY_DATASETS = [
     "tretail",
 ]
 
-IMAGE_DATASETS = ["MNIST", "FashionMNIST", "CIFAR10"]
+IMAGE_DATASETS = ["MNIST", "FashionMNIST", "CIFAR10", "CelebA"]
 
 CONTINUOUS_DATASETS = ["power", "gas", "hepmass", "miniboone", "bsds300"]
 
@@ -140,12 +141,13 @@ def load_binary_dataset(
 
 def load_image_dataset(name: str, path: str = "datasets") -> Tuple[
     Tuple[int, int, int],
-    Tuple[Tensor, Tensor, Tensor],
+    Tuple[Dataset, Dataset, Dataset],
 ]:
     if name == "MNIST":
         train_data = MNIST(path, train=True, download=True).data.unsqueeze(dim=-1)
         valid_data = None
         test_data = MNIST(path, train=False, download=True).data.unsqueeze(dim=-1)
+        image_shape = (train_data.shape[3], train_data.shape[1], train_data.shape[2])
     elif name == "FashionMNIST":
         train_data = FashionMNIST(path, train=True, download=True).data.unsqueeze(
             dim=-1
@@ -154,19 +156,25 @@ def load_image_dataset(name: str, path: str = "datasets") -> Tuple[
         test_data = FashionMNIST(path, train=False, download=True).data.unsqueeze(
             dim=-1
         )
+        image_shape = (train_data.shape[3], train_data.shape[1], train_data.shape[2])
     elif name == "CIFAR10":
         train_data = CIFAR10(path, train=True, download=True).data
         valid_data = None
         test_data = CIFAR10(path, train=False, download=True).data
+        image_shape = (train_data.shape[3], train_data.shape[1], train_data.shape[2])
     elif name == "CelebA":
-        data = CELEBA(path, split="train", ycc=True)
-        train_data = torch.stack([data[i] for i in range(len(data))], dim=0)
-        data = CELEBA(path, split="valid", ycc=True)
-        valid_data = torch.stack([data[i] for i in range(len(data))], dim=0)
-        data = CELEBA(path, split="test", ycc=True)
-        test_data = torch.stack([data[i] for i in range(len(data))], dim=0)
+        train_data = CELEBA(path, split="train", ycc=True)
+        valid_data = CELEBA(path, split="valid", ycc=True)
+        test_data = CELEBA(path, split="test", ycc=True)
+        image_shape = (3, 64, 64)
     else:
         raise ValueError(f"Unknown datasets called {name}")
+
+    if isinstance(train_data, Dataset):
+        assert isinstance(valid_data, Dataset)
+        assert isinstance(train_data, Dataset)
+        return image_shape, (train_data, valid_data, test_data)
+
     if isinstance(train_data, np.ndarray):
         train_data = torch.from_numpy(train_data)
     train_data = train_data.to(torch.int64)
@@ -176,7 +184,6 @@ def load_image_dataset(name: str, path: str = "datasets") -> Tuple[
     if isinstance(test_data, np.ndarray):
         test_data = torch.from_numpy(test_data)
     test_data = test_data.to(torch.int64)
-    image_shape = (train_data.shape[3], train_data.shape[1], train_data.shape[2])
     if valid_data is None:
         train_idx, valid_idx = train_test_split(
             np.arange(train_data.shape[0]),
@@ -186,9 +193,9 @@ def load_image_dataset(name: str, path: str = "datasets") -> Tuple[
         )
         valid_data = train_data[valid_idx]
         train_data = train_data[train_idx]
-    train_data = train_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous()
-    valid_data = valid_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous()
-    test_data = test_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous()
+    train_data = TensorDataset(train_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous())
+    valid_data = TensorDataset(valid_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous())
+    test_data = TensorDataset(test_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous())
 
     return (
         image_shape,
