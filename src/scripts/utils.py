@@ -94,14 +94,6 @@ def unroll_hparams(hparams: dict) -> List[dict]:
     return unroll_hparams
 
 
-def format_model(m: str) -> str:
-    if m == "MPC":
-        return r"$+$"
-    elif m == "SOS":
-        return r"$\Sigma^2$"
-    assert False
-
-
 def set_global_seed(seed: int, is_deterministic=True):
     random.seed(seed)
     np.random.seed(seed)

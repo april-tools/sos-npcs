@@ -1,6 +1,5 @@
 import argparse
 import os
-from typing import Optional
 
 import matplotlib.ticker as tck
 import pandas as pd
@@ -9,6 +8,7 @@ from matplotlib import pyplot as plt
 from matplotlib import rcParams
 
 from graphics.utils import setup_tueplots
+from scripts.plots.utils import format_dataset, format_metric, preprocess_dataframe
 from scripts.utils import retrieve_tboard_runs
 
 parser = argparse.ArgumentParser(
@@ -17,12 +17,18 @@ parser = argparse.ArgumentParser(
 parser.add_argument("tboard_path", type=str, help="The Tensorboard runs path")
 parser.add_argument("dataset", type=str, help="Dataset name")
 parser.add_argument("--metric", default="avg_ll", help="The metric considered")
-parser.add_argument("--models", default="MPC;SOS", help="The models")
+parser.add_argument("--models", default="MPC;SOS;ExpSOS", help="The models")
 parser.add_argument(
     "--sum-params-only",
     action="store_true",
     default=False,
     help="Whether to show the number of parameters of sum units only",
+)
+parser.add_argument(
+    "--select-best-run",
+    action="store_true",
+    default=False,
+    help="Whether to select the best run"
 )
 parser.add_argument(
     "--train",
@@ -58,81 +64,6 @@ parser.add_argument(
     help="Whether to move the legend outside",
 )
 
-
-def format_metric(m: str, train: Optional[bool] = None) -> str:
-    if m == "avg_ll":
-        m = "LL"
-    elif m == "bpd":
-        m = "BPD"
-    elif m == "ppl":
-        m = "PPL"
-    else:
-        assert False
-    if train is None:
-        return m
-    if train:
-        return f"{m} [train]"
-    return f"{m} [test]"
-
-
-def filter_dataframe(df: pd.DataFrame, filter_dict: dict) -> pd.DataFrame:
-    df = df.copy()
-    for k, v in filter_dict.items():
-        if isinstance(v, bool):
-            v = float(v)
-        df = df[df[k] == v]
-    return df
-
-
-def format_model(m: str, exp_alias: str, num_components: int) -> str:
-    if m == "MPC":
-        return r"$+_{\mathsf{sd}}$"
-    elif m == "SOS":
-        if "real" in exp_alias:
-            if num_components > 1:
-                return r"$\Sigma_{\mathsf{cmp}}^2 (\mathbb{R})$"
-            return r"$\pm^2 (\mathbb{R})$"
-        elif "complex" in exp_alias:
-            if num_components > 1:
-                return r"$\Sigma_{\mathsf{cmp}}^2 (\mathbb{C})$"
-            return r"$\pm^2 (\mathbb{C})$"
-    elif m == "ExpSOS":
-        if "real" in exp_alias:
-            return r"$+_{\mathsf{sd}}\!\cdot\!\pm^2 (\mathbb{R})$"
-        elif "complex" in exp_alias:
-            return r"$+_{\mathsf{sd}}\!\cdot\!\pm^2 (\mathbb{C})$"
-    assert False
-
-
-def format_model_order(m: str, exp_alias: str, num_components: int) -> (int, int):
-    if m == "MPC":
-        return 0, 0
-    elif m == "SOS":
-        if "real" in exp_alias:
-            return 1, num_components
-        elif "complex" in exp_alias:
-            return 2, num_components
-    elif m == "ExpSOS":
-        if "real" in exp_alias:
-            return 3, 0
-        elif "complex" in exp_alias:
-            return 4, 0
-    assert False
-
-
-def format_dataset(d: str) -> str:
-    return {
-        "power": "Power",
-        "gas": "Gas",
-        "hepmass": "Hepmass",
-        "miniboone": "MiniBoonE",
-        "bsds300": "BSDS300",
-        "MNIST": "MNIST",
-        "FashionMNIST": "Fashion-MNIST",
-        "CIFAR10": "CIFAR-10",
-    }[d]
-
-
 if __name__ == "__main__":
     args = parser.parse_args()
     train_metric = "Best/Train/" + args.metric
@@ -145,6 +76,7 @@ if __name__ == "__main__":
     df = df[df["dataset"] == args.dataset]
     df = df[df["model"].isin(models)]
     group_by_cols = [
+        "seed",
         "dataset",
         "model",
         "exp_alias",
@@ -157,18 +89,11 @@ if __name__ == "__main__":
     ]
     cols_to_keep = group_by_cols + metrics + ["num_sum_params", "num_params"]
     df = df.drop(df.columns.difference(cols_to_keep), axis=1)
-    df = df.sort_values(valid_metric, ascending=False)
-    df: pd.DataFrame = df.groupby(group_by_cols).first()
-    df.reset_index(inplace=True)
-
-    df["model_id"] = df.apply(
-        lambda row: format_model(row.model, row.exp_alias, row.num_components), axis=1
-    )
-    df["model_order"] = df.apply(
-        lambda row: format_model_order(row.model, row.exp_alias, row.num_components),
-        axis=1,
-    )
-    df = df.sort_values(by="model_order", ascending=True)
+    if args.select_best_run:
+        df = df.sort_values(valid_metric, ascending=False)
+        df: pd.DataFrame = df.groupby(group_by_cols).first()
+        df.reset_index(inplace=True)
+    df = preprocess_dataframe(df)
 
     num_rows = 1
     num_cols = 1
@@ -188,6 +113,7 @@ if __name__ == "__main__":
         y=metric,
         hue="model_id",
         style="model_id",
+        errorbar=('ci', 100),
         linewidth=1.2,
         markers=True,
         dashes=False,

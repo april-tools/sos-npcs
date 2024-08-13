@@ -4,12 +4,12 @@ import os
 from collections import defaultdict
 
 import numpy as np
-import pandas as pd
 import seaborn as sb
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 
 from graphics.utils import setup_tueplots
+from scripts.plots.utils import format_dataset, format_model
 
 parser = argparse.ArgumentParser(
     description="Plot metrics as a swarm plot based on number of squares",
@@ -41,36 +41,6 @@ parser.add_argument(
 parser.add_argument(
     "--title", action="store_true", default=False, help="Whether to show the title"
 )
-
-
-def filter_dataframe(df: pd.DataFrame, filter_dict: dict) -> pd.DataFrame:
-    df = df.copy()
-    for k, v in filter_dict.items():
-        if isinstance(v, bool):
-            v = float(v)
-        df = df[df[k] == v]
-    return df
-
-
-def format_model(m: str, exp_alias: str) -> str:
-    if m == "MPC":
-        return r"$+_{\mathsf{sd}}$"
-    elif m == "SOS":
-        if "real" in exp_alias:
-            return r"$\pm^2 (\mathbb{R})$"
-        elif "complex" in exp_alias:
-            return r"$\pm^2 (\mathbb{C})$"
-    assert False
-
-
-def format_dataset(d: str) -> str:
-    return {
-        "power": "Power",
-        "gas": "Gas",
-        "hepmass": "Hepmass",
-        "miniboone": "MiniBoonE",
-        "bsds300": "BSDS300",
-    }[d]
 
 
 if __name__ == "__main__":
@@ -123,8 +93,8 @@ if __name__ == "__main__":
     ys_data = [ys[: args.max_epochs] for ys in ys_data]
     cs_data_map = {
         r"$+_{\mathsf{sd}}$": f"C0",
-        r"$\pm^2 (\mathbb{R})$": f"C1",
-        r"$\pm^2 (\mathbb{C})$": f"C2",
+        r"$\pm^2_{\mathbb{R}}$": f"C1",
+        r"$\pm^2_{\mathbb{C}}$": f"C2",
     }
     cs_data = [cs_data_map[hue] for hue in hues_data]
 
@@ -136,7 +106,7 @@ if __name__ == "__main__":
         x = x[: args.max_epochs]
         y = y[: args.max_epochs]
         g = sb.lineplot(
-            x=x, y=y, ax=ax, linewidth=0.8, legend=False, label=hue, color=c, alpha=0.5
+            x=x, y=y, ax=ax, linewidth=0.8, legend=False, label=hue, color=c, alpha=0.7
         )
     if args.ylabel:
         if args.ylabel_horizontal:

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PYSCRIPT="scripts.plots.complex_squared_npcs_curves"
-CHECKP_PATH="${CHECKP_PATH:-checkpoints/sos-npcs}"
+CHECKP_PATH="${CHECKP_PATH:-checkpoints/sos-npcs-fixed-size}"
 MAX_EPOCHS=100
 
 for dataset in power gas hepmass miniboone

@@ -1,13 +1,12 @@
 import argparse
 import os
-from typing import Optional
 
-import pandas as pd
 import seaborn as sb
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 
 from graphics.utils import setup_tueplots
+from scripts.plots.utils import format_model, format_metric, format_dataset, preprocess_dataframe
 from scripts.utils import retrieve_tboard_runs
 
 parser = argparse.ArgumentParser(
@@ -58,52 +57,6 @@ parser.add_argument(
 )
 
 
-def format_metric(m: str, train: Optional[bool] = None) -> str:
-    if m == "avg_ll":
-        m = "LL"
-    elif m == "bpd":
-        m = "BPD"
-    elif m == "ppl":
-        m = "PPL"
-    else:
-        assert False
-    if train is None:
-        return m
-    if train:
-        return f"{m} [train]"
-    return f"{m} [test]"
-
-
-def filter_dataframe(df: pd.DataFrame, filter_dict: dict) -> pd.DataFrame:
-    df = df.copy()
-    for k, v in filter_dict.items():
-        if isinstance(v, bool):
-            v = float(v)
-        df = df[df[k] == v]
-    return df
-
-
-def format_model(m: str, exp_alias: str) -> str:
-    if m == "MPC":
-        return r"$+_{\mathsf{sd}}$"
-    elif m == "SOS":
-        if "real" in exp_alias:
-            return r"$\Sigma_{\mathsf{cmp}}^2 (\mathbb{R})$"
-        elif "complex" in exp_alias:
-            return r"$\Sigma_{\mathsf{cmp}}^2 (\mathbb{C})$"
-    assert False
-
-
-def format_dataset(d: str) -> str:
-    return {
-        "power": "Power",
-        "gas": "Gas",
-        "hepmass": "Hepmass",
-        "miniboone": "MiniBoonE",
-        "bsds300": "BSDS300",
-    }[d]
-
-
 if __name__ == "__main__":
     args = parser.parse_args()
     metric = (
@@ -114,19 +67,11 @@ if __name__ == "__main__":
     df = df[df["dataset"] == args.dataset]
     df = df[df["model"].isin(models)]
     df = df[df["num_components"] > 1]
-    df = df.sort_values("model", ascending=True)
-    df["model_id"] = df.apply(
-        lambda row: format_model(row.model, row.exp_alias), axis=1
-    )
     df["num_components"] = df["num_components"].astype(int)
-    # num_sum_parameters = df["num_sum_params"].tolist()
-    # rel_num_sum_parameters = (
-    #     np.max(num_sum_parameters) - np.min(num_sum_parameters)
-    # ) / np.min(num_sum_parameters)
-    # print(f"Relative diff. num. of parameters: {rel_num_sum_parameters * 100:.1f}")
+    df = preprocess_dataframe(df)
+
     num_rows = 1
     num_cols = 1
-
     setup_tueplots(num_rows, num_cols, rel_width=0.45, hw_ratio=0.7)
     fig, ax = plt.subplots(num_rows, num_cols, squeeze=True, sharey=True)
     g = sb.boxplot(

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PYSCRIPT="scripts.plots.complex_squared_npcs"
-TBOARD_PATH="${TBOARD_PATH:-tboard-runs/sos-npcs}"
+TBOARD_PATH="${TBOARD_PATH:-tboard-runs/sos-npcs-fixed-size}"
 
 for dataset in power gas hepmass miniboone
 do
