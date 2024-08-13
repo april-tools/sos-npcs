@@ -43,7 +43,7 @@ class CELEBA(Dataset):
                 transforms.CenterCrop((140, 140)),
                 transforms.Resize((64, 64)),
                 transforms.ToTensor(),
-                transforms.Lambda(lambda x: (x * 255).to(torch.int16)),
+                transforms.Lambda(lambda x: (x * 255).to(torch.int64)),
                 transforms.Lambda(rgb2ycc)
             ]
         else:
@@ -64,4 +64,4 @@ class CELEBA(Dataset):
 
     def __getitem__(self, idx):
         image, _ = self.celeba_dataset[idx]
-        return image.permute(1, 2, 0)
+        return image.view(image.shape[0], -1)
