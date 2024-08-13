@@ -80,6 +80,7 @@ if __name__ == "__main__":
         y=metric,
         hue="model_id",
         width=0.65,
+        whis=2.0,
         fliersize=2.5,
         ax=ax,
         legend=args.legend,

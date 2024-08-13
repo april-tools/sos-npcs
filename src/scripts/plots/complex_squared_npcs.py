@@ -59,7 +59,7 @@ if __name__ == "__main__":
     setup_tueplots(num_rows, num_cols, rel_width=0.375, hw_ratio=0.84)
     fig, ax = plt.subplots(num_rows, num_cols, squeeze=True, sharey=True)
     g = sb.boxplot(
-        df, x="model_id", y=metric, hue="model_id", width=0.65, fliersize=3.0, ax=ax
+        df, x="model_id", y=metric, hue="model_id", width=0.65, fliersize=3.0, whis=2.0, ax=ax
     )
     ax.set_xlabel("")
     if args.ylabel:
