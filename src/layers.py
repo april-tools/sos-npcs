@@ -146,8 +146,8 @@ class TorchEmbeddingLayer(TorchInputLayer):
         weight = self.weight()
         x = x.to(weight.dtype)
         x = torch.einsum("fcbdi,fdkci->fbkc", x, weight)
-        x = torch.prod(x, dim=-1)  # (F, B, K)
-        return csafelog(self.semiring.cast(x))
+        x = csafelog(self.semiring.cast(x))  # (F, B, K, C)
+        return torch.sum(x, dim=-1)  # (F, B, K)
 
 
 class TorchConstantLayer(TorchInputLayer):
