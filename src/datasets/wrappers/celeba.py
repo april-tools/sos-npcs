@@ -56,7 +56,7 @@ class CELEBA(Dataset):
         transform = transforms.Compose(ts)
 
         self.celeba_dataset = CelebA(
-            root=root, split=split, transform=transform, download=True
+            root=root, split=split, transform=transform, download=False
         )
 
     def __len__(self):
