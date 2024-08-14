@@ -493,9 +493,12 @@ def _build_region_graphs(
     elif name == "lt":
         assert num_variables is not None
         return [_build_lt_region_graph(num_variables, random=False) for _ in range(k)]
-    elif name == "qt":
+    elif name == "qt-2":
         assert image_shape is not None
-        return [_build_qt_region_graph(image_shape) for _ in range(k)]
+        return [_build_qt_region_graph(image_shape, num_patch_splits=2) for _ in range(k)]
+    elif name in ["qt", "qt-4"]:
+        assert image_shape is not None
+        return [_build_qt_region_graph(image_shape, num_patch_splits=4) for _ in range(k)]
     raise NotImplementedError()
 
 
@@ -510,9 +513,9 @@ def _build_lt_region_graph(
     return LinearRegionGraph(num_variables, random=random, seed=seed)
 
 
-def _build_qt_region_graph(image_shape: Tuple[int, int, int]) -> RegionGraph:
+def _build_qt_region_graph(image_shape: Tuple[int, int, int], num_patch_splits: int) -> RegionGraph:
     num_channels, height, width = image_shape
-    return QuadGraph((height, width), is_tree=True, num_patch_splits=4)
+    return QuadGraph((height, width), is_tree=True, num_patch_splits=num_patch_splits)
 
 
 def _build_monotonic_sym_circuits(
