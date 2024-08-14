@@ -424,7 +424,9 @@ class Engine:
             running_average_loss = 0.0
             running_training_samples = 0
             for batch_idx, batch in enumerate(train_dataloader):
-                batch = batch[0].to(self._device)
+                if isinstance(batch, tuple):
+                    batch = batch[0]
+                batch = batch.to(self._device)
                 if isinstance(self.model, PC):
                     if len(batch.shape) < 3:
                         batch = batch.unsqueeze(dim=1)

@@ -244,7 +244,9 @@ def evaluate_model_log_likelihood(
     model.eval()
     lls = list()
     for batch in dataloader:
-        batch = batch[0].to(device)
+        if isinstance(batch, tuple):
+            batch = batch[0]
+        batch = batch.to(device)
         if isinstance(model, PC):
             if len(batch.shape) < 3:
                 batch = batch.unsqueeze(dim=1)
