@@ -217,7 +217,7 @@ def build_run_id(args):
     else:
         rs.append(args.model)
     if args.model in PCS_MODELS:
-        if args.region_graph_sd:
+        if args.region_graph_sd and args.region_graph == 'rnd-bt':
             rs.append(f"RG{args.region_graph}-sd")
         else:
             rs.append(f"RG{args.region_graph}")
