@@ -21,6 +21,12 @@ parser.add_argument(
     "--learning-rate", type=float, default=0.001, help="The learning rate"
 )
 parser.add_argument(
+    "--xticks",
+    action="store_true",
+    default=False,
+    help="Whether to show the x-axis ticks",
+)
+parser.add_argument(
     "--ylabel",
     action="store_true",
     default=False,
@@ -131,6 +137,8 @@ if __name__ == "__main__":
             else (f"{y:.1f}"[1:] if y >= 0.0 else "-" + f"{y:.1f}"[2:])
         )
     )
+    if not args.xticks:
+        ax.set_xticks([])
     ax.grid(linestyle="--", which="major", alpha=0.3, linewidth=0.5)
     ax.grid(linestyle="--", which="minor", alpha=0.3, linewidth=0.3)
     if args.title:

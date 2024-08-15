@@ -37,6 +37,12 @@ parser.add_argument(
     help="Whether to show the metric on the training data",
 )
 parser.add_argument(
+    "--xlabel",
+    action="store_true",
+    default=False,
+    help="Whether to show the x-axis label",
+)
+parser.add_argument(
     "--ylabel",
     action="store_true",
     default=False,
@@ -123,9 +129,21 @@ if __name__ == "__main__":
     )
     ax.margins(0.1)
     ax.set_xscale("log")
-    ax.set_xlabel(
-        "Num. of sum parameters" if args.sum_params_only else "Num. of parameters"
-    )
+    # ax.set_xlabel(
+    #     "Num. of sum parameters" if args.sum_params_only else "Num. of parameters"
+    # )
+    ax.set_xlabel("")
+    if args.xlabel:
+        ax.annotate(
+            r"\# sum parameters" if args.sum_params_only else r"\# parameters",
+            fontsize=9,
+            xy=(1.05, 0),
+            xytext=(1, -1.5 * rcParams["xtick.major.pad"]),
+            ha="left",
+            va="top",
+            xycoords="axes fraction",
+            textcoords="offset points",
+        )
     if args.ylabel:
         formatted_metric = format_metric(
             args.metric, train=args.train if args.ylabel_detailed else None

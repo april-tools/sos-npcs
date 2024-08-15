@@ -1,10 +1,11 @@
 #!/bin/bash
 
 PYSCRIPT="scripts.plots.num_params_lines"
-TBOARD_PATH="${TBOARD_PATH:-tboard-runs/image-data-full}"
-MODELS="MPC;SOS;ExpSOS"
+TBOARD_PATH="${TBOARD_PATH:-tboard-runs/image-data-complete}"
+MODELS="${MODELS:-"MPC;SOS;ExpSOS"}"
+DATASETS="${DATASETS:-"MNIST FashionMNIST CelebA"}"
 
-for dataset in MNIST FashionMNIST
+for dataset in $DATASETS
 do
   echo "Processing results relative to data set $dataset"
   if [ "$dataset" == "MNIST" ]
@@ -12,7 +13,10 @@ do
     OTHER_FLAGS="--ylabel --ylabel-horizontal"
   elif [ "$dataset" == "FashionMNIST" ]
   then
-    OTHER_FLAGS="--ylabel --ylabel-horizontal --legend --move-legend-outside"
+    OTHER_FLAGS="--ylabel --ylabel-horizontal"
+  elif [ "$dataset" == "CelebA" ]
+  then
+    OTHER_FLAGS="--ylabel --ylabel-horizontal --legend --move-legend-outside --xlabel"
   else
     OTHER_FLAGS=""
   fi
@@ -20,13 +24,16 @@ do
 done
 
 
-for dataset in MNIST FashionMNIST
+for dataset in $DATASETS
 do
   echo "Processing results relative to data set $dataset"
   if [ "$dataset" == "MNIST" ]
   then
     OTHER_FLAGS="--ylabel --ylabel-horizontal"
   elif [ "$dataset" == "FashionMNIST" ]
+  then
+    OTHER_FLAGS="--ylabel --ylabel-horizontal"
+  elif [ "$dataset" == "CelebA" ]
   then
     OTHER_FLAGS="--ylabel --ylabel-horizontal"
   else

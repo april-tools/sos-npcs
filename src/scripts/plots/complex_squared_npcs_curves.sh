@@ -10,18 +10,18 @@ do
 
   for lr in 0.0005 0.001 0.005
   do
-    if [ "$dataset" == "power" ]
+    if [ "$lr" == 0.0005 ]
     then
-      OTHER_FLAGS="--ylabel --ylabel-horizontal"
-    elif [ "$dataset" == "miniboone" ]
+      OTHER_FLAGS="--ylabel --ylabel-horizontal --title"
+    elif [ "$lr" == 0.005 ]
     then
-      OTHER_FLAGS="--legend"
+      OTHER_FLAGS="--xticks"
     else
-      OTHER_FLAGS="--ylabel --ylabel-horizontal"
+      OTHER_FLAGS=""
     fi
-    if [ "$lr" == "0.0005" ]
+    if [ "$dataset" == "miniboone" ]
     then
-      OTHER_FLAGS="$OTHER_FLAGS --title"
+      OTHER_FLAGS="$OTHER_FLAGS --legend"
     fi
     python -m "$PYSCRIPT" "$CHECKP_PATH" "$dataset" \
       --learning-rate $lr --max-epochs $MAX_EPOCHS \

@@ -2,6 +2,7 @@ import io
 from typing import Optional
 
 import numpy as np
+import seaborn as sb
 from matplotlib import pyplot as plt
 from PIL import Image as pillow
 from tueplots import figsizes, fonts, fontsizes
@@ -47,6 +48,7 @@ def setup_tueplots(
     #    ),
     #    "patch.facecolor": "#0173B2"
     # })
+    sb.color_palette("colorblind")
 
 
 def array_to_image(
