@@ -99,10 +99,10 @@ if __name__ == "__main__":
     # sb.move_legend(ax, handlelength=1.0, handletextpad=0.5, loc="best")
     if args.legend:
         if args.move_legend_outside and not args.plot_single_squares:
-            sb.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), title="")
+            sb.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), title="", framealpha=0.6)
         else:
             handles, labels = ax.get_legend_handles_labels()
-            ax.legend(handles, labels)
+            ax.legend(handles, labels, framealpha=0.6)
     if args.xlabel:
         ax.set_xlabel(r"Num. of components")
     else:
