@@ -375,7 +375,7 @@ class ExpSOS(PC):
     def log_score(self, x: Tensor) -> Tensor:
         sq_log_score = 2.0 * self._circuit(x).real
         mono_log_score = self._mono_circuit(x).real
-        return sq_log_score + mono_log_score
+        return (sq_log_score + mono_log_score).squeeze(dim=1)
 
     def _build_circuits(
         self,

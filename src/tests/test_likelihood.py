@@ -155,6 +155,48 @@ def test_discrete_complex_sos_pc(
     check_evi_ll(model, data)
 
 
+@pytest.mark.parametrize(
+    "num_variables,num_units,region_graph,sd,input_layer",
+    list(
+        itertools.product(
+            [9, 12],
+            [1, 3],
+            ["rnd-bt", "qt"],
+            [False, True],
+            ["categorical", "embedding"],
+        )
+    ),
+)
+def test_discrete_exp_sos_pc(
+    num_variables, num_units, region_graph, sd, input_layer
+):
+    input_layer_kwargs = (
+        {"num_categories": 2} if input_layer == "categorical" else {"num_states": 2}
+    )
+    if region_graph == "qt":
+        if num_variables == 9:
+            image_shape = (1, 3, 3)
+        else:  # num_variables == 12
+            image_shape = (1, 4, 3)
+    else:
+        image_shape = None
+    model = ExpSOS(
+        num_variables,
+        image_shape=image_shape,
+        num_input_units=num_units,
+        num_sum_units=num_units,
+        mono_num_input_units=2,
+        mono_num_sum_units=2,
+        input_layer=input_layer,
+        input_layer_kwargs=input_layer_kwargs,
+        region_graph=region_graph,
+        structured_decomposable=sd,
+        complex=True,
+    )
+    data = torch.LongTensor(generate_all_binary_samples(num_variables))
+    check_evi_ll(model, data)
+
+
 @pytest.mark.slow
 @pytest.mark.parametrize(
     "num_components,num_units,region_graph",
