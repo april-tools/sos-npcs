@@ -215,6 +215,7 @@ if __name__ == "__main__":
             mu_gpu_memory = np.mean(gpu_memory_peaks)
         except torch.cuda.OutOfMemoryError:
             mu_time, mu_gpu_memory = np.nan, np.nan
+        del model
 
         benchmark_results.append({
             'model': args.model,
