@@ -12,15 +12,23 @@ from torch.utils.data import DataLoader
 from datasets.loaders import IMAGE_DATASETS
 from models import PC
 from scripts.logger import Logger
-from scripts.utils import (retrieve_tboard_runs, set_global_seed,
-                           setup_data_loaders, setup_model)
+from scripts.utils import (
+    retrieve_tboard_runs,
+    set_global_seed,
+    setup_data_loaders,
+    setup_model,
+)
 from utilities import PCS_MODELS
 
 parser = argparse.ArgumentParser(description="Benchmarking script")
 parser.add_argument("tboard_path", type=str, help="The Tensorboard runs path")
-parser.add_argument("dataset", type=str, choices=IMAGE_DATASETS,  help="The image dataset")
+parser.add_argument(
+    "dataset", type=str, choices=IMAGE_DATASETS, help="The image dataset"
+)
 parser.add_argument("model", type=str, choices=PCS_MODELS, help="The PC to benchmark")
-parser.add_argument("--data-path", type=str, default="datasets", help="The data sets directory")
+parser.add_argument(
+    "--data-path", type=str, default="datasets", help="The data sets directory"
+)
 parser.add_argument(
     "--num-iterations",
     type=int,
@@ -34,11 +42,12 @@ parser.add_argument(
     help="Burnin iterations (additional to --num-iterations)",
 )
 parser.add_argument("--device", type=str, default="cuda", help="The device id")
+parser.add_argument("--batch-size", type=int, default=512, help="The batch size")
 parser.add_argument(
-    "--batch-size", type=int, default=512, help="The batch size"
-)
-parser.add_argument(
-    "--complex", action='store_true', default=False, help="Whether to use complex parameters"
+    "--complex",
+    action="store_true",
+    default=False,
+    help="Whether to use complex parameters",
 )
 parser.add_argument(
     "--num-units",
@@ -50,7 +59,7 @@ parser.add_argument(
     "--mono-num-units",
     type=int,
     default=8,
-    help="The number of units in monotonic PCs, for ExpSOS models only"
+    help="The number of units in monotonic PCs, for ExpSOS models only",
 )
 parser.add_argument(
     "--min-bubble-radius", type=float, default=20.0, help="Bubble sizes minimum"
@@ -70,12 +79,7 @@ parser.add_argument(
     default=False,
     help="Whether to benchmark also backpropagation",
 )
-parser.add_argument(
-    "--metric",
-    type=str,
-    default='bpd',
-    help="The test metric to log"
-)
+parser.add_argument("--metric", type=str, default="bpd", help="The test metric to log")
 parser.add_argument("--seed", type=int, default=42, help="The seed for reproducibility")
 
 
@@ -156,45 +160,53 @@ if __name__ == "__main__":
 
     metric = "Best/Test/" + args.metric
     df = retrieve_tboard_runs(os.path.join(args.tboard_path, args.dataset), metric)
-    df = df[df['model'] == args.model]
-    if 'SOS' in args.model:
-        df = df[(df['exp_alias'] == 'complex') if args.complex else (df['exp_alias'] == 'real')]
+    df = df[df["model"] == args.model]
+    if "SOS" in args.model:
+        df = df[
+            (
+                (df["exp_alias"] == "complex")
+                if args.complex
+                else (df["exp_alias"] == "real")
+            )
+        ]
 
-    logger = Logger('benchmark', verbose=True)
+    logger = Logger("benchmark", verbose=True)
     metadata, (data_loader, _, _) = setup_data_loaders(
         args.dataset,
         args.data_path,
         logger,
         batch_size=args.batch_size,
         num_workers=12,
-        drop_last=True
+        drop_last=True,
     )
     device = torch.device(args.device)
 
     benchmark_results = []
     for num_units in num_units_ls:
-        if args.model == 'ExpSOS':
+        if args.model == "ExpSOS":
             conditioned_df = df[
-                (df['num_units'] == num_units) &
-                (df['num_input_units'] == num_units) &
-                (df['mono_num_units'] == args.mono_num_units) &
-                (df['mono_num_input_units'] == args.mono_num_units)
+                (df["num_units"] == num_units)
+                & (df["num_input_units"] == num_units)
+                & (df["mono_num_units"] == args.mono_num_units)
+                & (df["mono_num_input_units"] == args.mono_num_units)
             ]
         else:
-            conditioned_df = df[(df['num_units'] == num_units) & (df['num_input_units'] == num_units)]
+            conditioned_df = df[
+                (df["num_units"] == num_units) & (df["num_input_units"] == num_units)
+            ]
         metric_value = conditioned_df[metric].mean()
 
         model = setup_model(
             args.model,
             metadata,
             logger,
-            region_graph='qt',
+            region_graph="qt",
             num_components=1,
             num_units=num_units,
             mono_num_units=args.mono_num_units,
-            mono_clamp=True if args.model in ['MPC', 'ExpSOS'] else False,
+            mono_clamp=True if args.model in ["MPC", "ExpSOS"] else False,
             complex=args.complex,
-            seed=args.seed
+            seed=args.seed,
         )
 
         try:
@@ -205,7 +217,7 @@ if __name__ == "__main__":
                 num_iterations=args.num_iterations,
                 burnin_iterations=args.burnin_iterations,
                 backprop=args.backprop,
-                partition_function_only=False
+                partition_function_only=False,
             )
             mu_time = np.mean(elapsed_times)
             peak_gpu_memory = np.max(gpu_memory_peaks)
@@ -213,19 +225,28 @@ if __name__ == "__main__":
             mu_time, peak_gpu_memory = np.nan, np.nan
         del model
 
-        benchmark_results.append({
-            'dataset': args.dataset,
-            'model': args.model,
-            'exp_alias': ('complex' if args.complex else 'real') if 'SOS' in args.model else '',
-            'time': mu_time,
-            'gpu_memory': peak_gpu_memory,
-            "num_components": 1,
-            "num_units": num_units,
-            metric: metric_value
-        })
+        benchmark_results.append(
+            {
+                "dataset": args.dataset,
+                "model": args.model,
+                "exp_alias": (
+                    ("complex" if args.complex else "real")
+                    if "SOS" in args.model
+                    else ""
+                ),
+                "time": mu_time,
+                "gpu_memory": peak_gpu_memory,
+                "num_components": 1,
+                "num_units": num_units,
+                metric: metric_value,
+            }
+        )
 
     path = os.path.join("benchmarks", args.dataset)
     os.makedirs(path, exist_ok=True)
-    filename = '-'.join([args.model] + ((['complex'] if args.complex else ['real']) if 'SOS' in args.model else []))
+    filename = "-".join(
+        [args.model]
+        + ((["complex"] if args.complex else ["real"]) if "SOS" in args.model else [])
+    )
     filepath = os.path.join(path, f"{filename}.csv")
     pd.DataFrame.from_dict(benchmark_results).to_csv(filepath)

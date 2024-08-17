@@ -83,7 +83,7 @@ if __name__ == "__main__":
         y=metric,
         size="gpu_memory",
         hue="model_id",
-        legend='brief' if args.legend else False,
+        legend="brief" if args.legend else False,
         alpha=0.7,
         sizes=(36, 512),
         ax=ax,
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         s=8,
         legend=False,
         alpha=0.7,
-        ax=ax
+        ax=ax,
     )
     ax.margins(x=0.1, y=0.16)
     ax.set_xscale("log")
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     if args.legend:
         if args.move_legend_outside:
             handles, labels = ax.get_legend_handles_labels()
-            if len(handles) > 10:
+            if len(handles) > 11:
                 del handles[10]
                 del labels[10]
             if len(handles) > 8:
@@ -155,7 +155,7 @@ if __name__ == "__main__":
                 title=r"Class \quad Memory (GiB)",
                 ncols=2,
                 handleheight=3.2,
-                alignment='left'
+                alignment="left",
             )
         else:
             handles, labels = ax.get_legend_handles_labels()
