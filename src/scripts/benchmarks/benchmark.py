@@ -98,7 +98,7 @@ def run_benchmark(
             for x in data_loader:
                 yield x
 
-    if args.eval_backprop:
+    if backprop:
         # Setup losses and a dummy optimizer (only used to free gradient tensors)
         optimizer = optim.SGD(model.parameters(), lr=0.01)
     else:
