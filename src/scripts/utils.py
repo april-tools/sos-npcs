@@ -277,6 +277,7 @@ def setup_data_loaders(
     discretize_unique: bool = False,
     discretize_bins: int = 32,
     shuffle_bins: bool = False,
+    drop_last: bool = False,
 ) -> Tuple[dict, Tuple[DataLoader, DataLoader, DataLoader]]:
     logger.info(f"Loading dataset '{dataset}' ...")
 
@@ -403,7 +404,7 @@ def setup_data_loaders(
                 train_data, xlim=metadata["domains"][0], ylim=metadata["domains"][1]
             )
     train_dataloader = DataLoader(
-        train_data, batch_size, num_workers=num_workers, shuffle=True
+        train_data, batch_size, num_workers=num_workers, shuffle=True, drop_last=drop_last
     )
     valid_dataloader = DataLoader(valid_data, batch_size, num_workers=num_workers)
     test_dataloader = DataLoader(test_data, batch_size, num_workers=num_workers)
