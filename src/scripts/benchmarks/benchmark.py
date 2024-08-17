@@ -226,7 +226,7 @@ if __name__ == "__main__":
             metric: metric_value
         })
 
-    path = "benchmarks"
+    path = os.path.join("benchmarks", args.dataset)
     os.makedirs(path, exist_ok=True)
     filename = '-'.join([args.model] + ((['complex'] if args.complex else ['real']) if 'SOS' in args.model else []))
     filepath = os.path.join(path, f"{filename}.csv")
