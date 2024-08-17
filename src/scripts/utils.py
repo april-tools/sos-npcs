@@ -429,6 +429,11 @@ def setup_model(
 ) -> Union[PC, Flow]:
     logger.info(f"Building model '{model_name}' ...")
 
+    if num_input_units < 0:
+        num_input_units = num_units
+    if mono_num_input_units < 0:
+        mono_num_input_units = mono_num_units
+
     if mono_clamp and model_name not in ["MPC", "ExpSOS"]:
         raise ValueError("--mono-clamp can only be used with MPC and ExpSOS circuits")
     if complex and model_name not in ["SOS", "ExpSOS"]:
