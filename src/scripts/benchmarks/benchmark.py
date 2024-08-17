@@ -194,7 +194,7 @@ if __name__ == "__main__":
             num_components=1,
             num_units=num_units,
             mono_num_units=args.mono_num_units,
-            mono_clamp=True,
+            mono_clamp=True if args.model in ['MPC', 'ExpSOS'] else False,
             complex=args.complex,
             seed=args.seed
         )
