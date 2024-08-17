@@ -99,7 +99,7 @@ if __name__ == "__main__":
         alpha=0.7,
         ax=ax
     )
-    ax.margins(x=0.1, y=0.2)
+    ax.margins(x=0.1, y=0.16)
     ax.set_xscale("log")
     ax.set_xlabel("")
     if args.xlabel:

@@ -208,9 +208,9 @@ if __name__ == "__main__":
                 partition_function_only=False
             )
             mu_time = np.mean(elapsed_times)
-            mu_gpu_memory = np.mean(gpu_memory_peaks)
+            peak_gpu_memory = np.max(gpu_memory_peaks)
         except torch.cuda.OutOfMemoryError:
-            mu_time, mu_gpu_memory = np.nan, np.nan
+            mu_time, peak_gpu_memory = np.nan, np.nan
         del model
 
         benchmark_results.append({
@@ -218,7 +218,7 @@ if __name__ == "__main__":
             'model': args.model,
             'exp_alias': ('complex' if args.complex else 'real') if 'SOS' in args.model else '',
             'time': mu_time,
-            'gpu_memory': mu_gpu_memory,
+            'gpu_memory': peak_gpu_memory,
             "num_components": 1,
             "num_units": num_units,
             metric: metric_value
