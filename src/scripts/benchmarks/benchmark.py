@@ -98,6 +98,8 @@ def run_benchmark(
             for x in data_loader:
                 yield x
 
+    model = model.to(device)
+
     if backprop:
         # Setup losses and a dummy optimizer (only used to free gradient tensors)
         optimizer = optim.SGD(model.parameters(), lr=0.01)
@@ -115,7 +117,7 @@ def run_benchmark(
         gc.collect()
         gc.disable()
         # Reset peak memory usage statistics
-        torch.cuda.reset_peak_memory_stats(model.device)
+        torch.cuda.reset_peak_memory_stats(device)
         # torch.cuda.synchronize(device)  # Synchronize CUDA operations
         batch = batch.to(device)
         # torch.cuda.synchronize(device)  # Make sure the batch is already loaded (do not take into account this!)
@@ -198,7 +200,6 @@ if __name__ == "__main__":
             complex=args.complex,
             seed=args.seed
         )
-        model = model.to(device)
 
         try:
             elapsed_times, gpu_memory_peaks = run_benchmark(
