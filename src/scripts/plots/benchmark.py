@@ -1,5 +1,6 @@
 import argparse
 import os
+from typing import Union
 
 import matplotlib.ticker as tck
 import pandas as pd
@@ -14,32 +15,58 @@ parser = argparse.ArgumentParser(
     description="Plot benchmark results",
 )
 parser.add_argument(
-    "csvdir", type=str, help="The directory containing CSV benchmark results"
+    "csvpath", type=str, help="The directory containing CSV benchmark results"
 )
 parser.add_argument("dataset", type=str, help="Dataset name")
 parser.add_argument("--metric", default="bpd", help="The metric to plot")
 parser.add_argument(
-    "--legend", action="store_trure", default=False, help="Whether to show the legend"
+    "--xlabel",
+    action="store_true",
+    default=False,
+    help="Whether to show the x-axis label",
+)
+parser.add_argument(
+    "--ylabel",
+    action="store_true",
+    default=False,
+    help="Whether to show the y-axis label",
+)
+parser.add_argument(
+    "--ylabel-horizontal",
+    action="store_true",
+    default=False,
+    help="Whether to rotate the y-axis label horizontally",
+)
+parser.add_argument(
+    "--legend", action="store_true", default=False, help="Whether to show the legend"
+)
+parser.add_argument(
+    "--move-legend-outside",
+    action="store_true",
+    default=False,
+    help="Whether to move the legend outside",
 )
 
 
-def from_bytes_to_gib(bytes: int) -> float:
+def from_bytes_to_gib(bytes: Union[int, float]) -> float:
     return bytes / (1024.0 * 1024.0 * 1024.0)
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    metric = (
-        ("Best/Train/" + args.metric) if args.train else ("Best/Test/" + args.metric)
-    )
+    metric = "Best/Test/" + args.metric
 
     dfs = []
-    for filename in os.listdir(args.csvdir):
-        filepath = os.path.join(args.csvdir, filename)
-        df = pd.read_csv(args.csv)
+    for filename in os.listdir(os.path.join(args.csvpath, args.dataset)):
+        filepath = os.path.join(args.csvpath, args.dataset, filename)
+        df = pd.read_csv(filepath)
         dfs.append(df)
     df = pd.concat(dfs, axis=0)
     df = preprocess_dataframe(df)
+    df["gpu_memory"] = df.apply(
+        lambda row: from_bytes_to_gib(row.gpu_memory),
+        axis=1,
+    )
 
     num_rows = 1
     num_cols = 1
@@ -54,13 +81,38 @@ if __name__ == "__main__":
         df,
         x="time",
         y=metric,
-        hue="gpu_memory",
-        palette="model_id",
-        legend=args.legend,
-        alpha=0.8,
+        size="gpu_memory",
+        hue="model_id",
+        legend='brief' if args.legend else False,
+        alpha=0.67,
+        sizes=(25, 350),
         ax=ax,
     )
-
+    sb.scatterplot(
+        df,
+        x="time",
+        y=metric,
+        hue="model_id",
+        style="model_id",
+        s=6,
+        legend=False,
+        alpha=0.9,
+        ax=ax
+    )
+    ax.margins(0.175)
+    ax.set_xscale("log")
+    ax.set_xlabel("")
+    if args.xlabel:
+        ax.annotate(
+            r"time\,(s) / step",
+            fontsize=9,
+            xy=(1.05, 0),
+            xytext=(1, -1.5 * rcParams["xtick.major.pad"]),
+            ha="left",
+            va="top",
+            xycoords="axes fraction",
+            textcoords="offset points",
+        )
     if args.ylabel:
         formatted_metric = format_metric(args.metric)
         if args.ylabel_horizontal:
@@ -82,7 +134,27 @@ if __name__ == "__main__":
     ax.set_title(format_dataset(args.dataset))
     if args.legend:
         if args.move_legend_outside:
-            sb.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), title="")
+            handles, labels = ax.get_legend_handles_labels()
+            del handles[9]
+            del labels[9]
+            del handles[7]
+            del labels[7]
+            del handles[5]
+            del labels[5]
+            del handles[0]
+            del labels[0]
+
+            ax.legend(
+                loc="upper left",
+                handles=handles,
+                labels=labels,
+                bbox_to_anchor=(1, 1),
+                fontsize=8,
+                title=r"Class \quad Memory (GiB)",
+                ncols=2,
+                handleheight=3,
+                alignment='left'
+            )
         else:
             handles, labels = ax.get_legend_handles_labels()
             ax.legend(handles, labels)
