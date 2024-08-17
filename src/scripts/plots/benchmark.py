@@ -73,8 +73,8 @@ if __name__ == "__main__":
     setup_tueplots(
         num_rows,
         num_cols,
-        rel_width=0.5,
-        hw_ratio=0.8,
+        rel_width=0.55,
+        hw_ratio=0.67,
     )
     fig, ax = plt.subplots(num_rows, num_cols, squeeze=True, sharey=True)
     sb.scatterplot(
@@ -84,8 +84,8 @@ if __name__ == "__main__":
         size="gpu_memory",
         hue="model_id",
         legend='brief' if args.legend else False,
-        alpha=0.67,
-        sizes=(25, 350),
+        alpha=0.7,
+        sizes=(36, 512),
         ax=ax,
     )
     sb.scatterplot(
@@ -94,17 +94,17 @@ if __name__ == "__main__":
         y=metric,
         hue="model_id",
         style="model_id",
-        s=6,
+        s=8,
         legend=False,
-        alpha=0.9,
+        alpha=0.7,
         ax=ax
     )
-    ax.margins(0.175)
+    ax.margins(x=0.1, y=0.2)
     ax.set_xscale("log")
     ax.set_xlabel("")
     if args.xlabel:
         ax.annotate(
-            r"time\,(s) / step",
+            r"time\,(s) / optimization step",
             fontsize=9,
             xy=(1.05, 0),
             xytext=(1, -1.5 * rcParams["xtick.major.pad"]),
@@ -135,10 +135,12 @@ if __name__ == "__main__":
     if args.legend:
         if args.move_legend_outside:
             handles, labels = ax.get_legend_handles_labels()
-            del handles[9]
-            del labels[9]
-            del handles[7]
-            del labels[7]
+            if len(handles) > 10:
+                del handles[10]
+                del labels[10]
+            if len(handles) > 8:
+                del handles[8]
+                del labels[8]
             del handles[5]
             del labels[5]
             del handles[0]
@@ -152,7 +154,7 @@ if __name__ == "__main__":
                 fontsize=8,
                 title=r"Class \quad Memory (GiB)",
                 ncols=2,
-                handleheight=3,
+                handleheight=3.2,
                 alignment='left'
             )
         else:
