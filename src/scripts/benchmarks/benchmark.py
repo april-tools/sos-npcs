@@ -227,6 +227,6 @@ if __name__ == "__main__":
 
     path = "benchmarks"
     os.makedirs(path, exist_ok=True)
-    filename = '-'.join([args.model] + ((['complex'] if args.complex else ['real']) if 'SOS' in args.model else []) + [args.num_units])
+    filename = '-'.join([args.model] + ((['complex'] if args.complex else ['real']) if 'SOS' in args.model else []))
     filepath = os.path.join(path, f"{filename}.csv")
     pd.DataFrame.from_dict(benchmark_results).to_csv(filepath)
