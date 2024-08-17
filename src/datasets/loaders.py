@@ -193,9 +193,15 @@ def load_image_dataset(name: str, path: str = "datasets") -> Tuple[
         )
         valid_data = train_data[valid_idx]
         train_data = train_data[train_idx]
-    train_data = TensorDataset(train_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous())
-    valid_data = TensorDataset(valid_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous())
-    test_data = TensorDataset(test_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous())
+    train_data = TensorDataset(
+        train_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous()
+    )
+    valid_data = TensorDataset(
+        valid_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous()
+    )
+    test_data = TensorDataset(
+        test_data.permute(0, 3, 1, 2).flatten(start_dim=2).contiguous()
+    )
 
     return (
         image_shape,

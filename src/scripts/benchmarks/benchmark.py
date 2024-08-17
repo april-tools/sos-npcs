@@ -1,23 +1,19 @@
 import argparse
 import gc
 import os
-from typing import Tuple, List, Iterator, Union
+from typing import Iterator, List, Tuple, Union
 
 import numpy as np
-import torch
 import pandas as pd
+import torch
+from torch import Tensor, optim
+from torch.utils.data import DataLoader
 
 from datasets.loaders import IMAGE_DATASETS
 from models import PC
-from torch import optim, Tensor
-from torch.utils.data import DataLoader
-
 from scripts.logger import Logger
-from scripts.utils import (
-    set_global_seed,
-    setup_data_loaders,
-    setup_model, retrieve_tboard_runs,
-)
+from scripts.utils import (retrieve_tboard_runs, set_global_seed,
+                           setup_data_loaders, setup_model)
 from utilities import PCS_MODELS
 
 parser = argparse.ArgumentParser(description="Benchmarking script")
@@ -218,10 +214,12 @@ if __name__ == "__main__":
         del model
 
         benchmark_results.append({
+            'dataset': args.dataset,
             'model': args.model,
             'exp_alias': ('complex' if args.complex else 'real') if 'SOS' in args.model else '',
             'time': mu_time,
             'gpu_memory': mu_gpu_memory,
+            "num_components": 1,
             "num_units": num_units,
             metric: metric_value
         })

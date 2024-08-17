@@ -28,7 +28,7 @@ parser.add_argument(
     "--select-best-run",
     action="store_true",
     default=False,
-    help="Whether to select the best run"
+    help="Whether to select the best run",
 )
 parser.add_argument(
     "--train",
@@ -119,7 +119,7 @@ if __name__ == "__main__":
         y=metric,
         hue="model_id",
         style="model_id",
-        errorbar=('ci', 100),
+        errorbar=("ci", 100),
         linewidth=1.2,
         markers=True,
         dashes=False,

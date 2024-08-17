@@ -416,10 +416,12 @@ class ExpSOS(PC):
             non_mono_clamp=non_mono_clamp,
             complex=complex,
         )
-        if input_layer == 'embedding':
-            mono_input_layer = 'categorical'
-            assert 'num_states' in input_layer_kwargs
-            mono_input_layer_kwargs = {'num_categories': input_layer_kwargs['num_states']}
+        if input_layer == "embedding":
+            mono_input_layer = "categorical"
+            assert "num_states" in input_layer_kwargs
+            mono_input_layer_kwargs = {
+                "num_categories": input_layer_kwargs["num_states"]
+            }
         else:
             mono_input_layer = input_layer
             mono_input_layer_kwargs = input_layer_kwargs
@@ -444,12 +446,11 @@ class ExpSOS(PC):
                 # Apply the conjugate operator if the circuit is complex
                 sym_prod_circuit = SF.multiply(
                     SF.multiply(sym_mono_circuit, SF.conjugate(sym_circuit)),
-                    sym_circuit
+                    sym_circuit,
                 )
             else:
                 sym_prod_circuit = SF.multiply(
-                    SF.multiply(sym_mono_circuit, sym_circuit),
-                    sym_circuit
+                    SF.multiply(sym_mono_circuit, sym_circuit), sym_circuit
                 )
 
             # Integrate the overall product circuit
@@ -495,10 +496,14 @@ def _build_region_graphs(
         return [_build_lt_region_graph(num_variables, random=False) for _ in range(k)]
     elif name == "qt-2":
         assert image_shape is not None
-        return [_build_qt_region_graph(image_shape, num_patch_splits=2) for _ in range(k)]
+        return [
+            _build_qt_region_graph(image_shape, num_patch_splits=2) for _ in range(k)
+        ]
     elif name in ["qt", "qt-4"]:
         assert image_shape is not None
-        return [_build_qt_region_graph(image_shape, num_patch_splits=4) for _ in range(k)]
+        return [
+            _build_qt_region_graph(image_shape, num_patch_splits=4) for _ in range(k)
+        ]
     raise NotImplementedError()
 
 
@@ -513,7 +518,9 @@ def _build_lt_region_graph(
     return LinearRegionGraph(num_variables, random=random, seed=seed)
 
 
-def _build_qt_region_graph(image_shape: Tuple[int, int, int], num_patch_splits: int) -> RegionGraph:
+def _build_qt_region_graph(
+    image_shape: Tuple[int, int, int], num_patch_splits: int
+) -> RegionGraph:
     num_channels, height, width = image_shape
     return QuadGraph((height, width), is_tree=True, num_patch_splits=num_patch_splits)
 

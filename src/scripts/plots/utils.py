@@ -3,7 +3,12 @@ from typing import Optional
 import pandas as pd
 
 
-def format_model(m: str, exp_alias: str, num_components: Optional[int] = None, merge_model_ids: bool = False) -> str:
+def format_model(
+    m: str,
+    exp_alias: str,
+    num_components: Optional[int] = None,
+    merge_model_ids: bool = False,
+) -> str:
     if m == "MPC":
         return r"$+_{\mathsf{sd}}$"
     elif m == "SOS":
@@ -37,7 +42,7 @@ def format_dataset(d: str) -> str:
         "MNIST": "MNIST",
         "FashionMNIST": "Fashion-MNIST",
         "CIFAR10": "CIFAR-10",
-        "CelebA": "CelebA"
+        "CelebA": "CelebA",
     }[d]
 
 
@@ -66,22 +71,21 @@ def filter_dataframe(df: pd.DataFrame, filter_dict: dict) -> pd.DataFrame:
     return df
 
 
-def preprocess_dataframe(df: pd.DataFrame, merge_model_ids: bool = False) -> pd.DataFrame:
+def preprocess_dataframe(
+    df: pd.DataFrame, merge_model_ids: bool = False
+) -> pd.DataFrame:
     df = df.copy()
     df["model_id"] = df.apply(
         lambda row: format_model(
             row.model,
             row.exp_alias,
             row.num_components,
-            merge_model_ids=merge_model_ids
-        ), axis=1
+            merge_model_ids=merge_model_ids,
+        ),
+        axis=1,
     )
     df["model_order"] = df.apply(
-        lambda row: format_model_order(
-            row.model,
-            row.exp_alias,
-            row.num_components
-        ),
+        lambda row: format_model_order(row.model, row.exp_alias, row.num_components),
         axis=1,
     )
     df.sort_values(by="model_order", ascending=True, inplace=True)

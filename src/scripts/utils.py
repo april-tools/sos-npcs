@@ -217,7 +217,7 @@ def build_run_id(args):
     else:
         rs.append(args.model)
     if args.model in PCS_MODELS:
-        if args.region_graph_sd and args.region_graph == 'rnd-bt':
+        if args.region_graph_sd and args.region_graph == "rnd-bt":
             rs.append(f"RG{args.region_graph}-sd")
         else:
             rs.append(f"RG{args.region_graph}")
@@ -404,7 +404,11 @@ def setup_data_loaders(
                 train_data, xlim=metadata["domains"][0], ylim=metadata["domains"][1]
             )
     train_dataloader = DataLoader(
-        train_data, batch_size, num_workers=num_workers, shuffle=True, drop_last=drop_last
+        train_data,
+        batch_size,
+        num_workers=num_workers,
+        shuffle=True,
+        drop_last=drop_last,
     )
     valid_dataloader = DataLoader(valid_data, batch_size, num_workers=num_workers)
     test_dataloader = DataLoader(test_data, batch_size, num_workers=num_workers)

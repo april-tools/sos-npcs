@@ -44,7 +44,7 @@ class CELEBA(Dataset):
                 transforms.Resize((64, 64)),
                 transforms.ToTensor(),
                 transforms.Lambda(lambda x: (x * 255).to(torch.int64)),
-                transforms.Lambda(rgb2ycc)
+                transforms.Lambda(rgb2ycc),
             ]
         else:
             ts = [

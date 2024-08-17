@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from matplotlib import rcParams
 
 from graphics.utils import setup_tueplots
-from scripts.plots.utils import format_metric, format_dataset, preprocess_dataframe
+from scripts.plots.utils import format_dataset, format_metric, preprocess_dataframe
 from scripts.utils import retrieve_tboard_runs
 
 parser = argparse.ArgumentParser(
@@ -17,8 +17,10 @@ parser.add_argument("dataset", type=str, help="Dataset name")
 parser.add_argument("--metric", default="avg_ll", help="The metric to plot")
 parser.add_argument("--models", default="MPC;SOS", help="The models")
 parser.add_argument(
-    "--plot-single-squares", action='store_true', default=False,
-    help="Whether to also show single squared PC"
+    "--plot-single-squares",
+    action="store_true",
+    default=False,
+    help="Whether to also show single squared PC",
 )
 parser.add_argument(
     "--train",
@@ -99,7 +101,9 @@ if __name__ == "__main__":
     # sb.move_legend(ax, handlelength=1.0, handletextpad=0.5, loc="best")
     if args.legend:
         if args.move_legend_outside and not args.plot_single_squares:
-            sb.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), title="", framealpha=0.6)
+            sb.move_legend(
+                ax, "upper left", bbox_to_anchor=(1, 1), title="", framealpha=0.6
+            )
         else:
             handles, labels = ax.get_legend_handles_labels()
             ax.legend(handles, labels, framealpha=0.6)
@@ -135,10 +139,10 @@ if __name__ == "__main__":
     path = os.path.join("figures", "sum-of-squares")
     os.makedirs(path, exist_ok=True)
     if args.train:
-        flags = 'train'
+        flags = "train"
     else:
-        flags = 'test'
+        flags = "test"
     if args.plot_single_squares:
-        flags = f'{flags}-compact'
+        flags = f"{flags}-compact"
     filename = f"{args.dataset}-{flags}.pdf"
     plt.savefig(os.path.join(path, filename))

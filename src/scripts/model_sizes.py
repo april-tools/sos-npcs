@@ -1,6 +1,5 @@
 import argparse
 
-
 import numpy as np
 
 from scripts.utils import retrieve_tboard_runs
@@ -19,7 +18,5 @@ if __name__ == "__main__":
     #     {"num_sum_params": [np.min, np.max]}
     # )
     # df.to_csv("model_sizes.csv")
-    df = df.groupby(by=["dataset"]).agg(
-        {"num_sum_params": [np.min, np.max]}
-    )
+    df = df.groupby(by=["dataset"]).agg({"num_sum_params": [np.min, np.max]})
     print(df)

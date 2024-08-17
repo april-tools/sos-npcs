@@ -167,9 +167,7 @@ def test_discrete_complex_sos_pc(
         )
     ),
 )
-def test_discrete_exp_sos_pc(
-    num_variables, num_units, region_graph, sd, input_layer
-):
+def test_discrete_exp_sos_pc(num_variables, num_units, region_graph, sd, input_layer):
     input_layer_kwargs = (
         {"num_categories": 2} if input_layer == "categorical" else {"num_states": 2}
     )
