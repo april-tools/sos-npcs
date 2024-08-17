@@ -4,7 +4,7 @@ PYSCRIPT="scripts.benchmarks.benchmark"
 TBOARD_PATH="${TBOARD_PATH:-tboard-runs/image-data-complete}"
 DATA_PATH="${DATA_PATH:-datasets}"
 
-BENCHMARK_FLAGS="--backprop --num-iterations 5 --burn-in-iterations 1 --batch-size 256 --data-path $DATA_PATH"
+BENCHMARK_FLAGS="--backprop --num-iterations 50 --burnin-iterations 5 --batch-size 256 --data-path $DATA_PATH"
 
 
 python -m "$PYSCRIPT" "$TBOARD_PATH" MNIST MPC $BENCHMARK_FLAGS --num-units "16 32 64 128 256 512"
