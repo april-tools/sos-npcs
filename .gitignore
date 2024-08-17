@@ -10,7 +10,6 @@ __pycache__
 /wandb*
 /slurm/logs/*
 figures
-benchmarks
 mnt
 
 *.png
