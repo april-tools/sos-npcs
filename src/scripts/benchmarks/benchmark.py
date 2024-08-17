@@ -24,6 +24,7 @@ parser = argparse.ArgumentParser(description="Benchmarking script")
 parser.add_argument("tboard_path", type=str, help="The Tensorboard runs path")
 parser.add_argument("dataset", type=str, choices=IMAGE_DATASETS,  help="The image dataset")
 parser.add_argument("model", type=str, choices=PCS_MODELS, help="The PC to benchmark")
+parser.add_argument("--data-path", type=str, default="datasets", help="The data sets directory")
 parser.add_argument(
     "--num-iterations",
     type=int,
