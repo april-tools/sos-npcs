@@ -130,13 +130,13 @@ if __name__ == "__main__":
             ax.set_ylabel("NLL")
     else:
         ax.set_ylabel("")
-    ax.yaxis.set_major_formatter(
-        lambda y, pos: (
-            f"{y:.0f}"
-            if np.abs(y) >= 1.0
-            else (f"{y:.1f}"[1:] if y >= 0.0 else "-" + f"{y:.1f}"[2:])
-        )
-    )
+    # ax.yaxis.set_major_formatter(
+    #     lambda y, pos: (
+    #         f"{y:.0f}"
+    #         if np.abs(y) >= 1.0
+    #         else (f"{y:.1f}"[1:] if y >= 0.0 else "-" + f"{y:.1f}"[2:])
+    #     )
+    # )
     if not args.xticks:
         ax.set_xticks([])
     ax.grid(linestyle="--", which="major", alpha=0.3, linewidth=0.5)
