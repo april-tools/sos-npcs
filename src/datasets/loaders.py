@@ -7,7 +7,6 @@ from typing import List, Optional, Tuple
 import numpy as np
 import torch
 from sklearn.model_selection import train_test_split
-from torch import Tensor
 from torch.utils.data import Dataset, TensorDataset
 from torchvision.datasets import CIFAR10, MNIST, FashionMNIST
 
@@ -22,7 +21,6 @@ from datasets.wrappers.artificial import (
     spiral_sample,
 )
 from datasets.wrappers.celeba import CELEBA
-from datasets.wrappers.gpt2_commongen import load_gpt2_commongen
 
 SMALL_UCI_DATASETS = ["biofam", "flare", "lymphography", "spect", "tumor", "votes"]
 
@@ -58,7 +56,7 @@ CONTINUOUS_DATASETS = ["power", "gas", "hepmass", "miniboone", "bsds300"]
 
 ARTIFICIAL_DATASETS = ["ring", "mring", "funnel", "banana", "cosine", "spiral"]
 
-LANGUAGE_DATASETS = ["gpt2_commongen"]
+LANGUAGE_DATASETS = []
 
 
 ALL_DATASETS = (
@@ -67,7 +65,6 @@ ALL_DATASETS = (
     + IMAGE_DATASETS
     + CONTINUOUS_DATASETS
     + ARTIFICIAL_DATASETS
-    + LANGUAGE_DATASETS
 )
 
 
@@ -303,16 +300,4 @@ def load_artificial_dataset(
     valid_data, test_data = train_test_split(
         valid_test_data, test_size=num_test_samples, shuffle=False
     )
-    return train_data, valid_data, test_data
-
-
-def load_language_dataset(
-    name: str, path: str = "datasets", seq_length: int = 32, seed: int = 42
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    path = os.path.join(path, "language")
-    if name == "gpt2_commongen":
-        assert seq_length == 32
-        train_data, valid_data, test_data = load_gpt2_commongen(path=path, seed=seed)
-    else:
-        raise ValueError(f"Unknown language dataset called {name}")
     return train_data, valid_data, test_data

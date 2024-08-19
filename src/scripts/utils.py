@@ -23,7 +23,6 @@ from datasets.loaders import (
     load_binary_dataset,
     load_continuous_dataset,
     load_image_dataset,
-    load_language_dataset,
     load_small_uci_dataset,
 )
 from graphics.distributions import (

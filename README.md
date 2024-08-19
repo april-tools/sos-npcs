@@ -1,11 +1,6 @@
-# Subtractive Mixture Models via Squaring: Representation and Learning
+# Sum of Squares Circuits
 
-This repository contains the code for reproducing the experiments of the paper
-[_"Subtractive Mixture Models via Squaring: Representation and Learning"_](https://openreview.net/forum?id=xIHi5nxu9P), which has been accepted at ICLR 2024.
-
-We show how to effectively represent and learn a generic class of (deep) mixture models encoding subtractions of
-probability distributions, called _squared non-monotonic PCs_ (NPC<sup>2</sup>s), and theoretically prove they can be
-exponentially more expressive than addition-only mixture models.
+This repository contains the code for reproducing the experiments of the paper [_"Sum of Squares Circuits"_].
 
 ## Project Structure
 
@@ -15,8 +10,8 @@ The directory ```src``` contains all the code, including utility scripts to run 
 the papers starting from tensorboard log files (see below). In ```src/tests``` we store sanity checks that can be run
 by executing ```pytest``` at the root level.
 The directory ```econfigs``` contains the configuration files for all the experiments, which consist of selections of
-models, datasets and all the relevant hyperparameters.  The directory ```slurm``` contains utility script to execute
-batches of experiments (e.g., grid  searches) on a Slurm cluster.
+models, datasets and all the relevant hyperparameters.  The directories ```slurm``` and ```sge``` contain some utility scripts to execute
+batches of experiments (e.g., grid  searches) on Slurm and Sun Grid Engine (SGE) clusters.
 
 ## How to Run Experiments?
 
@@ -28,12 +23,11 @@ which is the default one.
 #### UCI Datasets
 
 The continuous UCI data sets that are commonly used in the _normalizing flow_ literature, i.e.,
-Power, Gas, Hepmass, MiniBoone and also BSDS300, can be downloaded from [zenodo](https://zenodo.org/record/1161203#.Wmtf_XVl8eN).
+Power, Gas, Hepmass and MiniBoone, can be downloaded from [zenodo](https://zenodo.org/record/1161203#.Wmtf_XVl8eN).
 
-#### Sentences sampled from GPT2
+#### Image data sets
 
-The sentences sampled from GPT2 four our experiments on model distillation can be downloaded from [here](https://github.com/april-tools/squared-npcs/releases/download/v0.1/gpt2_commongen.zip).
-After downloading it, you need to decompress it in the ```./datasets/language/gpt2_commongen``` directory.
+The download of image data sets -- MNIST, FashionMNIST and CelebA -- is managed automatically thrugh ```torchvision```.
 
 ### Run the same hyperparameters grid searches
 
@@ -45,29 +39,26 @@ See below section about running grids of experiments for details.
 Simple experiments can be run by executing the Python module ```scripts.experiment.py```.
 For a complete overview of the parameters to pass to it, it is suggested to read its code. 
 
-For example, to run an experiment with a ```MonotonicPC``` having input layers computing splines over 32 knots
-and on the synthetic dataset ```cosine```, you can execute
+For example, to run an experiment with a ```MPC``` having input layers computing Gaussian likeliohoods on the dataset ```Power```, you can execute
 ```shell
-python -m scripts.experiment --dataset cosine --model MonotonicPC --num-components 8 --splines --spline-knots 32 \
-    --optimizer Adam --learning-rate 1e-3 --batch-size 128 --verbose
+python -m scripts.experiment --dataset power --model MPC --num-units 8 \
+    --optimizer Adam --learning-rate 1e-3 --batch-size 128 --verbose --device cuda
 ```
-The ```--num-components``` argument is used to provide the number of components of each sum unit in the
+The ```--num-units``` argument is used to provide the number of sum, product and input units of each layer in the
 tensorized circuit architecture built.
 
 Note that the flag ```--verbose``` will enable terminal logging (e.g., to show the loss).
 All the models are learned by minimizing the negative log-likelihood on the
 training data with gradient descent.
 
-In addition, to run an experiment with a squared non-monotonic PC -- ```BornPC``` --
-on the artificially-constructed data set ```cosine```, you can execute
+In addition, to run an experiment with (sum of) complex squared PCs -- ```SOS``` --
+on the data set ```Power```, you can execute
 ```shell
-python -m scripts.experiment --dataset cosine --model BornPC --num-components 4 \
-    --optimizer Adam --learning-rate 1-3
-    --batch-size 128 --verbose --num-samples 10000
+python -m scripts.experiment --dataset power --model SOS --num-units 8 --complex --num-components 4 \
+    --optimizer Adam --learning-rate 1e-3 --batch-size 128 --verbose --device cuda
 ```
-The ```--num-samples``` argument is used to specify the number of samples to draw from the
-artificial distribution to construct the training split.
-An additional 10%/20% amount of samples will be drawn to construct the validation/test split.
+The ```--num-components``` argument is used to specify the number of squares in the SOS PC,
+and the argument ```--complex``` enables complex parameters.
 
 #### Logging Metrics and Models
 
@@ -82,10 +73,6 @@ an improvement of the loss on the validation data.
 To enable this, you can specify
 ```--save-checkpoint``` and ```--checkpoint-path /path/to/checkpoints```
 with a path that will contain the model's weights in the ```.pt``` PyTorch format.
-
-In the checkpoints path it will be also saved additional information, e.g.,
-the (quantized) probability density/mass functions estimated by the models on the
-artificial continuous/discrete 2D data sets. 
 
 ### Run a Grid of Experiments
 
@@ -140,11 +127,10 @@ Then, we need to generate the commands to dispatch and save it to a text file.
 For this purpose, it is possible to use the script ```scripts.grid``` (see above) with the argument ```--dry-run```.
 For instance, to generate the commands to execute for the experiments on UCI data sets, it suffices to run the command
 ```shell
-python -m scripts.grid econfigs/uci-data-splines.json --dry-run > exps-uci-data-splines.txt
+python -m scripts.grid econfigs/image-sos-npcs.json --dry-run > exps-image-sos-npcs.txt
 ```
 Finally, the Bash script ```slurm/launch.sh``` will automatically dispatch an array of Slurm jobs to execute.
 ```shell
-EXPS_ID=uci-data bash slurm/launch.sh exps-uci-data-splines.txt
+EXPS_ID=image-sos-npcs bash slurm/launch.sh exps-image-sos-npcs.txt
 ```
 The Slurm jobs should now appear somewhere in the queue, which can be viewed by running ```squeue```.
-
