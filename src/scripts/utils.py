@@ -347,22 +347,7 @@ def setup_data_loaders(
         valid_data = TensorDataset(torch.tensor(valid_data))
         test_data = TensorDataset(torch.tensor(test_data))
     elif language_dataset:
-        train_data, valid_data, test_data = load_language_dataset(
-            dataset, path=path, seed=123
-        )
-        seq_length = train_data.shape[1]
-        metadata["image_shape"] = None
-        metadata["num_variables"] = seq_length
-        metadata["hmap"] = None
-        metadata["type"] = "language"
-        metadata["interval"] = (
-            torch.min(train_data).item(),
-            torch.max(train_data).item(),
-        )
-        metadata["domains"] = None
-        train_data = TensorDataset(train_data)
-        valid_data = TensorDataset(valid_data)
-        test_data = TensorDataset(test_data)
+        raise NotImplementedError()
     else:
         train_data, valid_data, test_data = load_artificial_dataset(
             dataset,
