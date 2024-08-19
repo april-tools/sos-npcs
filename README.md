@@ -6,9 +6,10 @@ This repository contains the code for reproducing the experiments of the paper [
 
 The repository is structured as follows.
 The file ```requirements.txt``` contains all the required Python dependencies, which can be installed by ```pip```.
-The directory ```src``` contains all the code, including utility scripts to run experiments and reproduce the plots of
-the papers starting from tensorboard log files (see below). In ```src/tests``` we store sanity checks that can be run
+The directory ```src``` contains the code related the paper, including utility scripts to run experiments and reproduce the plots of
+the paper starting from tensorboard log files (see below). In ```src/tests``` we store sanity checks that can be run
 by executing ```pytest``` at the root level.
+In addition, ```cirkit``` contains a general-purpose circuit library, where the product of circuits is implemented.
 The directory ```econfigs``` contains the configuration files for all the experiments, which consist of selections of
 models, datasets and all the relevant hyperparameters.  The directories ```slurm``` and ```sge``` contain some utility scripts to execute
 batches of experiments (e.g., grid  searches) on Slurm and Sun Grid Engine (SGE) clusters.
