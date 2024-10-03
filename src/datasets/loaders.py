@@ -19,6 +19,7 @@ from datasets.wrappers.artificial import (
     rotate_samples,
     single_ring_sample,
     spiral_sample,
+    crossing_rings_sample,
 )
 from datasets.wrappers.celeba import CELEBA
 

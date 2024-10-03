@@ -137,10 +137,7 @@ def bivariate_pdf_heatmap(
         raise ValueError("A PC defined over two variables is required")
     elif model.num_variables == 2:
         xy = torch.from_numpy(xy).to(device)
-        if isinstance(model, PC):
-            zi = model.log_prob(xy)
-        else:
-            zi = model().log_prob(xy)
+        zi = model.log_likelihood(xy)
     else:
         raise NotImplementedError()
     zi = torch.exp(zi).cpu().numpy().reshape(xi.shape)
