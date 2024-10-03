@@ -26,7 +26,7 @@ parser.add_argument(
     help="Whether to log the learned distribution",
 )
 parser.add_argument(
-    "--log-frequency", default=100, help="The frequency for logging distributions"
+    "--log-frequency", default=100, type=int, help="The frequency for logging distributions"
 )
 parser.add_argument(
     "--wandb-path", default="", type=str, help="The W&B path, empty to disable"
