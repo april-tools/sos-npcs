@@ -60,6 +60,24 @@ def multi_rings_sample(
     return rings_sample(num_samples, dim, sigma, radia=[1, 5], seed=seed)
 
 
+def crossing_rings_sample(
+    num_samples: int, dim: int = 2, sigma: float = 0.26, seed: int = 42
+):
+    delta = 0.5 * sigma * 8.0
+    per_ring_num_samples = int(np.ceil(num_samples / 3.0))
+    r1 = single_ring_sample(per_ring_num_samples, dim=dim, sigma=sigma, seed=seed)
+    print(r1.mean(0))
+    r1[:, 0] -= delta
+    r1[:, 1] -= delta
+    r2 = single_ring_sample(per_ring_num_samples, dim=dim, sigma=sigma, seed=seed)
+    r2[:, 0] += delta
+    r2[:, 1] -= delta
+    r3 = single_ring_sample(per_ring_num_samples, dim=dim, sigma=sigma, seed=seed)
+    r3[:, 1] += delta
+    r3 = r3[:num_samples - 2 * per_ring_num_samples]
+    return np.concatenate([r1, r2, r3], axis=0)
+
+
 def funnel_sample(num_samples: int, dim: int = 2, sigma: float = 2.0, seed: int = 42):
     def thresh(x: np.ndarray, low_lim: float = 0.0, high_lim: float = 5.0):
         return np.clip(np.exp(-x), low_lim, high_lim)

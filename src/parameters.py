@@ -46,14 +46,12 @@ class TorchDoubleClampParameter(TorchEntrywiseParameterOp):
         return {"eps": self.eps}
 
     @torch.no_grad()
-    @torch.compile()
     def _double_clamp_(self, x: Tensor):
         close_zero_mask = (x > -self.eps) & (x < self.eps)
         clamped_x = self.eps * (1.0 - 2.0 * torch.signbit(x))
         torch.where(close_zero_mask, clamped_x, x, out=x)
 
     @torch.no_grad()
-    @torch.compile()
     def forward(self, x: Tensor) -> Tensor:
         TorchDoubleClampParameter._double_clamp_(x.real)
         return x

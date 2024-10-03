@@ -38,6 +38,7 @@ def plot_bivariate_samples_hmap(
     ax.pcolormesh(xi, yi, zi.reshape(xi.shape), shading="auto", vmin=0.0)
     ax.set_xticks([])
     ax.set_yticks([])
+    plt.show()
     return matplotlib_buffer_to_image(fig)
 
 
