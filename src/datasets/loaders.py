@@ -54,7 +54,7 @@ IMAGE_DATASETS = ["MNIST", "FashionMNIST", "CIFAR10", "CelebA"]
 
 CONTINUOUS_DATASETS = ["power", "gas", "hepmass", "miniboone", "bsds300"]
 
-ARTIFICIAL_DATASETS = ["ring", "mring", "funnel", "banana", "cosine", "spiral"]
+ARTIFICIAL_DATASETS = ["ring", "mring", "funnel", "banana", "cosine", "spiral", "crossing-rings"]
 
 LANGUAGE_DATASETS = []
 
@@ -262,6 +262,8 @@ def load_artificial_dataset(
         data = rotate_samples(data)
     elif name == "spiral":
         data = spiral_sample(total_num_samples, seed=seed, **kwargs)
+    elif name == "crossing-rings":
+        data = crossing_rings_sample(total_num_samples, seed=seed, **kwargs)
     else:
         raise ValueError(f"Unknown dataset called {name}")
     data = data.astype(dtype=dtype, copy=False)
