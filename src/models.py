@@ -598,12 +598,16 @@ def _build_monotonic_sym_circuits(
         assert input_layer in ["categorical", "gaussian"]
         weight_factory = weight_factory_clamp if mono_clamp else weight_factory_exp
         if input_layer == "categorical":
+            input_factory = categorical_layer_factory
+        else:
+            input_factory = gaussian_layer_factory
+        if True:
             return Circuit.from_region_graph(
                 rg,
                 num_channels=num_channels,
                 num_input_units=num_input_units,
                 num_sum_units=num_sum_units,
-                input_factory=categorical_layer_factory,
+                input_factory=input_factory,
                 sum_product="cp-t",
                 dense_weight_factory=weight_factory,
             )
@@ -710,9 +714,11 @@ def _build_non_monotonic_sym_circuits(
 
     def build_sym_circuit(rg: RegionGraph) -> Circuit:
         assert input_layer in ["categorical", "embedding", "gaussian"]
-        if input_layer in ["categorical", "embedding"]:
+        if True:
             if input_layer == "categorical":
                 input_factory = categorical_layer_factory
+            elif input_layer == "gaussian":
+                input_factory = gaussian_layer_factory
             else:
                 input_factory = embedding_layer_factory
             return Circuit.from_region_graph(

@@ -37,13 +37,13 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     checkpoint_paths = [
-        f"{args.path}/crossing-rings/MPC/MPC_RGrnd-bt_R1_K4_OAdam_LR0.001_BS64/",
+        f"{args.path}/crossing-rings/MPC/MPC_RGrnd-bt_R1_K12_OAdam_LR0.001_BS64/",
         f"{args.path}/crossing-rings/SOS/real/SOS_RGrnd-bt_R1_K8_OAdam_LR0.001_BS64",
         f"{args.path}/crossing-rings/SOS/real/SOS_RGrnd-bt_R3_K2_OAdam_LR0.001_BS64"
     ]
     gt_array = np.load(os.path.join(checkpoint_paths[0], 'gt.npy'))
     gt_array = np.broadcast_to(gt_array, (args.max_num_frames, gt_array.shape[0], gt_array.shape[1]))
-    arrays = map(lambda p: np.load(os.path.join(p, next(filter(lambda f: 'diststeps' in f, os.path.listdir(p))))), checkpoint_paths)
+    arrays = map(lambda p: np.load(os.path.join(p, sorted(list(filter(lambda f: 'diststeps' in f, os.listdir(p))))[-2])), checkpoint_paths)
     if args.drop_last_frames > 0:
         arrays = map(lambda a: a[:-args.drop_last_frames], arrays)
     arrays = [gt_array] + list(arrays)
@@ -87,3 +87,5 @@ if __name__ == '__main__':
     img = next(gif_iterator)
     with open(os.path.join('figures', 'crossing-rings', f'learning-distributions.gif'), 'wb') as fp:
         img.save(fp=fp, format='GIF', append_images=gif_iterator, save_all=True, duration=args.duration, loop=0, optimize=True)
+
+

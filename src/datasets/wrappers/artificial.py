@@ -66,7 +66,6 @@ def crossing_rings_sample(
     delta = 0.5 * sigma * 8.0
     per_ring_num_samples = int(np.ceil(num_samples / 3.0))
     r1 = single_ring_sample(per_ring_num_samples, dim=dim, sigma=sigma, seed=seed)
-    print(r1.mean(0))
     r1[:, 0] -= delta
     r1[:, 1] -= delta
     r2 = single_ring_sample(per_ring_num_samples, dim=dim, sigma=sigma, seed=seed)
