@@ -1,15 +1,16 @@
 {
   "common": {
-    "tboard-path": "tboard-runs/crossing-rings-gif",
-    "checkpoint-path": "checkpoints/crossing-rings-gif",
+    "tboard-path": "tboard-runs/crossing-rings-gif-results",
+    "checkpoint-path": "checkpoints/crossing-rings-gif-results",
     "save-checkpoint": true,
     "log-distribution": true,
-    "log-frequency": 500,
-    "num-epochs": 1200,
+    "log-frequency": 360,
+    "num-epochs": 99999,
     "device": "cuda",
     "num-workers": 0,
     "patience-threshold": 1e-3,
-    "early-stop-patience": 50
+    "early-stop-patience": 75,
+    "seed": 2265
   },
   "datasets": ["crossing-rings"],
   "grid": {
@@ -18,17 +19,16 @@
       "batch-size": 64,
       "optimizer": "Adam",
       "verbose": true,
-      "learning-rate": 1e-3,
-      "seed": 213
+      "learning-rate": 1e-3
     },
     "models": {
       "crossing-rings": {
         "MPC": {
-            "num-components,num-units": [[1, 12]]
+          "num-components,num-units": [[1, 12]]
         },
         "SOS": {
           "real": {
-            "num-components,num-units": [[1, 4], [3, 2]],
+            "num-components,num-units": [[1, 8], [3, 2]],
             "complex": false
           }
         }

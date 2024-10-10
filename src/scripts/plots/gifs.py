@@ -43,7 +43,7 @@ if __name__ == '__main__':
     ]
     gt_array = np.load(os.path.join(checkpoint_paths[0], 'gt.npy'))
     gt_array = np.broadcast_to(gt_array, (args.max_num_frames, gt_array.shape[0], gt_array.shape[1]))
-    arrays = map(lambda p: np.load(os.path.join(p, sorted(list(filter(lambda f: 'diststeps' in f, os.listdir(p))))[-2])), checkpoint_paths)
+    arrays = map(lambda p: np.load(os.path.join(p, sorted(list(filter(lambda f: 'diststeps' in f, os.listdir(p))))[-1])), checkpoint_paths)
     if args.drop_last_frames > 0:
         arrays = map(lambda a: a[:-args.drop_last_frames], arrays)
     arrays = [gt_array] + list(arrays)
@@ -74,7 +74,7 @@ if __name__ == '__main__':
                 (int(0.5 * (x[1].shape[2] - cv2.getTextSize(x[0], font, fontscale, thickness)[0][0])),
                     int(0.5 * (caption_height + cv2.getTextSize(x[0], font, fontscale, thickness)[0][1]))),
                 font, fontscale, (16, 16, 16), thickness, cv2.LINE_AA), reps=(num_frames, 1, 1, 1))
-        ], axis=1), zip(['Ground Truth'] + ['MPC', 'NPC^2', 'SOS'], arrays)
+        ], axis=1), zip(['Ground Truth'] + ['GMM', 'Squared GMM', 'SOS GMM'], arrays)
     )
     gif_images = np.concatenate(list(arrays), axis=2)
 
