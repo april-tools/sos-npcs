@@ -73,7 +73,7 @@ def crossing_rings_sample(
     r2[:, 1] -= delta
     r3 = single_ring_sample(per_ring_num_samples, dim=dim, sigma=sigma, seed=seed)
     r3[:, 1] += delta
-    r3 = r3[:num_samples - 2 * per_ring_num_samples]
+    r3 = r3[: num_samples - 2 * per_ring_num_samples]
     return np.concatenate([r1, r2, r3], axis=0)
 
 

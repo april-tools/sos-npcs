@@ -18,6 +18,7 @@ from cirkit.symbolic.layers import (
     DenseLayer,
     GaussianLayer,
     HadamardLayer,
+    EmbeddingLayer,
 )
 from cirkit.symbolic.parameters import (
     ClampParameter,
@@ -26,17 +27,16 @@ from cirkit.symbolic.parameters import (
     Parameter,
     ScaledSigmoidParameter,
     TensorParameter,
+    SoftmaxParameter,
 )
 from cirkit.templates.region_graph import (
-    LinearRegionGraph,
-    QuadGraph,
-    RandomBinaryTree,
     RegionGraph,
+    LinearTree,
+    QuadTree,
+    RandomBinaryTree,
 )
 from cirkit.utils.scope import Scope
 from initializers import ExpUniformInitializer
-from layers import EmbeddingLayer
-from parameters import DoubleClampParameter
 from pipeline import setup_pipeline_context
 
 
@@ -92,19 +92,24 @@ class PC(nn.Module, ABC):
         return num_params
 
     @abstractmethod
-    def layers(self) -> Iterator[TorchLayer]: ...
+    def layers(self) -> Iterator[TorchLayer]:
+        ...
 
     @abstractmethod
-    def input_layers(self) -> Iterator[TorchInputLayer]: ...
+    def input_layers(self) -> Iterator[TorchInputLayer]:
+        ...
 
     @abstractmethod
-    def inner_layers(self) -> Iterator[TorchInnerLayer]: ...
+    def inner_layers(self) -> Iterator[TorchInnerLayer]:
+        ...
 
     @abstractmethod
-    def log_partition(self) -> Tensor: ...
+    def log_partition(self) -> Tensor:
+        ...
 
     @abstractmethod
-    def log_score(self, x: Tensor) -> Tensor: ...
+    def log_score(self, x: Tensor) -> Tensor:
+        ...
 
 
 class MPC(PC):
@@ -194,7 +199,7 @@ class MPC(PC):
 
         with self._pipeline:
             # Merge the symbolic circuits into a single one having multiple outputs
-            sym_circuit = SF.merge(sym_circuits)
+            sym_circuit = SF.concatenate(sym_circuits)
 
             # Integrate the circuits (by integrating the merged symbolic representation)
             sym_int_circuit = SF.integrate(sym_circuit)
@@ -219,7 +224,6 @@ class SOS(PC):
         num_squares: int = 1,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
-        non_mono_clamp: bool = False,
         complex: bool = False,
         seed: int = 42,
     ) -> None:
@@ -234,7 +238,6 @@ class SOS(PC):
             num_squares=num_squares,
             region_graph=region_graph,
             structured_decomposable=structured_decomposable,
-            non_mono_clamp=non_mono_clamp,
             complex=complex,
             seed=seed,
         )
@@ -292,20 +295,19 @@ class SOS(PC):
             num_sum_units,
             input_layer=input_layer,
             input_layer_kwargs=input_layer_kwargs,
-            non_mono_clamp=non_mono_clamp,
             complex=complex,
         )
 
         with self._pipeline:
             # Merge the symbolic circuits into a single one having multiple outputs
-            sym_circuit = SF.merge(sym_circuits)
+            sym_circuit = SF.concatenate(sym_circuits)
 
             # Square each symbolic circuit and merge them into a single one having multiple outputs
             sym_sq_circuits = [
                 (SF.multiply(SF.conjugate(sc), sc) if complex else SF.multiply(sc, sc))
                 for sc in sym_circuits
             ]
-            sym_sq_circuit = SF.merge(sym_sq_circuits)
+            sym_sq_circuit = SF.concatenate(sym_sq_circuits)
 
             # Integrate the squared circuits (by integrating the merged symbolic representation)
             sym_int_sq_circuit = SF.integrate(sym_sq_circuit)
@@ -332,7 +334,6 @@ class ExpSOS(PC):
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
         mono_clamp: bool = False,
-        non_mono_clamp: bool = False,
         complex: bool = False,
         seed: int = 42,
     ) -> None:
@@ -349,7 +350,6 @@ class ExpSOS(PC):
             region_graph=region_graph,
             structured_decomposable=structured_decomposable,
             mono_clamp=mono_clamp,
-            non_mono_clamp=non_mono_clamp,
             complex=complex,
             seed=seed,
         )
@@ -389,7 +389,6 @@ class ExpSOS(PC):
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
         mono_clamp: bool = False,
-        non_mono_clamp: bool = False,
         complex: bool = False,
         seed: int = 42,
     ) -> Tuple[TorchCircuit, TorchCircuit, TorchConstantCircuit]:
@@ -413,26 +412,16 @@ class ExpSOS(PC):
             num_sum_units,
             input_layer=input_layer,
             input_layer_kwargs=input_layer_kwargs,
-            non_mono_clamp=non_mono_clamp,
             complex=complex,
         )
-        if input_layer == "embedding":
-            mono_input_layer = "categorical"
-            assert "num_states" in input_layer_kwargs
-            mono_input_layer_kwargs = {
-                "num_categories": input_layer_kwargs["num_states"]
-            }
-        else:
-            mono_input_layer = input_layer
-            mono_input_layer_kwargs = input_layer_kwargs
 
         sym_mono_circuits = _build_monotonic_sym_circuits(
             rgs,
             num_channels,
             mono_num_input_units,
             mono_num_sum_units,
-            input_layer=mono_input_layer,
-            input_layer_kwargs=mono_input_layer_kwargs,
+            input_layer=input_layer,
+            input_layer_kwargs=input_layer_kwargs,
             mono_clamp=mono_clamp,
         )
         assert len(sym_circuits) == 1
@@ -515,14 +504,14 @@ def _build_rnd_bt_region_graph(num_variables: int, seed: int = 42) -> RegionGrap
 def _build_lt_region_graph(
     num_variables: int, random: bool = False, seed: int = 42
 ) -> RegionGraph:
-    return LinearRegionGraph(num_variables, random=random, seed=seed)
+    return LinearTree(num_variables, randomize=random, seed=seed)
 
 
 def _build_qt_region_graph(
     image_shape: Tuple[int, int, int], num_patch_splits: int
 ) -> RegionGraph:
     num_channels, height, width = image_shape
-    return QuadGraph((height, width), is_tree=True, num_patch_splits=num_patch_splits)
+    return QuadTree((height, width), num_patch_splits=num_patch_splits)
 
 
 def _build_monotonic_sym_circuits(
@@ -565,6 +554,21 @@ def _build_monotonic_sym_circuits(
             ),
         )
 
+    def embedding_layer_factory(
+        scope: Scope, num_units: int, num_channels: int
+    ) -> EmbeddingLayer:
+        assert "num_states" in input_layer_kwargs
+        return EmbeddingLayer(
+            scope,
+            num_units,
+            num_channels,
+            num_states=input_layer_kwargs["num_states"],
+            weight_factory=lambda shape: Parameter.from_unary(
+                SoftmaxParameter(shape),
+                TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0)),
+            ),
+        )
+
     def gaussian_layer_factory(
         scope: Scope, num_units: int, num_channels: int
     ) -> GaussianLayer:
@@ -572,7 +576,7 @@ def _build_monotonic_sym_circuits(
             scope,
             num_units,
             num_channels,
-            mean_factory=lambda shape: Parameter.from_leaf(
+            mean_factory=lambda shape: Parameter.from_input(
                 TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0))
             ),
             stddev_factory=lambda shape: Parameter.from_sequence(
@@ -581,24 +585,24 @@ def _build_monotonic_sym_circuits(
             ),
         )
 
-    def hadamard_layer_factory(
-        scope: Scope, num_input_units: int, arity: int
-    ) -> HadamardLayer:
-        return HadamardLayer(scope, num_input_units, arity)
+    def hadamard_layer_factory(num_input_units: int, arity: int) -> HadamardLayer:
+        return HadamardLayer(num_input_units, arity)
 
-    def dense_layer_factory(
-        scope: Scope, num_input_units: int, num_output_units: int
-    ) -> DenseLayer:
+    def dense_layer_factory(num_input_units: int, num_output_units: int) -> DenseLayer:
         weight_factory = weight_factory_clamp if mono_clamp else weight_factory_exp
         return DenseLayer(
-            scope, num_input_units, num_output_units, weight_factory=weight_factory
+            num_input_units, num_output_units, weight_factory=weight_factory
         )
 
     def build_sym_circuit(rg: RegionGraph) -> Circuit:
-        assert input_layer in ["categorical", "gaussian"]
+        assert input_layer in ["embedding", "categorical", "gaussian"]
         weight_factory = weight_factory_clamp if mono_clamp else weight_factory_exp
-        if input_layer == "categorical":
-            input_factory = categorical_layer_factory
+        if input_layer in ["embedding", "categorical"]:
+            input_factory = (
+                categorical_layer_factory
+                if input_layer == "categorical"
+                else embedding_layer_factory
+            )
         else:
             input_factory = gaussian_layer_factory
         if True:
@@ -609,7 +613,7 @@ def _build_monotonic_sym_circuits(
                 num_sum_units=num_sum_units,
                 input_factory=input_factory,
                 sum_product="cp-t",
-                dense_weight_factory=weight_factory,
+                sum_weight_factory=weight_factory,
             )
         return Circuit.from_region_graph(
             rg,
@@ -632,24 +636,14 @@ def _build_non_monotonic_sym_circuits(
     *,
     input_layer: str,
     input_layer_kwargs: Optional[Dict[str, Any]] = None,
-    non_mono_clamp: bool = False,
     complex: bool = False,
 ) -> List[Circuit]:
     if input_layer_kwargs is None:
         input_layer_kwargs = {}
 
-    def weight_factory_clamp(shape: Tuple[int, ...]) -> Parameter:
-        weight_dtype = DataType.COMPLEX if complex else DataType.REAL
-        return Parameter.from_unary(
-            DoubleClampParameter(shape, eps=1e-19),
-            TensorParameter(
-                *shape, initializer=UniformInitializer(0.0, 1.0), dtype=weight_dtype
-            ),
-        )
-
     def weight_factory(shape: Tuple[int, ...]) -> Parameter:
         weight_dtype = DataType.COMPLEX if complex else DataType.REAL
-        return Parameter.from_leaf(
+        return Parameter.from_input(
             TensorParameter(
                 *shape, initializer=UniformInitializer(0.0, 1.0), dtype=weight_dtype
             )
@@ -664,7 +658,7 @@ def _build_non_monotonic_sym_circuits(
             num_units,
             num_channels,
             num_categories=input_layer_kwargs["num_categories"],
-            logits_factory=lambda shape: Parameter.from_leaf(
+            logits_factory=lambda shape: Parameter.from_input(
                 TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0))
             ),
         )
@@ -678,7 +672,7 @@ def _build_non_monotonic_sym_circuits(
             num_units,
             num_channels,
             num_states=input_layer_kwargs["num_states"],
-            weight_factory=weight_factory_clamp if non_mono_clamp else weight_factory,
+            weight_factory=weight_factory,
         )
 
     def gaussian_layer_factory(
@@ -688,7 +682,7 @@ def _build_non_monotonic_sym_circuits(
             scope,
             num_units,
             num_channels,
-            mean_factory=lambda shape: Parameter.from_leaf(
+            mean_factory=lambda shape: Parameter.from_input(
                 TensorParameter(*shape, initializer=NormalInitializer(0.0, 1.0))
             ),
             stddev_factory=lambda shape: Parameter.from_sequence(
@@ -697,19 +691,14 @@ def _build_non_monotonic_sym_circuits(
             ),
         )
 
-    def hadamard_layer_factory(
-        scope: Scope, num_input_units: int, arity: int
-    ) -> HadamardLayer:
-        return HadamardLayer(scope, num_input_units, arity)
+    def hadamard_layer_factory(num_input_units: int, arity: int) -> HadamardLayer:
+        return HadamardLayer(num_input_units, arity)
 
-    def dense_layer_factory(
-        scope: Scope, num_input_units: int, num_output_units: int
-    ) -> DenseLayer:
+    def dense_layer_factory(num_input_units: int, num_output_units: int) -> DenseLayer:
         return DenseLayer(
-            scope,
             num_input_units,
             num_output_units,
-            weight_factory=weight_factory_clamp if non_mono_clamp else weight_factory,
+            weight_factory=weight_factory,
         )
 
     def build_sym_circuit(rg: RegionGraph) -> Circuit:
@@ -728,9 +717,7 @@ def _build_non_monotonic_sym_circuits(
                 num_sum_units=num_sum_units,
                 input_factory=input_factory,
                 sum_product="cp-t",
-                dense_weight_factory=(
-                    weight_factory_clamp if non_mono_clamp else weight_factory
-                ),
+                sum_weight_factory=weight_factory,
             )
         return Circuit.from_region_graph(
             rg,

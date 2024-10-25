@@ -37,9 +37,9 @@ class Logger:
             self._setup_wandb(wandb_path, **wandb_kwargs)
 
         self._best_distribution = None
-        self._logged_scalars: Dict[str, List[Tuple[float, Optional[int]]]] = (
-            defaultdict(list)
-        )
+        self._logged_scalars: Dict[
+            str, List[Tuple[float, Optional[int]]]
+        ] = defaultdict(list)
         self._logged_distributions = list()
         self._logged_wcoords = list()
 

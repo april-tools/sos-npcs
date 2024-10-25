@@ -26,7 +26,10 @@ parser.add_argument(
     help="Whether to log the learned distribution",
 )
 parser.add_argument(
-    "--log-frequency", default=100, type=int, help="The frequency for logging distributions"
+    "--log-frequency",
+    default=100,
+    type=int,
+    help="The frequency for logging distributions",
 )
 parser.add_argument(
     "--wandb-path", default="", type=str, help="The W&B path, empty to disable"
@@ -150,12 +153,6 @@ parser.add_argument(
     default=False,
     action="store_true",
     help="Whether to parameterize sum units in monotonic circuits via clamping",
-)
-parser.add_argument(
-    "--non-mono-clamp",
-    default=False,
-    action="store_true",
-    help="Clamp parameters of layers in SOS PCs to be away from 0 by a tiny value. This might be required for better numerical stability",
 )
 parser.add_argument(
     "--reduce-lr-plateau",

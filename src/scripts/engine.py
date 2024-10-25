@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from zuko.flows import Flow
 
 from datasets.loaders import ALL_DATASETS
-from models import PC, SOS
+from models import PC
 from optimization.optimizers import OPTIMIZERS_NAMES, setup_optimizer
 from optimization.schedulers import ReduceLROnPlateau
 from scripts.logger import Logger
@@ -272,20 +272,22 @@ class Engine:
 
     def run(self):
         # Setup the data loaders
-        metadata, (train_dataloader, valid_dataloader, test_dataloader) = (
-            setup_data_loaders(
-                self.args.dataset,
-                self.args.data_path,
-                logger=self.logger,
-                batch_size=self.args.batch_size,
-                num_workers=self.args.num_workers,
-                num_samples=self.args.num_samples,
-                standardize=self.args.standardize,
-                discretize_unique=self.args.discretize_unique,
-                discretize=self.args.discretize,
-                discretize_bins=self.args.discretize_bins,
-                shuffle_bins=self.args.shuffle_bins,
-            )
+        metadata, (
+            train_dataloader,
+            valid_dataloader,
+            test_dataloader,
+        ) = setup_data_loaders(
+            self.args.dataset,
+            self.args.data_path,
+            logger=self.logger,
+            batch_size=self.args.batch_size,
+            num_workers=self.args.num_workers,
+            num_samples=self.args.num_samples,
+            standardize=self.args.standardize,
+            discretize_unique=self.args.discretize_unique,
+            discretize=self.args.discretize,
+            discretize_bins=self.args.discretize_bins,
+            shuffle_bins=self.args.shuffle_bins,
         )
         self.metadata = metadata
         self.dataloaders["train"] = train_dataloader
@@ -310,7 +312,6 @@ class Engine:
             mono_num_units=self.args.mono_num_units,
             mono_num_input_units=self.args.mono_num_input_units,
             mono_clamp=self.args.mono_clamp,
-            non_mono_clamp=self.args.non_mono_clamp,
             complex=self.args.complex,
             seed=self.args.seed,
         )

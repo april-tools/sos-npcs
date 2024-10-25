@@ -55,7 +55,15 @@ IMAGE_DATASETS = ["MNIST", "FashionMNIST", "CIFAR10", "CelebA"]
 
 CONTINUOUS_DATASETS = ["power", "gas", "hepmass", "miniboone", "bsds300"]
 
-ARTIFICIAL_DATASETS = ["ring", "mring", "funnel", "banana", "cosine", "spiral", "crossing-rings"]
+ARTIFICIAL_DATASETS = [
+    "ring",
+    "mring",
+    "funnel",
+    "banana",
+    "cosine",
+    "spiral",
+    "crossing-rings",
+]
 
 LANGUAGE_DATASETS = []
 
@@ -137,10 +145,9 @@ def load_binary_dataset(
     return dataset_splits
 
 
-def load_image_dataset(name: str, path: str = "datasets") -> Tuple[
-    Tuple[int, int, int],
-    Tuple[Dataset, Dataset, Dataset],
-]:
+def load_image_dataset(
+    name: str, path: str = "datasets"
+) -> Tuple[Tuple[int, int, int], Tuple[Dataset, Dataset, Dataset],]:
     if name == "MNIST":
         train_data = MNIST(path, train=True, download=True).data.unsqueeze(dim=-1)
         valid_data = None
