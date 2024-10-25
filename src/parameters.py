@@ -1,62 +1,14 @@
 from functools import cached_property
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 import numpy as np
 import torch
 from torch import Tensor
 
-from cirkit.backend.torch.compiler import TorchCompiler
 from cirkit.backend.torch.parameters.nodes import (
-    TorchEntrywiseParameterOp,
     TorchParameterOp,
     TorchUnaryParameterOp,
 )
-from cirkit.symbolic.parameters import EntrywiseParameterOp
-
-
-class DoubleClampParameter(EntrywiseParameterOp):
-    def __init__(
-        self,
-        in_shape: Tuple[int, ...],
-        *,
-        eps: Optional[float] = None,
-    ) -> None:
-        super().__init__(in_shape)
-        self.eps = eps
-
-    @property
-    def config(self) -> Dict[str, Any]:
-        config = dict()
-        if self.eps is not None:
-            config.update(eps=self.eps)
-        return config
-
-
-class TorchDoubleClampParameter(TorchEntrywiseParameterOp):
-    def __init__(
-        self, in_shape: Tuple[int, ...], num_folds: int = 1, eps: Optional[float] = None
-    ):
-        super().__init__(in_shape, num_folds=num_folds)
-        if eps is None:
-            eps = torch.finfo(torch.get_default_dtype()).tiny
-        self.eps = eps
-
-    @property
-    def config(self) -> Dict[str, Any]:
-        return {"eps": self.eps}
-
-    @torch.no_grad()
-    @torch.compile()
-    def _double_clamp_(self, x: Tensor):
-        close_zero_mask = (x > -self.eps) & (x < self.eps)
-        clamped_x = self.eps * (1.0 - 2.0 * torch.signbit(x))
-        torch.where(close_zero_mask, clamped_x, x, out=x)
-
-    @torch.no_grad()
-    @torch.compile()
-    def forward(self, x: Tensor) -> Tensor:
-        TorchDoubleClampParameter._double_clamp_(x.real)
-        return x
 
 
 class TorchFlattenParameter(TorchUnaryParameterOp):
@@ -78,7 +30,11 @@ class TorchFlattenParameter(TorchUnaryParameterOp):
 
     @property
     def config(self) -> Dict[str, Any]:
-        return {"start_dim": self.start_dim, "end_dim": self.end_dim}
+        return {
+            "in_shape": self.in_shape,
+            "start_dim": self.start_dim,
+            "end_dim": self.end_dim,
+        }
 
     @cached_property
     def shape(self) -> Tuple[int, ...]:
@@ -96,7 +52,9 @@ class TorchFlattenParameter(TorchUnaryParameterOp):
 
 
 class TorchEinsumParameter(TorchParameterOp):
-    def __init__(self, *in_shapes: Tuple[int, ...], num_folds: int = 1, einsum: str):
+    def __init__(
+        self, in_shapes: Tuple[Tuple[int, ...]], einsum: str, num_folds: int = 1
+    ):
         if "f" in einsum:
             raise ValueError(
                 "The einsum string should not contain the reserved index 'f'"
@@ -132,7 +90,7 @@ class TorchEinsumParameter(TorchParameterOp):
 
     @property
     def config(self) -> Dict[str, Any]:
-        return {"einsum": self.einsum}
+        return {"in_shapes": self.in_shapes, "einsum": self.einsum}
 
     @property
     def shape(self) -> Tuple[int, ...]:
@@ -140,10 +98,3 @@ class TorchEinsumParameter(TorchParameterOp):
 
     def forward(self, *xs: Tensor) -> Tensor:
         return torch.einsum(self._processed_einsum, *xs)
-
-
-def compile_double_clamp_parameter(
-    compiler: TorchCompiler, p: DoubleClampParameter
-) -> TorchDoubleClampParameter:
-    (in_shape,) = p.in_shapes
-    return TorchDoubleClampParameter(in_shape, eps=p.eps)

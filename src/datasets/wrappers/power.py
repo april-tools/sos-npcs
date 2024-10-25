@@ -5,9 +5,7 @@ import numpy as np
 
 
 class POWER:
-
     class Data:
-
         def __init__(self, data):
             self.x = data.astype(np.float32)
             self.N = self.x.shape[0]

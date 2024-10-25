@@ -69,9 +69,8 @@ def apply_prod_sum_einsum(
     in_idx1 = "".join([indices[i] for i in in_idx1])
     in_idx2 = "".join([indices[i] for i in in_idx2])
     out_idx = "".join([indices[i] for i in out_idx2])
-    einsum = TorchEinsumParameter(
-        *outer_prod.in_shapes, einsum=f"{in_idx1},{in_idx2}->{out_idx}"
-    )
+    einsum_string = f"{in_idx1},{in_idx2}->{out_idx}"
+    einsum = TorchEinsumParameter(outer_prod.in_shapes, einsum=einsum_string)
     if flatten_start_dim is None:
         assert flatten_end_dim is None
         return (einsum,)

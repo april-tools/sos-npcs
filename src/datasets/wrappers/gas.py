@@ -39,7 +39,6 @@ def get_correlation_numbers(data):
 
 
 def load_data_and_clean(file):
-
     data = load_data(file)
     B = get_correlation_numbers(data)
 

@@ -411,7 +411,6 @@ def setup_model(
     mono_num_units: int = 2,
     mono_num_input_units: int = -1,
     mono_clamp: bool = False,
-    non_mono_clamp: bool = False,
     complex: bool = False,
     seed: int = 123,
 ) -> Union[PC, Flow]:
@@ -475,7 +474,6 @@ def setup_model(
             num_squares=num_components,
             region_graph=region_graph,
             structured_decomposable=structured_decomposable,
-            non_mono_clamp=non_mono_clamp,
             complex=complex,
             seed=seed,
         )
@@ -494,7 +492,6 @@ def setup_model(
             region_graph=region_graph,
             structured_decomposable=structured_decomposable,
             mono_clamp=mono_clamp,
-            non_mono_clamp=non_mono_clamp,
             complex=complex,
             seed=seed,
         )
