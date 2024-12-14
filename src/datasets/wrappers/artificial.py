@@ -1,5 +1,3 @@
-from typing import Optional
-
 import numpy as np
 
 
@@ -19,7 +17,7 @@ def rings_sample(
     num_samples: int,
     dim: int,
     sigma: float = 0.1,
-    radia: Optional[list] = None,
+    radia: list | None = None,
     seed: int = 42,
 ):
     assert dim >= 2
@@ -127,7 +125,7 @@ def spiral_sample(
     eps: float = 1.0,
     r_scale: float = 1.5,
     length: float = np.pi,
-    starts: Optional[list] = None,
+    starts: list | None = None,
     seed: int = 42,
 ):
     if starts is None:

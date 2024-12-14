@@ -16,7 +16,7 @@ class ExpUniformInitializer(ElementwiseInitializer):
         self.b = b
 
     @property
-    def config(self) -> Dict[str, Any]:
+    def config(self) -> dict[str, Any]:
         return dict(a=self.a, b=self.b)
 
 

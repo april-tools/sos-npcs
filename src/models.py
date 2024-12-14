@@ -1,6 +1,7 @@
 import itertools
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, cast
+from typing import Any, cast
+from collections.abc import Iterator, Sequence
 
 import numpy as np
 import torch
@@ -40,7 +41,7 @@ from pipeline import setup_pipeline_context
 
 class PC(nn.Module, ABC):
     def __init__(
-        self, num_variables: int, image_shape: Optional[Tuple[int, int, int]] = None
+        self, num_variables: int, image_shape: tuple[int, int, int] | None = None
     ) -> None:
         assert num_variables > 1
         if image_shape is not None:
@@ -48,7 +49,7 @@ class PC(nn.Module, ABC):
         super().__init__()
         self.num_variables = num_variables
         self.image_shape = image_shape
-        self.__cache_log_z: Optional[Tensor] = None
+        self.__cache_log_z: Tensor | None = None
 
     def train(self, mode: bool = True):
         if mode:
@@ -90,36 +91,31 @@ class PC(nn.Module, ABC):
         return num_params
 
     @abstractmethod
-    def layers(self) -> Iterator[TorchLayer]:
-        ...
+    def layers(self) -> Iterator[TorchLayer]: ...
 
     @abstractmethod
-    def input_layers(self) -> Iterator[TorchInputLayer]:
-        ...
+    def input_layers(self) -> Iterator[TorchInputLayer]: ...
 
     @abstractmethod
-    def inner_layers(self) -> Iterator[TorchInnerLayer]:
-        ...
+    def inner_layers(self) -> Iterator[TorchInnerLayer]: ...
 
     @abstractmethod
-    def log_partition(self) -> Tensor:
-        ...
+    def log_partition(self) -> Tensor: ...
 
     @abstractmethod
-    def log_score(self, x: Tensor) -> Tensor:
-        ...
+    def log_score(self, x: Tensor) -> Tensor: ...
 
 
 class MPC(PC):
     def __init__(
         self,
         num_variables: int,
-        image_shape: Optional[Tuple[int, int, int]] = None,
+        image_shape: tuple[int, int, int] | None = None,
         *,
         num_input_units: int,
         num_sum_units: int,
         input_layer: str,
-        input_layer_kwargs: Optional[Dict[str, Any]] = None,
+        input_layer_kwargs: dict[str, Any] | None = None,
         num_components: int = 1,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
@@ -166,13 +162,13 @@ class MPC(PC):
         num_input_units: int,
         num_sum_units: int,
         input_layer: str,
-        input_layer_kwargs: Optional[Dict[str, Any]] = None,
+        input_layer_kwargs: dict[str, Any] | None = None,
         num_components: int = 1,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
         mono_clamp: bool = False,
         seed: int = 42,
-    ) -> Tuple[TorchCircuit, TorchConstantCircuit]:
+    ) -> tuple[TorchCircuit, TorchConstantCircuit]:
         # Build the region graphs
         rgs = _build_region_graphs(
             region_graph,
@@ -213,12 +209,12 @@ class SOS(PC):
     def __init__(
         self,
         num_variables: int,
-        image_shape: Optional[Tuple[int, int, int]] = None,
+        image_shape: tuple[int, int, int] | None = None,
         *,
         num_input_units: int,
         num_sum_units: int,
         input_layer: str,
-        input_layer_kwargs: Optional[Dict[str, Any]] = None,
+        input_layer_kwargs: dict[str, Any] | None = None,
         num_squares: int = 1,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
@@ -266,13 +262,13 @@ class SOS(PC):
         num_sum_units: int,
         *,
         input_layer: str,
-        input_layer_kwargs: Optional[Dict[str, Any]] = None,
+        input_layer_kwargs: dict[str, Any] | None = None,
         num_squares: int = 1,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
         complex: bool = False,
         seed: int = 42,
-    ) -> Tuple[TorchCircuit, TorchConstantCircuit]:
+    ) -> tuple[TorchCircuit, TorchConstantCircuit]:
         # Build the region graphs
         rgs = _build_region_graphs(
             region_graph,
@@ -320,14 +316,14 @@ class ExpSOS(PC):
     def __init__(
         self,
         num_variables: int,
-        image_shape: Optional[Tuple[int, int, int]] = None,
+        image_shape: tuple[int, int, int] | None = None,
         *,
         num_input_units: int,
         num_sum_units: int,
         mono_num_input_units: int = 2,
         mono_num_sum_units: int = 2,
         input_layer: str,
-        input_layer_kwargs: Optional[Dict[str, Any]] = None,
+        input_layer_kwargs: dict[str, Any] | None = None,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
         mono_clamp: bool = False,
@@ -382,13 +378,13 @@ class ExpSOS(PC):
         mono_num_sum_units: int = 2,
         *,
         input_layer: str,
-        input_layer_kwargs: Optional[Dict[str, Any]] = None,
+        input_layer_kwargs: dict[str, Any] | None = None,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
         mono_clamp: bool = False,
         complex: bool = False,
         seed: int = 42,
-    ) -> Tuple[TorchCircuit, TorchCircuit, TorchConstantCircuit]:
+    ) -> tuple[TorchCircuit, TorchCircuit, TorchConstantCircuit]:
         # Build the region graphs
         rgs = _build_region_graphs(
             region_graph,
@@ -453,8 +449,8 @@ class ExpSOS(PC):
 def _build_region_graphs(
     name: str,
     k: int,
-    num_variables: Optional[int] = None,
-    image_shape: Optional[Tuple[int, int, int]] = None,
+    num_variables: int | None = None,
+    image_shape: tuple[int, int, int] | None = None,
     structured_decomposable: bool = False,
     seed: int = 42,
 ) -> Sequence[RegionGraph]:
@@ -505,7 +501,7 @@ def _build_lt_region_graph(
 
 
 def _build_qt_region_graph(
-    image_shape: Tuple[int, int, int], num_patch_splits: int
+    image_shape: tuple[int, int, int], num_patch_splits: int
 ) -> RegionGraph:
     num_channels, height, width = image_shape
     return QuadTree((height, width), num_patch_splits=num_patch_splits)
@@ -518,19 +514,19 @@ def _build_monotonic_sym_circuits(
     num_sum_units: int,
     *,
     input_layer: str,
-    input_layer_kwargs: Optional[Dict[str, Any]] = None,
+    input_layer_kwargs: dict[str, Any] | None = None,
     mono_clamp: bool = False,
-) -> List[Circuit]:
+) -> list[Circuit]:
     if input_layer_kwargs is None:
         input_layer_kwargs = {}
 
-    def weight_factory_clamp(shape: Tuple[int, ...]) -> Parameter:
+    def weight_factory_clamp(shape: tuple[int, ...]) -> Parameter:
         return Parameter.from_unary(
             ClampParameter(shape, vmin=1e-19),
             TensorParameter(*shape, initializer=UniformInitializer(0.01, 0.99)),
         )
 
-    def weight_factory_exp(shape: Tuple[int, ...]) -> Parameter:
+    def weight_factory_exp(shape: tuple[int, ...]) -> Parameter:
         return Parameter.from_unary(
             ExpParameter(shape),
             TensorParameter(*shape, initializer=ExpUniformInitializer(0.0, 1.0)),
@@ -613,13 +609,13 @@ def _build_non_monotonic_sym_circuits(
     num_sum_units: int,
     *,
     input_layer: str,
-    input_layer_kwargs: Optional[Dict[str, Any]] = None,
+    input_layer_kwargs: dict[str, Any] | None = None,
     complex: bool = False,
-) -> List[Circuit]:
+) -> list[Circuit]:
     if input_layer_kwargs is None:
         input_layer_kwargs = {}
 
-    def weight_factory(shape: Tuple[int, ...]) -> Parameter:
+    def weight_factory(shape: tuple[int, ...]) -> Parameter:
         weight_dtype = DataType.COMPLEX if complex else DataType.REAL
         return Parameter.from_input(
             TensorParameter(

@@ -1,7 +1,6 @@
 import os
 import random
 import subprocess
-from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -43,7 +42,7 @@ WANDB_KEY_FILE = "wandb_api.key"  # Put your wandb api key in this file, first l
 
 
 def drop_na(
-    df: pd.DataFrame, drop_cols: List[str], verbose: bool = True
+    df: pd.DataFrame, drop_cols: list[str], verbose: bool = True
 ) -> pd.DataFrame:
     N = len(df)
 
@@ -73,7 +72,7 @@ def filter_dataframe(df: pd.DataFrame, filter_dict: dict) -> pd.DataFrame:
     return df
 
 
-def unroll_hparams(hparams: dict) -> List[dict]:
+def unroll_hparams(hparams: dict) -> list[dict]:
     """
     :param hparams: dictionary with hyperparameter names as keys and hyperparam value domain as list
 
@@ -109,7 +108,7 @@ def get_git_revision_hash() -> str:
 
 
 def retrieve_wandb_runs(
-    project_names: Union[str, List[str]], verbose: bool = True
+    project_names: str | list[str], verbose: bool = True
 ) -> pd.DataFrame:
     """
     Returns all wandb runs from project name(s) specified
@@ -117,7 +116,7 @@ def retrieve_wandb_runs(
     :param project_names: The wandb user or team name and the project name as a string e.g "user12/project34"
     :param verbose: Bool for printing messages about processing
     """
-    api = wandb.Api(api_key=open(WANDB_KEY_FILE, "r").readline())
+    api = wandb.Api(api_key=open(WANDB_KEY_FILE).readline())
 
     if isinstance(project_names, str):
         project_names = [project_names]
@@ -157,7 +156,7 @@ def retrieve_wandb_runs(
 
 
 def retrieve_tboard_runs(
-    tboard_path: str, metrics: Union[str, List[str]], ignore_diverged=False
+    tboard_path: str, metrics: str | list[str], ignore_diverged=False
 ) -> pd.DataFrame:
     reader = SummaryReader(tboard_path, pivot=True, extra_columns={"dir_name"})
     df_hparams = reader.hparams
@@ -238,8 +237,8 @@ def build_run_id(args):
 
 @torch.no_grad()
 def evaluate_model_log_likelihood(
-    model: Union[PC, Flow], dataloader: DataLoader, device: torch.device
-) -> Tuple[float, float]:
+    model: PC | Flow, dataloader: DataLoader, device: torch.device
+) -> tuple[float, float]:
     model.eval()
     lls = list()
     for batch in dataloader:
@@ -277,7 +276,7 @@ def setup_data_loaders(
     discretize_bins: int = 32,
     shuffle_bins: bool = False,
     drop_last: bool = False,
-) -> Tuple[dict, Tuple[DataLoader, DataLoader, DataLoader]]:
+) -> tuple[dict, tuple[DataLoader, DataLoader, DataLoader]]:
     logger.info(f"Loading dataset '{dataset}' ...")
 
     numpy_dtype = retrieve_default_dtype(numpy=True)
@@ -413,7 +412,7 @@ def setup_model(
     mono_clamp: bool = False,
     complex: bool = False,
     seed: int = 123,
-) -> Union[PC, Flow]:
+) -> PC | Flow:
     logger.info(f"Building model '{model_name}' ...")
 
     if num_input_units < 0:
@@ -539,7 +538,7 @@ def setup_flow_model(
 
 
 def num_parameters(
-    model: Union[PC, nn.Module], requires_grad: bool = True, sum_only: bool = False
+    model: PC | nn.Module, requires_grad: bool = True, sum_only: bool = False
 ) -> int:
     if isinstance(model, PC):
         if sum_only:

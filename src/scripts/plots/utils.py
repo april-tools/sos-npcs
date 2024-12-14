@@ -1,12 +1,10 @@
-from typing import Optional
-
 import pandas as pd
 
 
 def format_model(
     m: str,
     exp_alias: str,
-    num_components: Optional[int] = None,
+    num_components: int | None = None,
     merge_model_ids: bool = False,
 ) -> str:
     if m == "MPC":
@@ -92,7 +90,7 @@ def preprocess_dataframe(
     return df
 
 
-def format_metric(m: str, train: Optional[bool] = None) -> str:
+def format_metric(m: str, train: bool | None = None) -> str:
     if m == "avg_ll":
         m = "LL"
     elif m == "bpd":

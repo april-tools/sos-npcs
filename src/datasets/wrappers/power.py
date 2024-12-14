@@ -1,5 +1,4 @@
 import os
-from typing import Tuple
 
 import numpy as np
 
@@ -24,7 +23,7 @@ def load_data(path: str) -> np.ndarray:
     return np.load(os.path.join(path, "power", "data.npy"))
 
 
-def load_data_split_with_noise(path: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def load_data_split_with_noise(path: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     rng = np.random.RandomState(42)
 
     data = load_data(path)
@@ -57,7 +56,7 @@ def load_data_split_with_noise(path: str) -> Tuple[np.ndarray, np.ndarray, np.nd
     return data_train, data_validate, data_test
 
 
-def load_data_normalised(path: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def load_data_normalised(path: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     data_train, data_validate, data_test = load_data_split_with_noise(path)
     data = np.vstack((data_train, data_validate))
     mu = data.mean(axis=0)

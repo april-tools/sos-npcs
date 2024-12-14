@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import numpy as np
 import torch
@@ -14,7 +14,7 @@ from cirkit.backend.torch.parameters.nodes import (
 class TorchFlattenParameter(TorchUnaryParameterOp):
     def __init__(
         self,
-        in_shape: Tuple[int, ...],
+        in_shape: tuple[int, ...],
         num_folds: int = 1,
         start_dim: int = 0,
         end_dim: int = -1,
@@ -29,7 +29,7 @@ class TorchFlattenParameter(TorchUnaryParameterOp):
         self.end_dim = end_dim
 
     @property
-    def config(self) -> Dict[str, Any]:
+    def config(self) -> dict[str, Any]:
         return {
             "in_shape": self.in_shape,
             "start_dim": self.start_dim,
@@ -37,7 +37,7 @@ class TorchFlattenParameter(TorchUnaryParameterOp):
         }
 
     @cached_property
-    def shape(self) -> Tuple[int, ...]:
+    def shape(self) -> tuple[int, ...]:
         flattened_dim = np.prod(
             [self.in_shapes[0][i] for i in range(self.start_dim, self.end_dim + 1)]
         )
@@ -53,7 +53,7 @@ class TorchFlattenParameter(TorchUnaryParameterOp):
 
 class TorchEinsumParameter(TorchParameterOp):
     def __init__(
-        self, in_shapes: Tuple[Tuple[int, ...]], einsum: str, num_folds: int = 1
+        self, in_shapes: tuple[tuple[int, ...]], einsum: str, num_folds: int = 1
     ):
         if "f" in einsum:
             raise ValueError(
@@ -73,9 +73,9 @@ class TorchEinsumParameter(TorchParameterOp):
 
     @staticmethod
     def _compute_output_shape(
-        *in_shapes: Tuple[int, ...], einsum: str
-    ) -> Tuple[int, ...]:
-        idx_to_dim: Dict[str, int] = {}
+        *in_shapes: tuple[int, ...], einsum: str
+    ) -> tuple[int, ...]:
+        idx_to_dim: dict[str, int] = {}
         in_idx, out_idx = einsum.split("->")
         for in_shape, multi_in_idx in zip(in_shapes, in_idx.split(",")):
             for idx, einsum_idx in enumerate(multi_in_idx):
@@ -89,11 +89,11 @@ class TorchEinsumParameter(TorchParameterOp):
         return tuple(idx_to_dim[einsum_idx] for einsum_idx in out_idx)
 
     @property
-    def config(self) -> Dict[str, Any]:
+    def config(self) -> dict[str, Any]:
         return {"in_shapes": self.in_shapes, "einsum": self.einsum}
 
     @property
-    def shape(self) -> Tuple[int, ...]:
+    def shape(self) -> tuple[int, ...]:
         return self._output_shape
 
     def forward(self, *xs: Tensor) -> Tensor:

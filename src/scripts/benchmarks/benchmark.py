@@ -1,7 +1,8 @@
 import argparse
 import gc
 import os
-from typing import Iterator, List, Tuple, Union
+from typing import List, Tuple, Union
+from collections.abc import Iterator
 
 import numpy as np
 import pandas as pd
@@ -92,11 +93,10 @@ def run_benchmark(
     burnin_iterations: int = 1,
     backprop: bool = False,
     partition_function_only: bool = False,
-) -> Tuple[List[float], List[float]]:
-    def infinite_dataloader() -> Iterator[Union[List[Tensor], Tuple[Tensor], Tensor]]:
+) -> tuple[list[float], list[float]]:
+    def infinite_dataloader() -> Iterator[list[Tensor] | tuple[Tensor] | Tensor]:
         while True:
-            for x in data_loader:
-                yield x
+            yield from data_loader
 
     model = model.to(device)
 

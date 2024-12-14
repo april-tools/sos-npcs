@@ -2,7 +2,7 @@ import os
 import time
 from argparse import Namespace
 from copy import copy
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import numpy as np
 import torch
@@ -66,24 +66,24 @@ class Engine:
             os.makedirs(kwargs["wandb_path"], exist_ok=True)
 
         self.logger = Logger(self._trial_unique_id, args.verbose, **kwargs)
-        self.metadata: Dict[str, Any] = dict()
+        self.metadata: dict[str, Any] = dict()
 
-        self.dataloaders: Dict[str, Optional[DataLoader]] = {
+        self.dataloaders: dict[str, DataLoader | None] = {
             "train": None,
             "valid": None,
             "test": None,
         }
 
-        self.model: Optional[Union[PC, Flow]] = None
-        self.optimizer: Optional[torch.optim.Optimizer] = None
-        self.scheduler: Optional[torch.optim.lr_scheduler.LRScheduler] = None
+        self.model: PC | Flow | None = None
+        self.optimizer: torch.optim.Optimizer | None = None
+        self.scheduler: torch.optim.lr_scheduler.LRScheduler | None = None
         self._log_distribution = self.args.log_distribution
 
     def shutdown(self):
         self.logger.close()
 
     @property
-    def hparams(self) -> Dict[str, Any]:
+    def hparams(self) -> dict[str, Any]:
         return {
             "seed": self.args.seed,
             "dataset": self.args.dataset,
@@ -112,9 +112,9 @@ class Engine:
     def _eval_step(
         self,
         epoch_idx: int,
-        metrics: Dict[str, float],
-        train_avg_ll: Optional[float] = None,
-    ) -> Dict[str, float]:
+        metrics: dict[str, float],
+        train_avg_ll: float | None = None,
+    ) -> dict[str, float]:
         # Log metrics based on training data
         if train_avg_ll is not None:
             if self.metadata["type"] in ["image", "categorical", "language"]:

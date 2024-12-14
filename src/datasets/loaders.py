@@ -2,7 +2,6 @@ import csv
 import os
 import pickle
 import time
-from typing import List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -79,7 +78,7 @@ ALL_DATASETS = (
 
 def load_small_uci_dataset(
     name: str, path: str = "datasets", dtype: str = "int64", seed: int = 42
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Load and split small UCI datasets.
     """
@@ -106,7 +105,7 @@ def csv_2_numpy(
     Utility to read a dataset in csv format into a numpy array.
     """
     file_path = os.path.join(path, filename)
-    reader = csv.reader(open(file_path, "r"), delimiter=sep)
+    reader = csv.reader(open(file_path), delimiter=sep)
     x = list(reader)
     array = np.array(x, dtype=dtype)
     return array
@@ -118,17 +117,15 @@ def load_binary_dataset(
     sep: str = ",",
     dtype: str = "int64",
     suffix: str = "data",
-    splits: Optional[List[str]] = None,
+    splits: list[str] | None = None,
     verbose: bool = False,
-) -> List[np.ndarray]:
+) -> list[np.ndarray]:
     """
     Loading training, validation and test splits by suffix from csv files.
     """
     if splits is None:
         splits = ["train", "valid", "test"]
-    csv_files = [
-        os.path.join(name, "{0}.{1}.{2}".format(name, ext, suffix)) for ext in splits
-    ]
+    csv_files = [os.path.join(name, f"{name}.{ext}.{suffix}") for ext in splits]
 
     load_start_t = time.perf_counter()
     dataset_splits = [csv_2_numpy(file, path, sep, dtype) for file in csv_files]
@@ -136,18 +133,19 @@ def load_binary_dataset(
 
     if verbose:
         print(
-            "Dataset splits for {0} loaded in {1} secs".format(
+            "Dataset splits for {} loaded in {} secs".format(
                 name, load_end_t - load_start_t
             )
         )
         for data, split in zip(dataset_splits, splits):
-            print("\t{0}:\t{1}".format(split, data.shape))
+            print(f"\t{split}:\t{data.shape}")
     return dataset_splits
 
 
-def load_image_dataset(
-    name: str, path: str = "datasets"
-) -> Tuple[Tuple[int, int, int], Tuple[Dataset, Dataset, Dataset],]:
+def load_image_dataset(name: str, path: str = "datasets") -> tuple[
+    tuple[int, int, int],
+    tuple[Dataset, Dataset, Dataset],
+]:
     if name == "MNIST":
         train_data = MNIST(path, train=True, download=True).data.unsqueeze(dim=-1)
         valid_data = None
@@ -216,7 +214,7 @@ def load_image_dataset(
 
 def load_continuous_dataset(
     name: str, path: str = "datasets", dtype: np.dtype = np.float32
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     if name == "power":
         data = POWER(path)
         data_train, data_valid, data_test = data.trn.x, data.val.x, data.tst.x
@@ -252,7 +250,7 @@ def load_artificial_dataset(
     discretize_bins: int = 32,
     shuffle_bins: bool = False,
     **kwargs,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     num_valid_samples = int(num_samples * valid_test_perc * 0.5)
     num_test_samples = int(num_samples * valid_test_perc)
     total_num_samples = num_samples + num_valid_samples + num_test_samples

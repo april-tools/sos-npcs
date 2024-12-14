@@ -1,7 +1,7 @@
 import json
 import os
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 import torch
@@ -19,15 +19,15 @@ class Logger:
         trail_id: str,
         verbose: bool,
         *,
-        checkpoint_path: Optional[str] = None,
-        tboard_path: Optional[str] = None,
-        wandb_path: Optional[str] = None,
-        wandb_kwargs: Optional[Dict[str, Any]] = None,
+        checkpoint_path: str | None = None,
+        tboard_path: str | None = None,
+        wandb_path: str | None = None,
+        wandb_kwargs: dict[str, Any] | None = None,
     ):
         self.trial_id = trail_id
         self.verbose = verbose
         self.checkpoint_path = checkpoint_path
-        self._tboard_writer: Optional[SummaryWriter] = None
+        self._tboard_writer: SummaryWriter | None = None
 
         if tboard_path:
             self._setup_tboard(tboard_path)
@@ -37,9 +37,9 @@ class Logger:
             self._setup_wandb(wandb_path, **wandb_kwargs)
 
         self._best_distribution = None
-        self._logged_scalars: Dict[
-            str, List[Tuple[float, Optional[int]]]
-        ] = defaultdict(list)
+        self._logged_scalars: dict[str, list[tuple[float, int | None]]] = defaultdict(
+            list
+        )
         self._logged_distributions = list()
         self._logged_wcoords = list()
 
@@ -57,10 +57,10 @@ class Logger:
     def _setup_wandb(
         self,
         path: str,
-        project: Optional[str] = None,
-        config: Optional[Dict[str, Any]] = None,
-        group: Optional[str] = None,
-        name: Optional[str] = None,
+        project: str | None = None,
+        config: dict[str, Any] | None = None,
+        group: str | None = None,
+        name: str | None = None,
         online: bool = True,
     ):
         if wandb.run is None:
@@ -73,7 +73,7 @@ class Logger:
                 mode="online" if online else "offline",
             )
 
-    def log_scalar(self, tag: str, value: float, step: Optional[int] = None):
+    def log_scalar(self, tag: str, value: float, step: int | None = None):
         if self._tboard_writer is not None:
             self._tboard_writer.add_scalar(tag, value, global_step=step)
         if wandb.run:
@@ -83,8 +83,8 @@ class Logger:
     def log_image(
         self,
         tag: str,
-        value: Union[np.ndarray, torch.Tensor],
-        step: Optional[int] = None,
+        value: np.ndarray | torch.Tensor,
+        step: int | None = None,
         dataformats: str = "CHW",
     ):
         if self._tboard_writer is not None:
@@ -101,10 +101,10 @@ class Logger:
 
     def log_hparams(
         self,
-        hparam_dict: Dict[str, Any],
-        metric_dict: Dict[str, Any],
-        hparam_domain_discrete: Optional[Dict[str, List[Any]]] = None,
-        run_name: Optional[str] = None,
+        hparam_dict: dict[str, Any],
+        metric_dict: dict[str, Any],
+        hparam_domain_discrete: dict[str, list[Any]] | None = None,
+        run_name: str | None = None,
     ):
         if self._tboard_writer is not None:
             self._tboard_writer.add_hparams(
@@ -120,11 +120,11 @@ class Logger:
         self,
         model: PC,
         discretized: bool,
-        lim: Tuple[
-            Tuple[Union[float, int], Union[float, int]],
-            Tuple[Union[float, int], Union[float, int]],
+        lim: tuple[
+            tuple[float | int, float | int],
+            tuple[float | int, float | int],
         ],
-        device: Optional[Union[str, torch.device]] = None,
+        device: str | torch.device | None = None,
     ):
         xlim, ylim = lim
         if discretized:
@@ -137,11 +137,11 @@ class Logger:
         self,
         model: PC,
         discretized: bool,
-        lim: Tuple[
-            Tuple[Union[float, int], Union[float, int]],
-            Tuple[Union[float, int], Union[float, int]],
+        lim: tuple[
+            tuple[float | int, float | int],
+            tuple[float | int, float | int],
         ],
-        device: Optional[Union[str, torch.device]] = None,
+        device: str | torch.device | None = None,
     ):
         xlim, ylim = lim
         if discretized:
@@ -167,7 +167,7 @@ class Logger:
             wandb.finish(quiet=True)
         self.save_dict(self._logged_scalars, f"scalars-{self.trial_id}.json")
 
-    def save_checkpoint(self, data: Dict[str, Any], filepath: str):
+    def save_checkpoint(self, data: dict[str, Any], filepath: str):
         if self.checkpoint_path:
             torch.save(data, os.path.join(self.checkpoint_path, filepath))
 
@@ -185,7 +185,7 @@ class Logger:
         with open(os.path.join(self.checkpoint_path, filepath), "w") as fp:
             json.dump(data, fp)
 
-    def load_array(self, filepath: str) -> Optional[np.ndarray]:
+    def load_array(self, filepath: str) -> np.ndarray | None:
         if self.checkpoint_path:
             try:
                 array = np.load(os.path.join(self.checkpoint_path, filepath))

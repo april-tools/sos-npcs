@@ -203,7 +203,7 @@ if __name__ == "__main__":
         for (c, t) in df.dtypes.to_dict().items()
         if t in [float, np.dtype("float32"), np.dtype("float64")]
     ]
-    df = df.round(dict((k, args.digits) for k in float_cols))
+    df = df.round({k: args.digits for k in float_cols})
 
     # Save the best results
     df.to_csv(args.best_filepath, index=False)

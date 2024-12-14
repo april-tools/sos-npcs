@@ -31,7 +31,7 @@ def check_evi_ll(model: PC, x: torch.Tensor) -> torch.Tensor:
     return lls
 
 
-def check_pdf(model, interval: Optional[Tuple[float, float]] = None):
+def check_pdf(model, interval: tuple[float, float] | None = None):
     pdf = lambda y, x: torch.exp(model.log_likelihood(torch.Tensor([[[x, y]]])))
     if interval is None:
         a, b = -64.0, 64.0

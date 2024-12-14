@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 from torch.utils.data import Dataset
 from torchvision.datasets import CelebA
@@ -37,7 +35,7 @@ def ycc2rgb(ycc_image):
 
 
 class CELEBA(Dataset):
-    def __init__(self, root, split="all", ycc: Optional[bool] = False):
+    def __init__(self, root, split="all", ycc: bool | None = False):
         if ycc:
             ts = [
                 transforms.CenterCrop((140, 140)),

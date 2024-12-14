@@ -1,5 +1,3 @@
-from typing import Optional, Tuple, Union
-
 import numpy as np
 import torch
 from matplotlib import pyplot as plt
@@ -12,8 +10,8 @@ from utilities import retrieve_default_dtype
 
 def plot_bivariate_samples_hmap(
     data: np.ndarray,
-    xlim: Optional[Tuple[float, float]] = None,
-    ylim: Optional[Tuple[float, float]] = None,
+    xlim: tuple[float, float] | None = None,
+    ylim: tuple[float, float] | None = None,
     zm: float = 0.0,
     nbins: int = 256,
 ) -> np.ndarray:
@@ -44,8 +42,8 @@ def plot_bivariate_samples_hmap(
 
 def plot_bivariate_discrete_samples_hmap(
     data: np.ndarray,
-    xlim: Optional[Tuple[int, int]] = None,
-    ylim: Optional[Tuple[int, int]] = None,
+    xlim: tuple[int, int] | None = None,
+    ylim: tuple[int, int] | None = None,
 ) -> np.ndarray:
     if xlim is None:
         xlim = np.min(data[:, 0]), np.max(data[:, 0])
@@ -69,8 +67,8 @@ def plot_bivariate_discrete_samples_hmap(
 
 def discrete_samples_hmap(
     data: np.ndarray,
-    xlim: Optional[Tuple[int, int]] = None,
-    ylim: Optional[Tuple[int, int]] = None,
+    xlim: tuple[int, int] | None = None,
+    ylim: tuple[int, int] | None = None,
 ) -> np.ndarray:
     if xlim is None:
         xlim = np.min(data[:, 0]), np.max(data[:, 0])
@@ -89,8 +87,8 @@ def discrete_samples_hmap(
 
 def kde_samples_hmap(
     data: np.ndarray,
-    xlim: Optional[Tuple[float, float]] = None,
-    ylim: Optional[Tuple[float, float]] = None,
+    xlim: tuple[float, float] | None = None,
+    ylim: tuple[float, float] | None = None,
     zm: float = 0.0,
     nbins: int = 256,
     *,
@@ -117,11 +115,11 @@ def kde_samples_hmap(
 @torch.no_grad()
 def bivariate_pdf_heatmap(
     model: PC,
-    xlim: Tuple[float, float],
-    ylim: Tuple[float, float],
+    xlim: tuple[float, float],
+    ylim: tuple[float, float],
     zm: float = 0.0,
     nbins: int = 256,
-    device: Optional[Union[str, torch.device]] = None,
+    device: str | torch.device | None = None,
 ) -> np.ndarray:
     if device is None:
         device = "cpu"
@@ -147,9 +145,9 @@ def bivariate_pdf_heatmap(
 @torch.no_grad()
 def bivariate_pmf_heatmap(
     model: PC,
-    xlim: Tuple[int, int],
-    ylim: Tuple[int, int],
-    device: Optional[Union[str, torch.device]] = None,
+    xlim: tuple[int, int],
+    ylim: tuple[int, int],
+    device: str | torch.device | None = None,
 ) -> np.ndarray:
     xi, yi = np.mgrid[xlim[0] : xlim[1] + 1, ylim[0] : ylim[1] + 1]
     xy = np.stack([xi.flatten(), yi.flatten()], axis=1)

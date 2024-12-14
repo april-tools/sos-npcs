@@ -1,6 +1,6 @@
 import os
 import argparse
-from typing import Callable
+from collections.abc import Callable
 
 import matplotlib.cm as cm
 import numpy as np

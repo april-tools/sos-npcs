@@ -3,7 +3,6 @@ import json
 import os
 from collections import defaultdict
 
-import numpy as np
 import seaborn as sb
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
@@ -79,7 +78,7 @@ if __name__ == "__main__":
         trial_id = "-".join(curve_file.split("scalars-")[1].split(".")[:2])
         if model not in raw_curves_data:
             raw_curves_data[model] = {}
-        with open(curve_file, "r") as fp:
+        with open(curve_file) as fp:
             curve_data = json.load(fp)
             if exp_alias not in raw_curves_data[model]:
                 raw_curves_data[model][exp_alias] = {}

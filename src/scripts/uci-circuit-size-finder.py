@@ -7,24 +7,24 @@ from scripts.utils import setup_data_loaders, setup_model, num_parameters
 # learnable parameters
 #
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     seed = 42
-    logger = Logger('progressive-size', verbose=True)
-    metadata, _ = setup_data_loaders('power', 'datasets', logger)
+    logger = Logger("progressive-size", verbose=True)
+    metadata, _ = setup_data_loaders("power", "datasets", logger)
 
     for conf in [(1, 152, 256), (4, 102, 64), (8, 80, 32), (16, 60, 16)]:
         num_components, num_units, num_input_units = conf
         model = setup_model(
-            'SOS',
+            "SOS",
             metadata,
             logger=logger,
-            region_graph='rnd-bt',
+            region_graph="rnd-bt",
             structured_decomposable=True,
             num_components=num_components,
             num_units=num_units,
             num_input_units=num_input_units,
             complex=True,
-            seed=seed
+            seed=seed,
         )
         print(f"Conf: {conf}")
         num_params = num_parameters(model)

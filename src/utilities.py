@@ -1,5 +1,3 @@
-from typing import Optional, Tuple, Union
-
 import numpy as np
 import torch
 
@@ -13,10 +11,10 @@ MODELS = PCS_MODELS + FLOW_MODELS
 
 
 #: A random state type is either an integer seed value or a Numpy RandomState instance.
-RandomState = Union[int, np.random.RandomState]
+RandomState = int | np.random.RandomState
 
 
-def retrieve_default_dtype(numpy: bool = False) -> Union[torch.dtype, np.dtype]:
+def retrieve_default_dtype(numpy: bool = False) -> torch.dtype | np.dtype:
     dtype = torch.get_default_dtype()
     if not numpy:
         return dtype
@@ -29,7 +27,7 @@ def retrieve_default_dtype(numpy: bool = False) -> Union[torch.dtype, np.dtype]:
     raise ValueError("Cannot map torch default dtype to np.dtype")
 
 
-def retrieve_real_complex_default_dtypes() -> Tuple[torch.dtype, torch.dtype]:
+def retrieve_real_complex_default_dtypes() -> tuple[torch.dtype, torch.dtype]:
     real_dtype = retrieve_default_dtype()
     if real_dtype == torch.float16:
         complex_dtype = torch.complex32
@@ -48,7 +46,7 @@ def retrieve_complex_default_dtype() -> torch.dtype:
 
 
 def check_random_state(
-    random_state: Optional[RandomState] = None,
+    random_state: RandomState | None = None,
 ) -> np.random.RandomState:
     """
     Check a possible input random state and return it as a Numpy's RandomState object.

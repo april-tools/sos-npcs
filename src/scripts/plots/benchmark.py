@@ -1,6 +1,5 @@
 import argparse
 import os
-from typing import Union
 
 import matplotlib.ticker as tck
 import pandas as pd
@@ -48,7 +47,7 @@ parser.add_argument(
 )
 
 
-def from_bytes_to_gib(bytes: Union[int, float]) -> float:
+def from_bytes_to_gib(bytes: int | float) -> float:
     return bytes / (1024.0 * 1024.0 * 1024.0)
 
 

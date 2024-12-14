@@ -1,5 +1,4 @@
 import io
-from typing import Optional
 
 import numpy as np
 import seaborn as sb
@@ -12,7 +11,7 @@ def setup_tueplots(
     nrows: int,
     ncols: int,
     rel_width: float = 1.0,
-    hw_ratio: Optional[float] = None,
+    hw_ratio: float | None = None,
     default_smaller: int = -1,
     use_tex: bool = True,
     tight_layout=False,
@@ -53,8 +52,8 @@ def setup_tueplots(
 
 def array_to_image(
     array: np.ndarray,
-    vmin: Optional[float] = None,
-    vmax: Optional[float] = None,
+    vmin: float | None = None,
+    vmax: float | None = None,
     colorbar: bool = False,
 ) -> np.ndarray:
     assert len(array.shape) == 2

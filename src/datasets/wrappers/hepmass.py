@@ -1,9 +1,7 @@
 import os.path
 from collections import Counter
 from os.path import join
-from typing import Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -30,7 +28,7 @@ class HEPMASS:
         self.n_dims = self.trn.x.shape[1]
 
 
-def load_data(path: str) -> Tuple[np.ndarray, np.ndarray]:
+def load_data(path: str) -> tuple[np.ndarray, np.ndarray]:
     data_train = pd.read_csv(
         filepath_or_buffer=join(path, "1000_train.csv"), index_col=False
     )
@@ -41,7 +39,7 @@ def load_data(path: str) -> Tuple[np.ndarray, np.ndarray]:
     return data_train, data_test
 
 
-def load_data_no_discrete(path: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def load_data_no_discrete(path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Loads the positive class examples from the first 10 percent of the dataset.
     """
@@ -58,7 +56,7 @@ def load_data_no_discrete(path: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     return data_train, data_test
 
 
-def load_data_no_discrete_normalised(path) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def load_data_no_discrete_normalised(path) -> tuple[pd.DataFrame, pd.DataFrame]:
     data_train, data_test = load_data_no_discrete(path)
     mu = data_train.mean()
     s = data_train.std()
@@ -70,7 +68,7 @@ def load_data_no_discrete_normalised(path) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
 def load_data_no_discrete_normalised_as_array(
     path: str,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     data_train, data_test = load_data_no_discrete_normalised(path)
     data_train, data_test = data_train.to_numpy(), data_test.to_numpy()
 

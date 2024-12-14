@@ -1,5 +1,4 @@
 import os
-from typing import Tuple
 
 import numpy as np
 
@@ -21,7 +20,7 @@ class MINIBOONE:
         self.n_dims = self.trn.x.shape[1]
 
 
-def load_data(root_path: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def load_data(root_path: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     # NOTE: To remember how the pre-processing was done.
     # data = pd.read_csv(root_path, names=[str(x) for x in range(50)], delim_whitespace=True)
     # print data.head()
@@ -53,7 +52,7 @@ def load_data(root_path: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     return data_train, data_validate, data_test
 
 
-def load_data_normalised(root_path: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def load_data_normalised(root_path: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     data_train, data_validate, data_test = load_data(root_path)
     data = np.vstack((data_train, data_validate))
     mu = data.mean(axis=0)

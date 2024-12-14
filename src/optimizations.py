@@ -1,4 +1,4 @@
-from typing import List, Tuple, Type, Union, cast
+from typing import cast
 
 from cirkit.backend.torch.compiler import TorchCompiler
 from cirkit.backend.torch.optimization.registry import (
@@ -19,15 +19,13 @@ class OuterProductReduceSumPattern(ParameterOptPatternDefn):
         return False
 
     @classmethod
-    def entries(cls) -> List[Type[TorchParameterNode]]:
+    def entries(cls) -> list[type[TorchParameterNode]]:
         return [TorchReduceSumParameter, TorchOuterProductParameter]
 
 
 def apply_prod_sum_einsum(
     compiler: TorchCompiler, match: ParameterOptMatch
-) -> Union[
-    Tuple[TorchEinsumParameter], Tuple[TorchEinsumParameter, TorchFlattenParameter]
-]:
+) -> tuple[TorchEinsumParameter] | tuple[TorchEinsumParameter, TorchFlattenParameter]:
     outer_prod = cast(TorchOuterProductParameter, match.entries[1])
     reduce_sum = cast(TorchReduceSumParameter, match.entries[0])
     in_shape1, in_shape2 = outer_prod.in_shapes

@@ -4,12 +4,12 @@ import json
 import multiprocessing
 import subprocess
 from collections import defaultdict
-from typing import Iterator, List, Optional, Tuple
+from collections.abc import Iterator
 
-device_ids_cycle_g: Optional[Iterator[int]] = None
+device_ids_cycle_g: Iterator[int] | None = None
 
 
-def expand_hparams_grid(hps_grid: dict, common_hps_grid: dict) -> List[dict]:
+def expand_hparams_grid(hps_grid: dict, common_hps_grid: dict) -> list[dict]:
     grid = common_hps_grid.copy()
     grid.update(hps_grid)
     grid_keys = list(grid.keys())
@@ -48,7 +48,7 @@ def expand_hparams_grid(hps_grid: dict, common_hps_grid: dict) -> List[dict]:
 
 def model_hparams(
     hps_grid: dict, common_hps_grid: dict
-) -> List[Tuple[Optional[str], dict]]:
+) -> list[tuple[str | None, dict]]:
     if not hps_grid:
         return [(None, common_hps_grid)]
     hps_grid_values = hps_grid.values()
@@ -117,7 +117,7 @@ parser.add_argument(
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    with open(args.config, "r") as fp:
+    with open(args.config) as fp:
         config = json.load(fp)
     dry_run = args.dry_run
     num_jobs = args.num_jobs
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     elif multi_devices:
 
         def run_multi_commands(
-            device_cmds: List[str], stdout: int = subprocess.DEVNULL
+            device_cmds: list[str], stdout: int = subprocess.DEVNULL
         ):
             for cmd in device_cmds:
                 subprocess.run(cmd.split(), stdout=stdout)
