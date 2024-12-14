@@ -13,3 +13,4 @@ tueplots
 h5py
 tbparse
 wandb
+opencv-python
