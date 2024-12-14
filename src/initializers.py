@@ -5,10 +5,10 @@ from torch import Tensor, nn
 
 from cirkit.backend.torch.compiler import TorchCompiler
 from cirkit.backend.torch.initializers import InitializerFunc
-from cirkit.symbolic.initializers import Initializer
+from cirkit.symbolic.initializers import ElementwiseInitializer
 
 
-class ExpUniformInitializer(Initializer):
+class ExpUniformInitializer(ElementwiseInitializer):
     def __init__(self, a: float = 0.0, b: float = 1.0) -> None:
         if a >= b:
             raise ValueError("The minimum should be strictly less than the maximum")

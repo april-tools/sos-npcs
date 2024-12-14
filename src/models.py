@@ -270,7 +270,6 @@ class SOS(PC):
         num_squares: int = 1,
         region_graph: str = "rnd-bt",
         structured_decomposable: bool = False,
-        non_mono_clamp: bool = False,
         complex: bool = False,
         seed: int = 42,
     ) -> Tuple[TorchCircuit, TorchConstantCircuit]:
@@ -595,8 +594,7 @@ def _build_monotonic_sym_circuits(
         else:
             sum_product = "cp-t"
             input_factory = embedding_layer_factory
-        return Circuit.from_region_graph(
-            rg,
+        return rg.build_circuit(
             num_channels=num_channels,
             num_input_units=num_input_units,
             num_sum_units=num_sum_units,
@@ -682,8 +680,7 @@ def _build_non_monotonic_sym_circuits(
         else:
             sum_product = "cp-t"
             input_factory = embedding_layer_factory
-        return Circuit.from_region_graph(
-            rg,
+        return rg.build_circuit(
             num_channels=num_channels,
             num_input_units=num_input_units,
             num_sum_units=num_sum_units,
