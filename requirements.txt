@@ -3,7 +3,6 @@ torchvision~=0.18.0
 pandas<2.0.0
 scikit-learn
 zuko
-scipy
 seaborn
 matplotlib
 pillow
