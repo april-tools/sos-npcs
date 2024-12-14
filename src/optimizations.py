@@ -1,3 +1,4 @@
+import itertools
 from typing import cast
 
 from cirkit.backend.torch.compiler import TorchCompiler
@@ -34,46 +35,36 @@ def apply_prod_sum_einsum(
     outer_dim = outer_prod.dim
     reduce_dim = reduce_sum.dim
 
-    in_idx1 = list(range(len(in_shape1)))  # [0, 1, 2, ..., N - 1]
-    in_idx2 = in_idx1.copy()  # [0, 1, 2, ..., K, ..., N - 1]
-    in_idx2[outer_dim] = len(in_shape1)  # [0, 1, 2, ..., N, ..., N - 1]
-    if outer_dim == reduce_dim:
-        out_idx2 = list(range(len(in_shape1)))  # [0, 1, 2, ..., K, ..., N - 1]
-        del out_idx2[reduce_dim]  # [0, 1, 2, ..., K - 1, K + 1, ..., N - 1]
-        flatten_start_dim = None
-        flatten_end_dim = None
-    else:
-        # out_idx2: [0, 1, 2, ..., K, N, K + 1, ..., N - 1]
-        out_idx2 = (
-            list(range(outer_dim + 1))
-            + [len(in_shape1)]
-            + list(range(outer_dim + 1, len(in_shape1)))
-        )
-        if reduce_dim < outer_dim:
-            del out_idx2[
-                reduce_dim
-            ]  # [0, 1, 2, ..., J - 1, J + 1, ..., K, N, K + 1, ..., N - 1]
-            flatten_start_dim = outer_dim - 1
-            flatten_end_dim = outer_dim
-        else:
-            del out_idx2[
-                reduce_dim + 1
-            ]  # [0, 1, 2, ..., K, N, K + 1, ..., J - 1, J + 1, ..., N - 1]
-            flatten_start_dim = outer_dim
-            flatten_end_dim = outer_dim + 1
-
-    # TODO: refactor TorchEinsumParameter to not accept only strings
-    indices = ["r", "s", "t", "u", "v", "w", "x", "y", "z"]
-    in_idx1 = "".join([indices[i] for i in in_idx1])
-    in_idx2 = "".join([indices[i] for i in in_idx2])
-    out_idx = "".join([indices[i] for i in out_idx2])
-    einsum_string = f"{in_idx1},{in_idx2}->{out_idx}"
-    einsum = TorchEinsumParameter(outer_prod.in_shapes, einsum=einsum_string)
-    if flatten_start_dim is None:
-        assert flatten_end_dim is None
-        return (einsum,)
-    assert flatten_end_dim is not None
-    flatten = TorchFlattenParameter(
-        einsum.shape, start_dim=flatten_start_dim, end_dim=flatten_end_dim
+    # in_idx1 = [0, 1, 2, ..., N - 1]
+    in_idx1: tuple[int, ...] = tuple(range(len(in_shape1)))
+    # in_idx2 = [0, 1, 2, ..., N + 1, ..., N - 1]
+    in_idx2: tuple[int, ...] = (
+        tuple(range(outer_dim))
+        + (len(in_shape1),)
+        + tuple(range(outer_dim + 1, len(in_shape1)))
     )
+    # Apply the reduction to the indices, as to get the output indices of the einsum
+    reduce_idx: list[tuple[int, ...]] = (
+        list((i,) for i in range(outer_dim))
+        + [(outer_dim, len(in_shape1))]
+        + list((i,) for i in range(outer_dim + 1, len(in_shape1)))
+    )
+    del reduce_idx[reduce_dim]
+    out_idx: tuple[int, ...] = tuple(itertools.chain.from_iterable(reduce_idx))
+
+    # If we are reducing the dimension along which we compute the Kronecker product,
+    # we just need an einsum
+    einsum = TorchEinsumParameter(
+        outer_prod.in_shapes, einsum=(in_idx1, in_idx2, out_idx)
+    )
+    if outer_dim == reduce_dim:
+        return (einsum,)
+
+    # If we are NOT reducing the dimension along which we compute the Kronecker product,
+    # we need to flatten some dimensions after the einsum
+    if reduce_dim < outer_dim:
+        start_dim, end_dim = outer_dim - 1, outer_dim
+    else:
+        start_dim, end_dim = outer_dim, outer_dim + 1
+    flatten = TorchFlattenParameter(einsum.shape, start_dim=start_dim, end_dim=end_dim)
     return einsum, flatten

@@ -1,3 +1,4 @@
+import itertools
 from functools import cached_property
 from typing import Any
 
@@ -53,48 +54,44 @@ class TorchFlattenParameter(TorchUnaryParameterOp):
 
 class TorchEinsumParameter(TorchParameterOp):
     def __init__(
-        self, in_shapes: tuple[tuple[int, ...]], einsum: str, num_folds: int = 1
+        self,
+        in_shapes: tuple[tuple[int, ...], ...],
+        einsum: tuple[tuple[int, ...], ...],
+        num_folds: int = 1,
     ):
-        if "f" in einsum:
-            raise ValueError(
-                "The einsum string should not contain the reserved index 'f'"
-            )
-        super().__init__(*in_shapes, num_folds=num_folds)
-        self.einsum = einsum
-        self._output_shape = TorchEinsumParameter._compute_output_shape(
-            *in_shapes, einsum=einsum
-        )
-        in_idx, out_idx = einsum.split("->")
-        self._processed_einsum = (
-            ",".join("f" + multi_in_idx for multi_in_idx in in_idx.split(","))
-            + "->"
-            + ("f" + out_idx)
-        )
-
-    @staticmethod
-    def _compute_output_shape(
-        *in_shapes: tuple[int, ...], einsum: str
-    ) -> tuple[int, ...]:
-        idx_to_dim: dict[str, int] = {}
-        in_idx, out_idx = einsum.split("->")
-        for in_shape, multi_in_idx in zip(in_shapes, in_idx.split(",")):
-            for idx, einsum_idx in enumerate(multi_in_idx):
-                if einsum_idx in idx_to_dim:
-                    if in_shape[idx] != idx_to_dim[einsum_idx]:
-                        raise ValueError(
-                            f"Einsum string shape mismatch, found {in_idx[idx]} but expected {idx_to_dim[einsum_idx]}"
-                        )
+        if len(in_shapes) != len(einsum) - 1:
+            raise ValueError("Number of inputs and einsum shapes mismatch")
+        idx_to_dim: dict[int, int] = {}
+        for in_shape, multi_in_idx in zip(in_shapes, einsum):
+            for i, einsum_idx in enumerate(multi_in_idx):
+                if einsum_idx not in idx_to_dim:
+                    idx_to_dim[einsum_idx] = in_shape[i]
                     continue
-                idx_to_dim[einsum_idx] = in_shape[idx]
-        return tuple(idx_to_dim[einsum_idx] for einsum_idx in out_idx)
+                if in_shape[i] != idx_to_dim[einsum_idx]:
+                    raise ValueError(
+                        f"Einsum shape mismatch, found {in_shape[i]} "
+                        f"but expected {idx_to_dim[einsum_idx]}"
+                    )
+                continue
+        super().__init__(*in_shapes, num_folds=num_folds)
+        # Pre-compute the output shape of the einsum
+        self._output_shape = tuple(
+            idx_to_dim[einsum_idx] + 1 for einsum_idx in einsum[-1]
+        )
+        # Add fold dimension in both inputs and outputs of the einsum
+        self.einsum = tuple(
+            (0,) + tuple(map(lambda i: i + 1, einsum_idx)) for einsum_idx in einsum
+        )
 
     @property
     def config(self) -> dict[str, Any]:
-        return {"in_shapes": self.in_shapes, "einsum": self.einsum}
+        unfolded_einsum = tuple(idx[1:] for idx in self.einsum)
+        return {"in_shapes": self.in_shapes, "einsum": unfolded_einsum}
 
     @property
     def shape(self) -> tuple[int, ...]:
         return self._output_shape
 
     def forward(self, *xs: Tensor) -> Tensor:
-        return torch.einsum(self._processed_einsum, *xs)
+        einsum_args = tuple(itertools.chain.from_iterable(zip(xs, self.einsum[:-1])))
+        return torch.einsum(*einsum_args, self.einsum[-1])
