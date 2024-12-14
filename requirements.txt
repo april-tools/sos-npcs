@@ -1,4 +1,4 @@
-libcirkit@git+https://github.com/april-tools/cirkit@efae019ac7f066d46e9245f813c5680779132613
+libcirkit@git+https://github.com/april-tools/cirkit@429dc89681b914807287ec52dd4012b2fdfb84b3
 torchvision~=0.18.0
 pandas<2.0.0
 scikit-learn
