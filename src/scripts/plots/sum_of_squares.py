@@ -108,7 +108,7 @@ if __name__ == "__main__":
             handles, labels = ax.get_legend_handles_labels()
             ax.legend(handles, labels, framealpha=0.6)
     if args.xlabel:
-        ax.set_xlabel(r"Num. of components")
+        ax.set_xlabel(r"\# components / squares")
     else:
         ax.set_xlabel("")
     if args.ylabel:
