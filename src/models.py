@@ -15,9 +15,7 @@ from cirkit.symbolic.dtypes import DataType
 from cirkit.symbolic.initializers import NormalInitializer, UniformInitializer
 from cirkit.symbolic.layers import (
     CategoricalLayer,
-    DenseLayer,
     GaussianLayer,
-    HadamardLayer,
     EmbeddingLayer,
 )
 from cirkit.symbolic.parameters import (
@@ -585,44 +583,26 @@ def _build_monotonic_sym_circuits(
             ),
         )
 
-    def hadamard_layer_factory(num_input_units: int, arity: int) -> HadamardLayer:
-        return HadamardLayer(num_input_units, arity)
-
-    def dense_layer_factory(num_input_units: int, num_output_units: int) -> DenseLayer:
-        weight_factory = weight_factory_clamp if mono_clamp else weight_factory_exp
-        return DenseLayer(
-            num_input_units, num_output_units, weight_factory=weight_factory
-        )
-
     def build_sym_circuit(rg: RegionGraph) -> Circuit:
         assert input_layer in ["embedding", "categorical", "gaussian"]
         weight_factory = weight_factory_clamp if mono_clamp else weight_factory_exp
-        if input_layer in ["embedding", "categorical"]:
-            input_factory = (
-                categorical_layer_factory
-                if input_layer == "categorical"
-                else embedding_layer_factory
-            )
-        else:
+        if input_layer == "categorical":
+            sum_product = "cp-t"
+            input_factory = categorical_layer_factory
+        elif input_layer == "gaussian":
+            sum_product = "cp-t" if rg.num_variables == 2 else "cp"
             input_factory = gaussian_layer_factory
-        if True:
-            return Circuit.from_region_graph(
-                rg,
-                num_channels=num_channels,
-                num_input_units=num_input_units,
-                num_sum_units=num_sum_units,
-                input_factory=input_factory,
-                sum_product="cp-t",
-                sum_weight_factory=weight_factory,
-            )
+        else:
+            sum_product = "cp-t"
+            input_factory = embedding_layer_factory
         return Circuit.from_region_graph(
             rg,
             num_channels=num_channels,
             num_input_units=num_input_units,
             num_sum_units=num_sum_units,
-            input_factory=gaussian_layer_factory,
-            sum_factory=dense_layer_factory,
-            prod_factory=hadamard_layer_factory,
+            input_factory=input_factory,
+            sum_product=sum_product,
+            sum_weight_factory=weight_factory,
         )
 
     return list(map(lambda rg: build_sym_circuit(rg), region_graphs))
@@ -691,42 +671,25 @@ def _build_non_monotonic_sym_circuits(
             ),
         )
 
-    def hadamard_layer_factory(num_input_units: int, arity: int) -> HadamardLayer:
-        return HadamardLayer(num_input_units, arity)
-
-    def dense_layer_factory(num_input_units: int, num_output_units: int) -> DenseLayer:
-        return DenseLayer(
-            num_input_units,
-            num_output_units,
-            weight_factory=weight_factory,
-        )
-
     def build_sym_circuit(rg: RegionGraph) -> Circuit:
         assert input_layer in ["categorical", "embedding", "gaussian"]
-        if True:
-            if input_layer == "categorical":
-                input_factory = categorical_layer_factory
-            elif input_layer == "gaussian":
-                input_factory = gaussian_layer_factory
-            else:
-                input_factory = embedding_layer_factory
-            return Circuit.from_region_graph(
-                rg,
-                num_channels=num_channels,
-                num_input_units=num_input_units,
-                num_sum_units=num_sum_units,
-                input_factory=input_factory,
-                sum_product="cp-t",
-                sum_weight_factory=weight_factory,
-            )
+        if input_layer == "categorical":
+            sum_product = "cp-t"
+            input_factory = categorical_layer_factory
+        elif input_layer == "gaussian":
+            sum_product = "cp-t" if rg.num_variables == 2 else "cp"
+            input_factory = gaussian_layer_factory
+        else:
+            sum_product = "cp-t"
+            input_factory = embedding_layer_factory
         return Circuit.from_region_graph(
             rg,
             num_channels=num_channels,
             num_input_units=num_input_units,
             num_sum_units=num_sum_units,
-            input_factory=gaussian_layer_factory,
-            sum_factory=dense_layer_factory,
-            prod_factory=hadamard_layer_factory,
+            input_factory=input_factory,
+            sum_product=sum_product,
+            sum_weight_factory=weight_factory,
         )
 
     return list(map(lambda rg: build_sym_circuit(rg), region_graphs))
