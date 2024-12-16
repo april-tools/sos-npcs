@@ -1,6 +1,13 @@
 # Sum of Squares Circuits
 
-This repository contains the code for reproducing the experiments of the paper [_"Sum of Squares Circuits"_].
+This repository contains the code for reproducing the experiments of the paper [_"Sum of Squares Circuits"_](),
+which has been accepted at AAAI 2025.
+
+> [!NOTE]
+> This repository also implements the squared non-monotonic probabilistic circuits originally introduced
+> in the paper [_"Subtractive Mixture Models via Squaring: Representation and Learning"_](https://openreview.net/forum?id=xIHi5nxu9P).
+> The main difference is that the implementation in this repository is based on [_cirkit_](https://github.com/april-tools/cirkit),
+> a general framework to build, learn and reason about probabilistic circuits that is based on PyTorch.
 
 ## Project Structure
 
