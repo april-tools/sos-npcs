@@ -12,7 +12,7 @@ from scripts.plots.utils import format_dataset, format_metric, preprocess_datafr
 from scripts.utils import retrieve_tboard_runs
 
 parser = argparse.ArgumentParser(
-    description="Plot metrics by number of sum unit parameters from Tensorboard files",
+    description="Plot metrics by number of parameters from Tensorboard files",
 )
 parser.add_argument("tboard_path", type=str, help="The Tensorboard runs path")
 parser.add_argument("dataset", type=str, help="Dataset name")
