@@ -150,3 +150,8 @@ Finally, the Bash script ```slurm/launch.sh``` will automatically dispatch an ar
 EXPS_ID=image-sos-npcs bash slurm/launch.sh exps-image-sos-npcs.txt
 ```
 The Slurm jobs should now appear somewhere in the queue, which can be viewed by running ```squeue```.
+
+#### Run a Grid of Experiments (on SGE)
+
+The directory ```sge/``` contains scripts very similar to the ones in ```slurm``` as to launch experiments
+on Sun Grid Engine (SGE) based clusters.
