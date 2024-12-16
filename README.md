@@ -50,7 +50,7 @@ whose results have been illustrated in the paper:
 - ```uci-sos-npcs.json```: reproduces the results of monotonic PCs and sum of squared PCs with either real or complex parameters on UCI data sets.
 - ```crossing-rings-gif.json```: reproduces the models used to plot the GIF shown in our Twitter/X post (see below).
 
-<blockquote class="twitter-tweet" data-media-max-width="560"><p lang="en" dir="ltr">We learn more expressive mixture models that can subtract probability density by squaring them<br><br>🚨We show squaring can reduce expressiveness<br><br>To tackle this we build sum of squares circuits🆘<br><br>🚀We explain why complex parameters help, and show an expressiveness hierarchy around🆘 <a href="https://t.co/me9aZAjp5z">pic.twitter.com/me9aZAjp5z</a></p>&mdash; Lorenzo Loconte (@loreloc_) <a href="https://twitter.com/loreloc_/status/1843317092151439506?ref_src=twsrc%5Etfw">October 7, 2024</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<blockquote class="twitter-tweet"><p lang="en" dir="ltr">We learn more expressive mixture models that can subtract probability density by squaring them<br><br>🚨We show squaring can reduce expressiveness<br><br>To tackle this we build sum of squares circuits🆘<br><br>🚀We explain why complex parameters help, and show an expressiveness hierarchy around🆘 <a href="https://t.co/me9aZAjp5z">pic.twitter.com/me9aZAjp5z</a></p>&mdash; Lorenzo Loconte (@loreloc_) <a href="https://twitter.com/loreloc_/status/1843317092151439506?ref_src=twsrc%5Etfw">October 7, 2024</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
 
 ### Run simple experiments
 
