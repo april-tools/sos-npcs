@@ -16,7 +16,6 @@ The file ```requirements.txt``` contains all the required Python dependencies, w
 The directory ```src``` contains the code related the paper, including utility scripts to run experiments and reproduce the plots of
 the paper starting from tensorboard log files (see below). In ```src/tests``` we store sanity checks that can be run
 by executing ```pytest``` at the root level.
-In addition, ```cirkit``` contains a general-purpose circuit library, where the product of circuits is implemented.
 The directory ```econfigs``` contains the configuration files for all the experiments, which consist of selections of
 models, datasets and all the relevant hyperparameters.  The directories ```slurm``` and ```sge``` contain some utility scripts to execute
 batches of experiments (e.g., grid  searches) on Slurm and Sun Grid Engine (SGE) clusters.
@@ -40,7 +39,18 @@ The download of image data sets -- MNIST, FashionMNIST and CelebA -- is managed 
 ### Run the same hyperparameters grid searches
 
 The directory ```econfigs/``` contains configuration files of the same hyperparameter grid searches we performed for all our experiments.
-See below section about running grids of experiments for details.
+See below sections about running grids of experiments for details.
+Each configuration file stored in ```econfigs/``` is specific for running a set of experiments
+whose results have been illustrated in the paper:
+
+- ```image-celeba-sos-npcs.json```: reproduces the results of monotonic PCs and real/complex squared PCs on CelebA.
+- ```image-celeba-exp-sos-npcs.json```: reproduces the results of $\mu$SOCS PCs on the data set CelebA.
+- ```image-mnist-sos-npcs.json```: reproduces the results of monotonic PCs and real/complex squared PCs on MNIST and FashionMNIST.
+- ```image-mnist-exp-sos-npcs.json```: reproduces the results of $\mu$SOCS PCs on MNIST and FashionMNIST.
+- ```uci-sos-npcs.json```: reproduces the results of monotonic PCs and sum of squared PCs with either real or complex parameters on UCI data sets.
+- ```crossing-rings-gif.json```: reproduces the models used to plot the GIF shown in our Twitter/X post (see below).
+
+<blockquote class="twitter-tweet" data-media-max-width="560"><p lang="en" dir="ltr">We learn more expressive mixture models that can subtract probability density by squaring them<br><br>🚨We show squaring can reduce expressiveness<br><br>To tackle this we build sum of squares circuits🆘<br><br>🚀We explain why complex parameters help, and show an expressiveness hierarchy around🆘 <a href="https://t.co/me9aZAjp5z">pic.twitter.com/me9aZAjp5z</a></p>&mdash; Lorenzo Loconte (@loreloc_) <a href="https://twitter.com/loreloc_/status/1843317092151439506?ref_src=twsrc%5Etfw">October 7, 2024</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 ### Run simple experiments
 
