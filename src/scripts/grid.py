@@ -153,14 +153,15 @@ if __name__ == "__main__":
                     hp["exp-alias"] = exp_alias
                 hp.update(common_hparams)
                 cmd = build_command_string(dataset, model, hp)
-                device = device_next_id() if multi_devices else common_hparams["device"]
                 if args.start_repetition_num == 0 and args.num_repetitions == 1:
+                    device = device_next_id() if multi_devices else common_hparams["device"]
                     commands.append((cmd, device))
                     continue
                 for k in range(
                     args.start_repetition_num,
                     args.start_repetition_num + args.num_repetitions,
                 ):
+                    device = device_next_id() if multi_devices else common_hparams["device"]
                     rep_seed = 123 + 42 * k
                     rep_cmd = f"{cmd} --seed {rep_seed}"
                     commands.append((rep_cmd, device))
