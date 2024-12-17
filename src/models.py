@@ -5,6 +5,7 @@ from collections.abc import Iterator, Sequence
 
 import numpy as np
 import torch
+from blib2to3.pygram import initialize
 from torch import Tensor, nn
 
 import cirkit.symbolic.functional as SF
@@ -617,10 +618,12 @@ def _build_non_monotonic_sym_circuits(
 
     def weight_factory(shape: tuple[int, ...]) -> Parameter:
         weight_dtype = DataType.COMPLEX if complex else DataType.REAL
+        if region_graphs[0].num_variables <= 2:
+            initializer = NormalInitializer(0.0, 1.0)
+        else:
+            initializer = UniformInitializer(0.0, 1.0)
         return Parameter.from_input(
-            TensorParameter(
-                *shape, initializer=UniformInitializer(0.0, 1.0), dtype=weight_dtype
-            )
+            TensorParameter(*shape, initializer=initializer, dtype=weight_dtype)
         )
 
     def categorical_layer_factory(
