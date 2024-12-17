@@ -29,7 +29,7 @@ parser.add_argument(
 )
 
 """
-python -m scripts.plots.gifs checkpoints/crossing-rings-gif --drop-last-frames 224
+python -m scripts.plots.gifs checkpoints/crossing-rings-gif-results
 """
 
 
@@ -74,7 +74,6 @@ if __name__ == "__main__":
     if args.drop_last_frames > 0:
         arrays = map(lambda a: a[: -args.drop_last_frames], arrays)
     arrays = [gt_array] + list(arrays)
-
     print("Constructing the GIF ...")
 
     num_frames = min(args.max_num_frames, min(len(a) for a in arrays))
