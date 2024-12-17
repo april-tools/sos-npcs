@@ -10,7 +10,7 @@ from scripts.plots.utils import format_dataset, format_metric, preprocess_datafr
 from scripts.utils import retrieve_tboard_runs
 
 parser = argparse.ArgumentParser(
-    description="Plot metrics as a swarm plot based on number of squares",
+    description="Plot metrics as a box plot based on number of components / squares",
 )
 parser.add_argument("tboard_path", type=str, help="The Tensorboard runs path")
 parser.add_argument("dataset", type=str, help="Dataset name")

@@ -11,7 +11,7 @@ from graphics.utils import setup_tueplots
 from scripts.plots.utils import format_dataset, format_model
 
 parser = argparse.ArgumentParser(
-    description="Plot metrics as a swarm plot based on number of squares",
+    description="Plot metrics as a line plot based on number of parameters",
 )
 parser.add_argument("checkpoint_path", type=str, help="The checkpoints path")
 parser.add_argument("dataset", type=str, help="Dataset name")

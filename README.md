@@ -13,9 +13,9 @@ which has been accepted at AAAI 2025.
 
 The repository is structured as follows.
 The file ```requirements.txt``` contains all the required Python dependencies, which can be installed by ```pip```.
-The directory ```src``` contains the code related the paper, including utility scripts to run experiments and reproduce the plots of
-the paper starting from tensorboard log files (see below). In ```src/tests``` we store sanity checks that can be run
-by executing ```pytest``` at the root level.
+The directory ```src``` contains the code related the paper, including utility scripts (see ```src/scripts```)
+to run experiments and reproduce the plots of the paper starting from e.g. tensorboard log files (see below).
+In ```src/tests``` we store sanity checks that can be run by executing ```pytest``` at the root level.
 The directory ```econfigs``` contains the configuration files for all the experiments, which consist of selections of
 models, datasets and all the relevant hyperparameters.  The directories ```slurm``` and ```sge``` contain some utility scripts to execute
 batches of experiments (e.g., grid  searches) on Slurm and Sun Grid Engine (SGE) clusters.
@@ -150,3 +150,8 @@ Finally, the Bash script ```slurm/launch.sh``` will automatically dispatch an ar
 EXPS_ID=image-sos-npcs bash slurm/launch.sh exps-image-sos-npcs.txt
 ```
 The Slurm jobs should now appear somewhere in the queue, which can be viewed by running ```squeue```.
+
+#### Run a Grid of Experiments (on SGE)
+
+The directory ```sge/``` contains scripts very similar to the ones in ```slurm``` as to launch experiments
+on Sun Grid Engine (SGE) based clusters.
