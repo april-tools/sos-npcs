@@ -1,6 +1,6 @@
 libcirkit@git+https://github.com/april-tools/cirkit@6a2c8160863681127ed4429667fbf806277e7625
 torchvision~=0.18.0
-pandas<2.0.0
+pandas
 scikit-learn
 zuko
 seaborn
