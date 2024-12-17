@@ -1,5 +1,5 @@
-libcirkit@git+https://github.com/april-tools/cirkit@6a2c8160863681127ed4429667fbf806277e7625
-torchvision~=0.18.0
+libcirkit@git+https://github.com/april-tools/cirkit@3cd51ada686842afca560172dac3862244d600c3
+torchvision
 pandas
 scikit-learn
 zuko
