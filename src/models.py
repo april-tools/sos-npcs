@@ -619,7 +619,7 @@ def _build_non_monotonic_sym_circuits(
     def weight_factory(shape: tuple[int, ...]) -> Parameter:
         weight_dtype = DataType.COMPLEX if complex else DataType.REAL
         if region_graphs[0].num_variables <= 2:
-            initializer = NormalInitializer(0.0, 1.0)
+            initializer = UniformInitializer(-2.0, 2.0)
         else:
             initializer = UniformInitializer(0.0, 1.0)
         return Parameter.from_input(
