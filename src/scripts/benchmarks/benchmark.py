@@ -124,7 +124,7 @@ def run_benchmark(
         # start_time = time.perf_counter()
         start = torch.cuda.Event(enable_timing=True)
         end = torch.cuda.Event(enable_timing=True)
-        start.record()
+        start.record(torch.cuda.current_stream(device))
         if partition_function_only:
             lls = model.log_partition()
         else:
@@ -134,7 +134,7 @@ def run_benchmark(
         if backprop:
             loss = -lls.mean()
             loss.backward(retain_graph=False)  # Free the autodiff graph
-        end.record()
+        end.record(torch.cuda.current_stream(device))
         torch.cuda.synchronize(device)  # Synchronize CUDA Kernels before measuring time
         # end_time = time.perf_counter()
         gpu_memory_peaks.append(torch.cuda.max_memory_allocated(device))
