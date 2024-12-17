@@ -1,7 +1,6 @@
 import argparse
 import gc
 import os
-from typing import List, Tuple, Union
 from collections.abc import Iterator
 
 import numpy as np
