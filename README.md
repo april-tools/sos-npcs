@@ -1,6 +1,6 @@
 # Sum of Squares Circuits
 
-This repository contains the code for reproducing the experiments of the paper [_"Sum of Squares Circuits"_](),
+This repository contains the code for reproducing the experiments of the paper [_"Sum of Squares Circuits"_](https://arxiv.org/abs/2408.11778),
 which has been accepted at AAAI 2025.
 
 > [!NOTE]
