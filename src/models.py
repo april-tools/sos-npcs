@@ -5,7 +5,6 @@ from collections.abc import Iterator, Sequence
 
 import numpy as np
 import torch
-from blib2to3.pygram import initialize
 from torch import Tensor, nn
 
 import cirkit.symbolic.functional as SF
