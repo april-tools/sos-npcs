@@ -102,11 +102,11 @@ if __name__ == "__main__":
     if args.legend:
         if args.move_legend_outside and not args.plot_single_squares:
             sb.move_legend(
-                ax, "upper left", bbox_to_anchor=(1, 1), title="", framealpha=0.6
+                ax, "upper left", bbox_to_anchor=(1, 1), title="", framealpha=0.6, handletextpad=0.5
             )
         else:
             handles, labels = ax.get_legend_handles_labels()
-            ax.legend(handles, labels, framealpha=0.6)
+            ax.legend(handles, labels, framealpha=0.6, handletextpad=0.5)
     if args.xlabel:
         ax.set_xlabel(r"\# components / squares")
     else:
@@ -118,20 +118,20 @@ if __name__ == "__main__":
         if args.ylabel_horizontal:
             ax.annotate(
                 formatted_metric,
-                fontsize=9,
-                xy=(0, 1.1),
-                xytext=(-0.5 * rcParams["xtick.major.pad"], 1),
-                ha="right",
-                va="top",
+                xy=(0.0, 1.0),
+                #xytext=(-0.5 * rcParams["xtick.major.pad"], 1),
+                ha="center",
+                va="bottom",
                 xycoords="axes fraction",
-                textcoords="offset points",
+                #textcoords="offset points",
+                fontsize=11
             )
             ax.set_ylabel("")
         else:
             ax.set_ylabel(formatted_metric)
     else:
         ax.set_ylabel("")
-    ax.tick_params(axis="both", which="major", labelsize=10)
+    ax.tick_params(axis="both", which="major")
     ax.grid(linestyle="--", which="major", alpha=0.3, linewidth=0.5)
     # ax.grid(linestyle="--", which="minor", alpha=0.3, linewidth=0.3)
     ax.set_title(format_dataset(args.dataset))

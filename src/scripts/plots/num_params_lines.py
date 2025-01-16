@@ -135,14 +135,14 @@ if __name__ == "__main__":
     ax.set_xlabel("")
     if args.xlabel:
         ax.annotate(
-            r"\# sum parameters" if args.sum_params_only else r"\# parameters",
-            fontsize=9,
+            r"\# sum params" if args.sum_params_only else r"\# params",
             xy=(1.05, 0),
             xytext=(1, -1.5 * rcParams["xtick.major.pad"]),
             ha="left",
             va="top",
             xycoords="axes fraction",
             textcoords="offset points",
+            fontsize=11
         )
     if args.ylabel:
         formatted_metric = format_metric(
@@ -151,13 +151,13 @@ if __name__ == "__main__":
         if args.ylabel_horizontal:
             ax.annotate(
                 formatted_metric,
-                fontsize=9,
-                xy=(0, 1.1),
-                xytext=(-0.5 * rcParams["xtick.major.pad"], 1),
-                ha="right",
-                va="top",
+                xy=(0.0, 1.0),
+                #xytext=(-0.5 * rcParams["xtick.major.pad"], 1),
+                fontsize=11,
+                ha="center",
+                va="bottom",
                 xycoords="axes fraction",
-                textcoords="offset points",
+                #textcoords="offset points",
             )
             ax.set_ylabel("")
         else:
@@ -167,10 +167,10 @@ if __name__ == "__main__":
     ax.set_title(format_dataset(args.dataset))
     if args.legend:
         if args.move_legend_outside:
-            sb.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), title="")
+            sb.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), title="", handlelength=1.0, handletextpad=0.5)
         else:
             handles, labels = ax.get_legend_handles_labels()
-            ax.legend(handles, labels)
+            ax.legend(handles, labels, handlelength=1.0, handletextpad=0.5)
     ax.grid(linestyle="--", which="major", alpha=0.3, linewidth=0.5)
     ax.grid(linestyle="--", which="minor", alpha=0.3, linewidth=0.3)
     ax.yaxis.set_minor_locator(tck.AutoMinorLocator())
